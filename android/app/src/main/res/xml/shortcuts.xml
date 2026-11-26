@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shuffle_all"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_media_play"
+        android:shortcutShortLabel="@string/shortcut_shuffle_short"
+        android:shortcutLongLabel="@string/shortcut_shuffle_long">
+        <intent
+            android:action="com.yourname.wetar.SHORTCUT_SHUFFLE"
+            android:targetPackage="com.yourname.wetar"
+            android:targetClass="com.yourname.wetar.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="favorites"
+        android:enabled="true"
+        android:icon="@android:drawable/btn_star_big_on"
+        android:shortcutShortLabel="@string/shortcut_favorites_short"
+        android:shortcutLongLabel="@string/shortcut_favorites_long">
+        <intent
+            android:action="com.yourname.wetar.SHORTCUT_FAVORITES"
+            android:targetPackage="com.yourname.wetar"
+            android:targetClass="com.yourname.wetar.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="car_mode"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_compass"
+        android:shortcutShortLabel="@string/shortcut_car_short"
+        android:shortcutLongLabel="@string/shortcut_car_long">
+        <intent
+            android:action="com.yourname.wetar.SHORTCUT_CAR_MODE"
+            android:targetPackage="com.yourname.wetar"
+            android:targetClass="com.yourname.wetar.MainActivity" />
+    </shortcut>
+</shortcuts>

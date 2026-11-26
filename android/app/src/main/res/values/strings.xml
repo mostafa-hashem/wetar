@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_shuffle_short">Shuffle All</string>
+    <string name="shortcut_shuffle_long">Shuffle all library songs</string>
+    <string name="shortcut_favorites_short">Favorites</string>
+    <string name="shortcut_favorites_long">Open favorite songs</string>
+    <string name="shortcut_car_short">Car Mode</string>
+    <string name="shortcut_car_long">Open Car driving mode</string>
+</resources>

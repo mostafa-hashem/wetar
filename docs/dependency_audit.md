@@ -12,12 +12,13 @@ Every runtime and build dependency in `pubspec.yaml` is audited below against We
 | `just_audio` | `^0.10.5` | MIT | Android, iOS, macOS | Active (ryanheise) | ~1.8 MB native (Media3 on Android; AVQueuePlayer on Apple) | Gapless playback, speed, pitch, Android skip-silence, `AndroidEqualizer` & `AndroidLoudnessEnhancer`; rejected `audioplayers` (lacks gapless & native EQ pipeline). |
 | `audio_service` | `^0.18.19` | MIT | Android, iOS, macOS | Active (ryanheise) | ~120 KB | Required background foreground-service `AudioHandler`, Android notification controls, and Apple `MPNowPlayingInfoCenter`; rejected custom MediaSession plugin. |
 | `audio_session` | `^0.2.4` | MIT | Android, iOS, macOS | Active (ryanheise) | ~40 KB | Reliable call interruptions, transient ducking, Bluetooth/headset route change events across all 3 OSes. |
-| `drift` + `drift_flutter` + `sqlite3_flutter_libs` | `^2.35.3` / `^0.3.1` | MIT | Android, iOS, macOS | Active (simolus3) | ~1.6 MB native SQLite arm64 | Typed indexed SQLite queries, migrations, and reactive streams for 20k+ tracks & hidden out-of-scope joins; rejected `hive`/`isar` (weaker relational joins & unmaintained Isar v3/v4). |
+| `drift` + `drift_flutter` | `^2.35.4` / `^0.3.1` | MIT | Android, iOS, macOS | Active (simolus3) | ~1.6 MB native SQLite arm64 (via `sqlite3` 3.x native assets) | Typed indexed SQLite queries, migrations, and reactive streams for 20k+ tracks & hidden out-of-scope joins; rejected `hive`/`isar` & EOL `sqlite3_flutter_libs`. |
 | `shared_preferences` | `^2.5.3` | BSD-3 | All | Official Flutter team | ~25 KB | `SharedPreferencesWithCache` for instant synchronous cold-start load of versioned `AppearanceSettings` JSON; rejected heavy key-value DBs. |
 | `path_provider` + `path` | `^2.1.5` / `^1.9.1` | BSD-3 | All | Official Flutter team | ~20 KB | Cross-platform app-private cache/support directory resolution & safe POSIX/URI path math. |
 | `audio_metadata_reader` | `^1.8.1` | MIT | Pure Dart (All) | Active | ~80 KB Dart | Pure-Dart isolate tag, embedded lyrics, ReplayGain, and cover art extraction (MP3/FLAC/M4A/OGG/WAV) for macOS/iOS & Android enrichment; rejected C++/TagLib FFI bloat. |
 | `material_color_utilities` | SDK-compat | Apache-2.0 | Pure Dart (All) | Official Material team | ~55 KB Dart | Exact HCT quantization & contrast-safe palette extraction from album thumbnails in background isolates. |
 | `dynamic_color` | `^2.1.0` | Apache-2.0 | Android 12+, macOS | Official Material team | ~25 KB | Optional OS wallpaper/accent dynamic color integration requested in 4B; small native footprint. |
+| `rxdart` | `^0.28.0` | Apache-2.0 | Pure Dart (All) | Active | ~0 KB extra (already transitive via `just_audio`/`audio_service`) | Reuses already-bundled `BehaviorSubject`/`PublishSubject` in `WetarAudioHandler`; zero incremental binary impact. |
 
 ## Explicitly Rejected Heavy / Unmaintained Packages (Replaced by Lean Native Channels)
 

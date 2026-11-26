@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_shuffle_short">تشغيل عشوائي</string>
+    <string name="shortcut_shuffle_long">تشغيل جميع المقاطع عشوائياً</string>
+    <string name="shortcut_favorites_short">المفضلة</string>
+    <string name="shortcut_favorites_long">فتح المقاطع المفضلة</string>
+    <string name="shortcut_car_short">وضع القيادة</string>
+    <string name="shortcut_car_long">فتح وضع القيادة بأزرار كبيرة</string>
+</resources>

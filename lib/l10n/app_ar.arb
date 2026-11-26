@@ -1,0 +1,486 @@
+{
+  "@@locale": "ar",
+  "appName": "وتر",
+  "appTagline": "صوت نقي بدون إنترنت، على ذوقك",
+  "navHome": "الرئيسية",
+  "navLibrary": "المكتبة",
+  "navFolders": "المجلدات",
+  "navPlaylists": "القوائم",
+  "navSettings": "الإعدادات",
+  "tabSongs": "الأغاني",
+  "tabAlbums": "الألبومات",
+  "tabArtists": "الفنانون",
+  "tabAlbumArtists": "فنانو الألبوم",
+  "tabGenres": "الأنواع",
+  "tabYears": "السنوات",
+  "tabFolders": "المجلدات",
+  "tabPlaylists": "القوائم",
+  "tabFavorites": "المفضلة",
+  "tabRecentlyAdded": "المضافة حديثاً",
+  "tabRecentlyPlayed": "المشغّلة مؤخراً",
+  "tabMostPlayed": "الأكثر تشغيلاً",
+  "actionPlay": "تشغيل",
+  "actionPause": "إيقاف مؤقت",
+  "actionNext": "التالي",
+  "actionPrevious": "السابق",
+  "actionShuffle": "عشوائي",
+  "actionShuffleAll": "تشغيل عشوائي للكل",
+  "actionRepeatOff": "بدون تكرار",
+  "actionRepeatAll": "تكرار الكل",
+  "actionRepeatOne": "تكرار المقطع",
+  "actionPlayNext": "تشغيل تالياً",
+  "actionAddToQueue": "إضافة لقائمة الانتظار",
+  "actionAddToPlaylist": "إضافة لقائمة تشغيل",
+  "actionFavorite": "إضافة للمفضلة",
+  "actionUnfavorite": "إزالة من المفضلة",
+  "actionRemove": "إزالة",
+  "actionDelete": "حذف",
+  "actionCancel": "إلغاء",
+  "actionConfirm": "تأكيد",
+  "actionApply": "تطبيق",
+  "actionSave": "حفظ",
+  "actionReset": "إعادة ضبط",
+  "actionResetAll": "إعادة ضبط الكل",
+  "actionUndo": "تراجع",
+  "actionRetry": "إعادة المحاولة",
+  "actionClose": "إغلاق",
+  "actionDone": "تم",
+  "actionSkip": "تخطي",
+  "actionContinue": "متابعة",
+  "actionSelectAll": "تحديد الكل",
+  "actionClear": "مسح",
+  "actionSearch": "بحث",
+  "actionShare": "مشاركة",
+  "actionExport": "تصدير",
+  "actionImport": "استيراد",
+  "actionRename": "إعادة تسمية",
+  "actionEdit": "تعديل",
+  "actionRescan": "إعادة فحص",
+  "actionClearFilters": "مسح الفلاتر",
+  "onboardingWelcomeTitle": "أهلاً بك في وتر",
+  "onboardingWelcomeSubtitle": "مشغل موسيقى سريع بدون إنترنت، يعرض فقط المجلدات التي تختارها.",
+  "onboardingOfflinePill": "بدون إنترنت ١٠٠٪ • خصوصية كاملة • بلا إعلانات",
+  "onboardingPermissionTitle": "صلاحية الصوت، على قد المجلدات",
+  "onboardingPermissionBody": "يحتاج وتر صلاحية الصوت فقط لقراءة المجلدات التي تحددها. لن يظهر أي ملف خارجها، ولن يحذف التطبيق أو يعدل ملفاتك أبداً.",
+  "onboardingGrantPermission": "السماح بالوصول للصوت",
+  "onboardingNotificationTitle": "تحكّم من شاشة القفل والإشعارات",
+  "onboardingNotificationBody": "اسمح بالإشعارات على أندرويد لتظهر أزرار التحكم بالموسيقى أثناء التشغيل في الخلفية.",
+  "onboardingAllowNotifications": "السماح بإشعارات التشغيل",
+  "onboardingFoldersTitle": "اختر مجلدات الموسيقى",
+  "onboardingFoldersSubtitle": "المكتبة ستعرض المقاطع الموجودة داخل المجلدات التي تختارها هنا فقط.",
+  "onboardingSelectAllMusicFolders": "تحديد كل المجلدات التي تحتوي على موسيقى",
+  "onboardingLookTitle": "اختر المظهر المناسب لك",
+  "onboardingLookSubtitle": "يمكنك تغيير الألوان والخطوط والخلفيات وشكل المشغل في أي وقت.",
+  "foldersTitle": "مجلدات الموسيقى",
+  "foldersPickerTitle": "اختيار مجلدات الموسيقى",
+  "foldersEmptyTitle": "لم تختر أي مجلد موسيقى بعد",
+  "foldersEmptySubtitle": "اختر المجلدات التي تضع فيها صوتياتك، ولن يتدخل وتر في أي مجلد آخر.",
+  "foldersChooseCta": "اختر مجلدات الموسيقى",
+  "foldersSearchHint": "ابحث في المجلدات أو المسارات...",
+  "foldersAddManualSaf": "إضافة مجلد يدوياً (منتقي النظام)",
+  "foldersAddButton": "إضافة مجلد",
+  "foldersIncludeSubfolders": "تضمين المجلدات الفرعية",
+  "foldersExcludeSubfolder": "استبعاد مجلد فرعي",
+  "foldersExcludedCount": "{count, plural, =0{لا توجد مجلدات مستبعدة} =1{مجلد فرعي مستبعد واحد} =2{مجلدان فرعيان مستبعدان} few{{count} مجلدات فرعية مستبعدة} many{{count} مجلداً فرعياً مستبعداً} other{{count} مجلد فرعي مستبعد}}",
+  "@foldersExcludedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersTrackCount": "{count, plural, =0{٠ مقاطع} =1{مقطع واحد} =2{مقطعان} few{{count} مقاطع} many{{count} مقطعاً} other{{count} مقطع}}",
+  "@foldersTrackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersSelectedSummary": "{folders} مجلدات • {tracks} مقطع",
+  "@foldersSelectedSummary": {
+    "placeholders": {
+      "folders": {
+        "type": "int"
+      },
+      "tracks": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersUnavailableBadge": "غير متاح",
+  "foldersUnavailableHint": "تم نقل وحدة التخزين أو إزالتها. اختيارك وقوائم التشغيل محفوظة حتى يعود المجلد.",
+  "foldersCloudPendingBadge": "على iCloud",
+  "foldersCloudDownloading": "جارٍ التنزيل من iCloud...",
+  "foldersScanProgress": "جارٍ فحص {folder}: {processed}/{total}",
+  "@foldersScanProgress": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      },
+      "processed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersScanCancelled": "تم إيقاف الفحص",
+  "foldersRemovedUndo": "تمت إزالة {name} من المكتبة",
+  "@foldersRemovedUndo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldersAddedSuccess": "تمت إضافة {name} إلى المكتبة",
+  "@foldersAddedSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionDeniedTitle": "مطلوب صلاحية الصوت",
+  "permissionDeniedBody": "بدون هذه الصلاحية لا يمكن لـ وتر قراءة أو تشغيل الملفات من مجلداتك.",
+  "permissionOpenSettings": "فتح إعدادات النظام",
+  "libraryEmptyTitle": "مكتبتك في انتظارك",
+  "libraryEmptyBody": "اختر مجلد موسيقى واحداً على الأقل لعرض الأغاني والألبومات والفنانين.",
+  "libraryFilteredEmpty": "لا توجد مقاطع تطابق هذا الفلتر",
+  "librarySortBy": "ترتيب حسب",
+  "librarySortTitle": "الاسم",
+  "librarySortArtist": "الفنان",
+  "librarySortAlbum": "الألبوم",
+  "librarySortDateAdded": "تاريخ الإضافة",
+  "librarySortDuration": "المدة",
+  "librarySortPlayCount": "الأكثر تشغيلاً",
+  "libraryViewMode": "طريقة العرض",
+  "libraryViewList": "قائمة",
+  "libraryViewGrid": "شبكة",
+  "librarySelectedCount": "تم تحديد {count}",
+  "@librarySelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryUnknownArtist": "فنان غير معروف",
+  "libraryUnknownAlbum": "ألبوم غير معروف",
+  "libraryUnknownGenre": "تصنيف غير معروف",
+  "libraryDecadeLabel": "عقد {year}",
+  "@libraryDecadeLabel": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "searchHint": "ابحث في الأغاني والألبومات والفنانين...",
+  "searchFilterAll": "الكل",
+  "searchRecent": "عمليات البحث الأخيرة",
+  "searchNoResults": "لا توجد نتائج لـ \"{query}\"",
+  "@searchNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "homeContinueListening": "أكمل الاستماع",
+  "homeQuickActions": "اختصارات سريعة",
+  "homeRecentlyAdded": "أضيف حديثاً",
+  "homeMostPlayed": "الأكثر استماعاً",
+  "homeYourFolders": "مجلداتك",
+  "homeYourPlaylists": "قوائم التشغيل",
+  "homeCustomizeBlocks": "ترتيب الرئيسية",
+  "playerNowPlaying": "قيد التشغيل الآن",
+  "playerQueue": "قائمة الانتظار",
+  "playerLyrics": "الكلمات",
+  "playerEqualizer": "معادل الصوت",
+  "playerSleepTimer": "مؤقت النوم",
+  "playerSpeedPitch": "السرعة والطبقة",
+  "playerSpeedLabel": "السرعة",
+  "playerPitchLabel": "طبقة الصوت",
+  "playerAbLoop": "تكرار A–B",
+  "playerAbSetA": "تعيين A",
+  "playerAbSetB": "تعيين B",
+  "playerAbClear": "إلغاء التكرار",
+  "playerCarMode": "وضع القيادة",
+  "playerCarModeHint": "أزرار كبيرة ومريحة أثناء القيادة",
+  "playerShareCard": "مشاركة بطاقة المقطع",
+  "playerShareFile": "مشاركة الملف الصوتي",
+  "playerTrackDetails": "تفاصيل المقطع",
+  "playerChooseCustomArt": "تعيين غلاف مخصص",
+  "playerExternalTempBanner": "تشغيل خارج المكتبة • هل تريد إضافة هذا المجلد؟",
+  "playerExternalAddFolder": "إضافة المجلد",
+  "playerGestureHintOnce": "تلميح: اسحب الغلاف للتغيير واضغط مرتين للتشغيل أو الإيقاف. يمكنك التعديل من الإعدادات.",
+  "playerCorruptSkipped": "تم تخطي ملف غير قابل للقراءة أو مفقود: {title}",
+  "@playerCorruptSkipped": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "queueEmpty": "قائمة الانتظار فارغة",
+  "queueCount": "{count, plural, =0{لا توجد مقاطع} =1{مقطع واحد في الانتظار} =2{مقطعان في الانتظار} few{{count} مقاطع في الانتظار} many{{count} مقطعاً في الانتظار} other{{count} مقطع في الانتظار}}",
+  "@queueCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queueSaveAsPlaylist": "حفظ الانتظار كقائمة تشغيل",
+  "queueClearConfirmTitle": "مسح قائمة الانتظار؟",
+  "queueClearConfirmBody": "سيتم إيقاف التشغيل الحالي وتفريغ قائمة الانتظار.",
+  "queueRemovedUndo": "تمت الإزالة من الانتظار",
+  "sleepTimerOff": "متوقف",
+  "sleepTimerMinutes": "{minutes} دقيقة",
+  "@sleepTimerMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepTimerEndOfTrack": "عند نهاية المقطع الحالي",
+  "sleepTimerAfterTracks": "بعد {count} مقاطع",
+  "@sleepTimerAfterTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepTimerActiveRemaining": "يتوقف خلال {time}",
+  "@sleepTimerActiveRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistsCreate": "قائمة جديدة",
+  "playlistsNameHint": "اسم القائمة",
+  "playlistsSmartTitle": "قوائم ذكية",
+  "playlistsUserTitle": "قوائمك",
+  "playlistsSmartMostPlayed": "الأكثر تشغيلاً",
+  "playlistsSmartRecentlyAdded": "المضافة حديثاً",
+  "playlistsSmartNeverPlayed": "لم تُشغّل بعد",
+  "playlistsSmartLongTracks": "المقاطع الطويلة والمحاضرات",
+  "playlistsImportM3u": "استيراد M3U",
+  "playlistsExportM3u": "تصدير M3U",
+  "playlistsDeleteTitle": "حذف قائمة التشغيل؟",
+  "playlistsDeleteBody": "حذف \"{name}\"؟ ملفاتك الصوتية على الجهاز لن تتأثر إطلاقاً.",
+  "@playlistsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistsEmpty": "لا توجد قوائم تشغيل بعد",
+  "playlistsImportedCount": "تم استيراد {count} مقطعاً إلى القائمة",
+  "@playlistsImportedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "equalizerEnable": "تفعيل معادل الصوت",
+  "equalizerPresets": "الإعدادات المسبقة",
+  "equalizerSavePreset": "حفظ إعداد مخصص",
+  "equalizerPresetNameHint": "اسم الإعداد",
+  "equalizerBassBoost": "تعزيز الباس",
+  "equalizerVirtualizer": "محيطية الصوت",
+  "equalizerLoudness": "رفع مستوى الصوت",
+  "equalizerLoudnessWarning": "رفع الصوت بشدة قد يسبب تشويشاً في السماعة",
+  "equalizerUnavailable": "معادل الصوت غير متاح على هذا النظام حالياً.",
+  "lyricsEmptyTitle": "لا توجد كلمات متاحة",
+  "lyricsEmptyBody": "أضف ملف كلمات .lrc من جهازك أو تأكد من تضمين الكلمات داخل الملف.",
+  "lyricsAttachLrc": "إرفاق ملف .lrc",
+  "lyricsOffsetLabel": "ضبط التوقيت ({ms} مللي ثانية)",
+  "@lyricsOffsetLabel": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsFontSize": "حجم خط الكلمات",
+  "detailsFormat": "الصيغة",
+  "detailsBitrate": "معدل البت",
+  "detailsSampleRate": "معدل العينة",
+  "detailsChannels": "القنوات",
+  "detailsDuration": "المدة",
+  "detailsFileSize": "حجم الملف",
+  "detailsFilePath": "مسار الملف",
+  "detailsCopyPath": "نسخ المسار",
+  "detailsPathCopied": "تم نسخ المسار",
+  "detailsReplayGain": "معادلة الصوت ReplayGain",
+  "settingsTitle": "الإعدادات",
+  "settingsSearchHint": "ابحث في الإعدادات...",
+  "settingsAppearance": "المظهر والتخصيص",
+  "settingsAppearanceSubtitle": "القوالب، الألوان، الخطوط، الخلفيات، المشغل",
+  "settingsPlayback": "التشغيل",
+  "settingsPlaybackSubtitle": "معادلة الصوت، تخطي الصمت، الاستئناف، السماعات",
+  "settingsLibrary": "المكتبة",
+  "settingsLibrarySubtitle": "أقل مدة للمقاطع، فواصل أسماء الفنانين",
+  "settingsMusicFolders": "مجلدات الموسيقى",
+  "settingsMusicFoldersSubtitle": "اختيار المجلدات، الاستبعاد، إعادة الفحص",
+  "settingsAudio": "الصوت والمؤثرات",
+  "settingsAudioSubtitle": "المعادل، التلاشي التدريجي، رفع الصوت",
+  "settingsGestures": "الإيماءات والاهتزاز",
+  "settingsGesturesSubtitle": "السحب، النقر المزدوج، الضغط المطول، اللمس",
+  "settingsLanguage": "اللغة والأرقام",
+  "settingsLanguageSubtitle": "العربية / الإنجليزية، شكل الأرقام",
+  "settingsBackup": "النسخ الاحتياطي والإحصائيات",
+  "settingsBackupSubtitle": "حفظ الإعدادات، ملخص الاستماع، الكاش، السجل",
+  "settingsAbout": "عن وتر",
+  "settingsAdvanced": "خيارات متقدمة",
+  "personalizationLooks": "المظاهر الجاهزة",
+  "personalizationColors": "الألوان",
+  "personalizationFonts": "الخطوط",
+  "personalizationPlayer": "المشغل والمشغل المصغر",
+  "personalizationBackgrounds": "الخلفيات",
+  "personalizationLayout": "تخطيط الرئيسية والمكتبة",
+  "personalizationMotion": "الحواف والظلال والحركة",
+  "personalizationLiteMode": "الوضع الخفيف",
+  "personalizationLiteModeAuto": "تلقائي (توفير البطارية / تقليل الحركة)",
+  "personalizationLiteModeOn": "مفعّل دائماً",
+  "personalizationLiteModeOff": "معطّل دائماً",
+  "personalizationThemeMode": "نمط السمة",
+  "personalizationThemeSystem": "حسب النظام",
+  "personalizationThemeLight": "فاتح",
+  "personalizationThemeDark": "داكن",
+  "personalizationThemeAmoled": "أسود AMOLED",
+  "personalizationScheduledDark": "وضع داكن مجدول",
+  "personalizationAdaptArtwork": "مواءمة الألوان مع غلاف الألبوم",
+  "personalizationSystemDynamicColor": "استخدام ألوان النظام الديناميكية",
+  "personalizationCustomColor": "لون أساسي مخصص",
+  "personalizationContrast": "مستوى التباين",
+  "personalizationContrastStandard": "عادي",
+  "personalizationContrastMedium": "متوسط",
+  "personalizationContrastHigh": "مرتفع",
+  "personalizationSurfaceTint": "تشبّع لون الأسطح",
+  "personalizationTextEmphasis": "وضوح النصوص",
+  "personalizationFontArabic": "الخط العربي",
+  "personalizationFontLatin": "الخط الإنجليزي",
+  "personalizationFontSystem": "خط النظام",
+  "personalizationFontScale": "حجم الخط",
+  "personalizationFontWeight": "سُمك الخط",
+  "personalizationImportFont": "استيراد خط .ttf / .otf",
+  "personalizationFontImported": "تم استيراد الخط: {name}",
+  "@personalizationFontImported": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalizationFontInvalid": "ملف الخط غير صالح أو غير مدعوم",
+  "personalizationPlayerLayout": "تصميم المشغل",
+  "personalizationLayoutOudStrings": "أوتار العود (مميز)",
+  "personalizationLayoutClassic": "بطاقة كلاسيكية",
+  "personalizationLayoutImmersive": "غلاف ممتد بالكامل",
+  "personalizationLayoutMinimal": "بسيط وهادئ",
+  "personalizationLayoutVinyl": "أسطوانة دوارة",
+  "personalizationArtShape": "شكل الغلاف",
+  "personalizationSeekBarStyle": "نمط شريط التقدم",
+  "personalizationMiniPlayerStyle": "نمط المشغل المصغر",
+  "personalizationMiniPlayerFloating": "شريط عائم",
+  "personalizationMiniPlayerDocked": "شريط مثبت",
+  "personalizationBackgroundMode": "نوع الخلفية",
+  "personalizationBgBlurredArt": "غلاف ضبابي",
+  "personalizationBgArtGradient": "تدرج من الغلاف",
+  "personalizationBgSolid": "لون ثابت",
+  "personalizationBgAnimatedGradient": "تدرج متحرك",
+  "personalizationBgProceduralAurora": "أورورا (مرسومة)",
+  "personalizationBgProceduralWaves": "موجات (مرسومة)",
+  "personalizationBgProceduralGrain": "خامة دافئة (مرسومة)",
+  "personalizationBgProceduralStrings": "أوتار العود (مرسومة)",
+  "personalizationBgCustomImage": "صورة مخصصة",
+  "personalizationBgBlur": "الضبابية",
+  "personalizationBgDim": "التعتيم",
+  "personalizationBgSaturation": "التشبّع",
+  "personalizationBgScope": "تطبيق الخلفية على",
+  "personalizationBgScopePlayer": "المشغل فقط",
+  "personalizationBgScopeHomePlayer": "الرئيسية والمشغل",
+  "personalizationBgScopeWholeApp": "التطبيق بالكامل",
+  "personalizationCornerRadius": "استدارة الحواف",
+  "personalizationShadowIntensity": "عمق الظلال",
+  "personalizationBlurIntensity": "شدة التمويه الزجاجي",
+  "personalizationMotionIntensity": "شدة الحركة",
+  "personalizationHapticsIntensity": "شدة الاهتزاز",
+  "personalizationListDensity": "كثافة القوائم",
+  "personalizationGridColumns": "أعمدة الشبكة",
+  "personalizationShowArtInLists": "عرض الأغلفة في القوائم",
+  "personalizationMirrorTimelineRtl": "عكس اتجاه شريط التقدم بالعربية",
+  "personalizationSaveLook": "حفظ المظهر الحالي",
+  "personalizationImportLook": "استيراد مظهر .wetarlook",
+  "personalizationExportLook": "تصدير .wetarlook",
+  "personalizationLookInvalid": "ملف المظهر غير صالح أو تالف",
+  "personalizationResetSection": "إعادة ضبط هذا القسم",
+  "personalizationResetAllTitle": "إعادة ضبط كل إعدادات المظهر؟",
+  "personalizationResetAllBody": "سيعيد ذلك ألوان وخطوط وتخطيط وإيماءات وتر إلى الإعداد الافتراضي.",
+  "playbackMinDuration": "إخفاء المقاطع الأقصر من ({seconds} ث)",
+  "@playbackMinDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "playbackArtistSeparators": "فواصل تعدد الفنانين",
+  "playbackFadePlayPause": "تلاشي ناعم عند التشغيل والإيقاف",
+  "playbackSkipSilence": "تخطي فترات الصمت",
+  "playbackReplayGainMode": "موازنة مستوى الصوت ReplayGain",
+  "playbackReplayGainOff": "متوقف",
+  "playbackReplayGainTrack": "لكل مقطع",
+  "playbackReplayGainAlbum": "لكل ألبوم",
+  "playbackReplayGainPreamp": "تضخيم مسبق",
+  "playbackRememberLongPos": "تذكر موضع التوقف للمقاطع الطويلة (١٥ دقيقة فأكثر)",
+  "playbackAutoPlayBt": "تشغيل تلقائي عند توصيل السماعات أو البلوتوث",
+  "languageArabic": "العربية",
+  "languageEnglish": "English",
+  "languageNumerals": "شكل الأرقام",
+  "languageNumeralsWestern": "غربية (0123)",
+  "languageNumeralsArabicIndic": "عربية شرقية (٠١٢٣)",
+  "backupExportJson": "تصدير نسخة احتياطية محلية (.json)",
+  "backupImportJson": "استعادة نسخة احتياطية (.json)",
+  "backupSuccess": "تم حفظ النسخة الاحتياطية بنجاح",
+  "backupRestored": "تمت استعادة النسخة الاحتياطية بنجاح",
+  "backupInvalid": "ملف النسخة الاحتياطية غير صالح",
+  "statsTitle": "ملخص استماعك (Wetar Wrapped)",
+  "statsTotalTime": "إجمالي وقت الاستماع",
+  "statsTotalPlays": "عدد مرات التشغيل",
+  "statsTopTracks": "أكثر المقاطع استماعاً",
+  "statsTopArtists": "أكثر الفنانين استماعاً",
+  "statsSharePoster": "مشاركة بطاقة الملخص",
+  "cacheClearButton": "مسح الملفات المؤقتة",
+  "cacheSizeLabel": "حجم الكاش: {size}",
+  "@cacheSizeLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticsTitle": "سجل الأخطاء والتشخيص المحلي",
+  "diagnosticsShare": "مشاركة ملف السجل",
+  "diagnosticsClear": "مسح السجل",
+  "batteryGuideTitle": "الحفاظ على استمرار الصوت في الخلفية",
+  "batteryGuideBody": "بعض الأجهزة تغلق التطبيقات في الخلفية لتوفير الطاقة. اختر وضع غير مقيد لـ وتر إذا توقف الصوت عند إطفاء الشاشة.",
+  "batteryGuideAction": "فتح إعدادات البطارية",
+  "batteryGuideOptimizedOk": "إعفاء تحسين البطارية مفعّل بالفعل",
+  "desktopCompactMiniMode": "المشغل المصغر العائم",
+  "desktopMenuLibrary": "المكتبة",
+  "desktopMenuPlayback": "التشغيل",
+  "desktopMenuView": "العرض",
+  "desktopShortcutsHint": "مسافة: تشغيل/إيقاف • الأسهم: تقديم/ترجيع • Cmd+F: بحث"
+}

@@ -1,0 +1,486 @@
+{
+  "@@locale": "en",
+  "appName": "Wetar",
+  "appTagline": "Pure offline sound, tuned to you",
+  "navHome": "Home",
+  "navLibrary": "Library",
+  "navFolders": "Folders",
+  "navPlaylists": "Playlists",
+  "navSettings": "Settings",
+  "tabSongs": "Songs",
+  "tabAlbums": "Albums",
+  "tabArtists": "Artists",
+  "tabAlbumArtists": "Album Artists",
+  "tabGenres": "Genres",
+  "tabYears": "Years",
+  "tabFolders": "Folders",
+  "tabPlaylists": "Playlists",
+  "tabFavorites": "Favorites",
+  "tabRecentlyAdded": "Recently Added",
+  "tabRecentlyPlayed": "Recently Played",
+  "tabMostPlayed": "Most Played",
+  "actionPlay": "Play",
+  "actionPause": "Pause",
+  "actionNext": "Next",
+  "actionPrevious": "Previous",
+  "actionShuffle": "Shuffle",
+  "actionShuffleAll": "Shuffle All",
+  "actionRepeatOff": "Repeat off",
+  "actionRepeatAll": "Repeat all",
+  "actionRepeatOne": "Repeat one",
+  "actionPlayNext": "Play next",
+  "actionAddToQueue": "Add to queue",
+  "actionAddToPlaylist": "Add to playlist",
+  "actionFavorite": "Favorite",
+  "actionUnfavorite": "Remove favorite",
+  "actionRemove": "Remove",
+  "actionDelete": "Delete",
+  "actionCancel": "Cancel",
+  "actionConfirm": "Confirm",
+  "actionApply": "Apply",
+  "actionSave": "Save",
+  "actionReset": "Reset",
+  "actionResetAll": "Reset all",
+  "actionUndo": "Undo",
+  "actionRetry": "Retry",
+  "actionClose": "Close",
+  "actionDone": "Done",
+  "actionSkip": "Skip",
+  "actionContinue": "Continue",
+  "actionSelectAll": "Select all",
+  "actionClear": "Clear",
+  "actionSearch": "Search",
+  "actionShare": "Share",
+  "actionExport": "Export",
+  "actionImport": "Import",
+  "actionRename": "Rename",
+  "actionEdit": "Edit",
+  "actionRescan": "Rescan",
+  "actionClearFilters": "Clear filters",
+  "onboardingWelcomeTitle": "Meet Wetar",
+  "onboardingWelcomeSubtitle": "A fast, completely offline music player built around only the folders you choose.",
+  "onboardingOfflinePill": "100% Offline • Zero Network • No Ads",
+  "onboardingPermissionTitle": "Audio access, strictly scoped",
+  "onboardingPermissionBody": "Wetar asks for audio permission only to scan the music folders you pick. Nothing outside your chosen folders ever appears, and Wetar never modifies or deletes your audio files.",
+  "onboardingGrantPermission": "Allow audio access",
+  "onboardingNotificationTitle": "Keep playback controls visible",
+  "onboardingNotificationBody": "Allow notification access on Android so media controls appear on your lock screen and notification shade.",
+  "onboardingAllowNotifications": "Allow notification controls",
+  "onboardingFoldersTitle": "Choose your music folders",
+  "onboardingFoldersSubtitle": "Only tracks inside folders you select here will appear in your library.",
+  "onboardingSelectAllMusicFolders": "Select all folders containing music",
+  "onboardingLookTitle": "Pick your starting look",
+  "onboardingLookSubtitle": "You can customize colors, fonts, backgrounds, and player layouts anytime.",
+  "foldersTitle": "Music Folders",
+  "foldersPickerTitle": "Choose Music Folders",
+  "foldersEmptyTitle": "No music folders selected yet",
+  "foldersEmptySubtitle": "Pick the folders that hold your music. Wetar stays completely out of everything else.",
+  "foldersChooseCta": "Choose music folders",
+  "foldersSearchHint": "Filter folders or paths...",
+  "foldersAddManualSaf": "Add folder manually (system picker)",
+  "foldersAddButton": "Add folder",
+  "foldersIncludeSubfolders": "Include subfolders",
+  "foldersExcludeSubfolder": "Exclude a subfolder",
+  "foldersExcludedCount": "{count, plural, =0{No excluded subfolders} =1{1 excluded subfolder} other{{count} excluded subfolders}}",
+  "@foldersExcludedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersTrackCount": "{count, plural, =0{0 tracks} =1{1 track} other{{count} tracks}}",
+  "@foldersTrackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersSelectedSummary": "{folders} folders • {tracks} tracks",
+  "@foldersSelectedSummary": {
+    "placeholders": {
+      "folders": {
+        "type": "int"
+      },
+      "tracks": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersUnavailableBadge": "Unavailable",
+  "foldersUnavailableHint": "Storage was removed or renamed. Selection and playlists remain safe until it returns.",
+  "foldersCloudPendingBadge": "In iCloud",
+  "foldersCloudDownloading": "Downloading from iCloud...",
+  "foldersScanProgress": "Scanning {folder}: {processed}/{total}",
+  "@foldersScanProgress": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      },
+      "processed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersScanCancelled": "Scan cancelled",
+  "foldersRemovedUndo": "Removed {name} from library",
+  "@foldersRemovedUndo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldersAddedSuccess": "Added {name} to library",
+  "@foldersAddedSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionDeniedTitle": "Audio permission needed",
+  "permissionDeniedBody": "Without permission, Wetar cannot list or play files from your music folders.",
+  "permissionOpenSettings": "Open system settings",
+  "libraryEmptyTitle": "Your library is waiting",
+  "libraryEmptyBody": "Select at least one music folder to populate your songs, albums, and artists.",
+  "libraryFilteredEmpty": "No tracks match this filter",
+  "librarySortBy": "Sort by",
+  "librarySortTitle": "Title",
+  "librarySortArtist": "Artist",
+  "librarySortAlbum": "Album",
+  "librarySortDateAdded": "Date added",
+  "librarySortDuration": "Duration",
+  "librarySortPlayCount": "Most played",
+  "libraryViewMode": "View mode",
+  "libraryViewList": "List",
+  "libraryViewGrid": "Grid",
+  "librarySelectedCount": "{count} selected",
+  "@librarySelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryUnknownArtist": "Unknown Artist",
+  "libraryUnknownAlbum": "Unknown Album",
+  "libraryUnknownGenre": "Unknown Genre",
+  "libraryDecadeLabel": "{year}s",
+  "@libraryDecadeLabel": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "searchHint": "Search songs, albums, artists, playlists...",
+  "searchFilterAll": "All",
+  "searchRecent": "Recent searches",
+  "searchNoResults": "Nothing matched \"{query}\"",
+  "@searchNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "homeContinueListening": "Continue listening",
+  "homeQuickActions": "Quick actions",
+  "homeRecentlyAdded": "Recently added",
+  "homeMostPlayed": "Most played",
+  "homeYourFolders": "Your folders",
+  "homeYourPlaylists": "Playlists",
+  "homeCustomizeBlocks": "Customize Home",
+  "playerNowPlaying": "Now Playing",
+  "playerQueue": "Queue",
+  "playerLyrics": "Lyrics",
+  "playerEqualizer": "Equalizer",
+  "playerSleepTimer": "Sleep Timer",
+  "playerSpeedPitch": "Speed & Pitch",
+  "playerSpeedLabel": "Speed",
+  "playerPitchLabel": "Pitch",
+  "playerAbLoop": "A–B Loop",
+  "playerAbSetA": "Set A",
+  "playerAbSetB": "Set B",
+  "playerAbClear": "Clear loop",
+  "playerCarMode": "Car Mode",
+  "playerCarModeHint": "Large distraction-free controls",
+  "playerShareCard": "Share Track Card",
+  "playerShareFile": "Share Audio File",
+  "playerTrackDetails": "Track Details",
+  "playerChooseCustomArt": "Choose custom album art",
+  "playerExternalTempBanner": "Playing outside your library • Add its folder?",
+  "playerExternalAddFolder": "Add folder",
+  "playerGestureHintOnce": "Tip: swipe cover to skip, double-tap to play/pause. Editable in Settings > Gestures.",
+  "playerCorruptSkipped": "Skipped unreadable or missing track: {title}",
+  "@playerCorruptSkipped": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "queueEmpty": "Queue is empty",
+  "queueCount": "{count, plural, =0{0 tracks in queue} =1{1 track in queue} other{{count} tracks in queue}}",
+  "@queueCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queueSaveAsPlaylist": "Save queue as playlist",
+  "queueClearConfirmTitle": "Clear queue?",
+  "queueClearConfirmBody": "This stops current playback and empties the active queue.",
+  "queueRemovedUndo": "Removed from queue",
+  "sleepTimerOff": "Off",
+  "sleepTimerMinutes": "{minutes} min",
+  "@sleepTimerMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepTimerEndOfTrack": "End of current track",
+  "sleepTimerAfterTracks": "After {count} tracks",
+  "@sleepTimerAfterTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepTimerActiveRemaining": "Stops in {time}",
+  "@sleepTimerActiveRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistsCreate": "New playlist",
+  "playlistsNameHint": "Playlist name",
+  "playlistsSmartTitle": "Smart playlists",
+  "playlistsUserTitle": "Your playlists",
+  "playlistsSmartMostPlayed": "Most Played",
+  "playlistsSmartRecentlyAdded": "Recently Added",
+  "playlistsSmartNeverPlayed": "Never Played",
+  "playlistsSmartLongTracks": "Long Tracks & Lectures",
+  "playlistsImportM3u": "Import M3U",
+  "playlistsExportM3u": "Export M3U",
+  "playlistsDeleteTitle": "Delete playlist?",
+  "playlistsDeleteBody": "Delete \"{name}\"? Your audio files on disk are never touched.",
+  "@playlistsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistsEmpty": "No playlists yet",
+  "playlistsImportedCount": "Imported {count} tracks into playlist",
+  "@playlistsImportedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "equalizerEnable": "Enable Equalizer",
+  "equalizerPresets": "Presets",
+  "equalizerSavePreset": "Save custom preset",
+  "equalizerPresetNameHint": "Preset name",
+  "equalizerBassBoost": "Bass Boost",
+  "equalizerVirtualizer": "Virtualizer",
+  "equalizerLoudness": "Volume Boost",
+  "equalizerLoudnessWarning": "High volume boost may cause speaker distortion",
+  "equalizerUnavailable": "Equalizer is not available on this platform yet.",
+  "lyricsEmptyTitle": "No lyrics found",
+  "lyricsEmptyBody": "Add embedded lyrics or attach an .lrc file from your device.",
+  "lyricsAttachLrc": "Attach .lrc file",
+  "lyricsOffsetLabel": "Sync offset ({ms} ms)",
+  "@lyricsOffsetLabel": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsFontSize": "Lyrics text size",
+  "detailsFormat": "Format",
+  "detailsBitrate": "Bitrate",
+  "detailsSampleRate": "Sample rate",
+  "detailsChannels": "Channels",
+  "detailsDuration": "Duration",
+  "detailsFileSize": "File size",
+  "detailsFilePath": "File path",
+  "detailsCopyPath": "Copy path",
+  "detailsPathCopied": "Path copied",
+  "detailsReplayGain": "ReplayGain",
+  "settingsTitle": "Settings",
+  "settingsSearchHint": "Search settings...",
+  "settingsAppearance": "Appearance",
+  "settingsAppearanceSubtitle": "Looks, colors, fonts, backgrounds, player style",
+  "settingsPlayback": "Playback",
+  "settingsPlaybackSubtitle": "ReplayGain, skip silence, resume, headphones",
+  "settingsLibrary": "Library",
+  "settingsLibrarySubtitle": "Minimum duration, multi-artist separators",
+  "settingsMusicFolders": "Music Folders",
+  "settingsMusicFoldersSubtitle": "Choose folders, exclusions, rescan",
+  "settingsAudio": "Audio & Effects",
+  "settingsAudioSubtitle": "Equalizer, fades, volume normalization",
+  "settingsGestures": "Gestures & Haptics",
+  "settingsGesturesSubtitle": "Swipes, double-tap, long-press, vibration",
+  "settingsLanguage": "Language & Numerals",
+  "settingsLanguageSubtitle": "Arabic / English, RTL, numeral style",
+  "settingsBackup": "Backup, Cache & Stats",
+  "settingsBackupSubtitle": "JSON backup, Wetar Wrapped, cache, logs",
+  "settingsAbout": "About Wetar",
+  "settingsAdvanced": "Advanced",
+  "personalizationLooks": "Looks",
+  "personalizationColors": "Colors",
+  "personalizationFonts": "Typography & Fonts",
+  "personalizationPlayer": "Now Playing & Mini Player",
+  "personalizationBackgrounds": "Backgrounds",
+  "personalizationLayout": "Home & Library Layout",
+  "personalizationMotion": "Shape, Depth & Motion",
+  "personalizationLiteMode": "Lite Mode",
+  "personalizationLiteModeAuto": "Automatic (Battery Saver / Reduce Motion)",
+  "personalizationLiteModeOn": "Always On",
+  "personalizationLiteModeOff": "Always Off",
+  "personalizationThemeMode": "Theme mode",
+  "personalizationThemeSystem": "System",
+  "personalizationThemeLight": "Light",
+  "personalizationThemeDark": "Dark",
+  "personalizationThemeAmoled": "AMOLED Black",
+  "personalizationScheduledDark": "Scheduled dark mode",
+  "personalizationAdaptArtwork": "Adapt colors to current artwork",
+  "personalizationSystemDynamicColor": "Use system dynamic colors",
+  "personalizationCustomColor": "Custom accent color",
+  "personalizationContrast": "Contrast level",
+  "personalizationContrastStandard": "Standard",
+  "personalizationContrastMedium": "Medium",
+  "personalizationContrastHigh": "High",
+  "personalizationSurfaceTint": "Surface tint",
+  "personalizationTextEmphasis": "Text emphasis",
+  "personalizationFontArabic": "Arabic font",
+  "personalizationFontLatin": "Latin font",
+  "personalizationFontSystem": "System default",
+  "personalizationFontScale": "Font size scale",
+  "personalizationFontWeight": "Font weight",
+  "personalizationImportFont": "Import .ttf / .otf font",
+  "personalizationFontImported": "Imported font: {name}",
+  "@personalizationFontImported": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalizationFontInvalid": "Unsupported or invalid font file",
+  "personalizationPlayerLayout": "Player layout",
+  "personalizationLayoutOudStrings": "Oud Strings (Signature)",
+  "personalizationLayoutClassic": "Classic Card",
+  "personalizationLayoutImmersive": "Immersive Bleed",
+  "personalizationLayoutMinimal": "Minimal",
+  "personalizationLayoutVinyl": "Vinyl Disc",
+  "personalizationArtShape": "Artwork shape",
+  "personalizationSeekBarStyle": "Seek bar style",
+  "personalizationMiniPlayerStyle": "Mini player style",
+  "personalizationMiniPlayerFloating": "Floating pill",
+  "personalizationMiniPlayerDocked": "Docked bar",
+  "personalizationBackgroundMode": "Background style",
+  "personalizationBgBlurredArt": "Blurred artwork",
+  "personalizationBgArtGradient": "Artwork gradient",
+  "personalizationBgSolid": "Solid color",
+  "personalizationBgAnimatedGradient": "Animated gradient",
+  "personalizationBgProceduralAurora": "Aurora (procedural)",
+  "personalizationBgProceduralWaves": "Waves (procedural)",
+  "personalizationBgProceduralGrain": "Warm grain (procedural)",
+  "personalizationBgProceduralStrings": "Oud strings (procedural)",
+  "personalizationBgCustomImage": "Custom image",
+  "personalizationBgBlur": "Blur",
+  "personalizationBgDim": "Dim",
+  "personalizationBgSaturation": "Saturation",
+  "personalizationBgScope": "Apply background to",
+  "personalizationBgScopePlayer": "Player only",
+  "personalizationBgScopeHomePlayer": "Home & Player",
+  "personalizationBgScopeWholeApp": "Whole app",
+  "personalizationCornerRadius": "Corner radius",
+  "personalizationShadowIntensity": "Shadow depth",
+  "personalizationBlurIntensity": "Glass blur",
+  "personalizationMotionIntensity": "Animation intensity",
+  "personalizationHapticsIntensity": "Haptic intensity",
+  "personalizationListDensity": "List density",
+  "personalizationGridColumns": "Grid columns",
+  "personalizationShowArtInLists": "Show artwork in lists",
+  "personalizationMirrorTimelineRtl": "Mirror seek bar in Arabic RTL",
+  "personalizationSaveLook": "Save current look",
+  "personalizationImportLook": "Import .wetarlook",
+  "personalizationExportLook": "Export .wetarlook",
+  "personalizationLookInvalid": "Invalid or corrupted .wetarlook file",
+  "personalizationResetSection": "Reset this section",
+  "personalizationResetAllTitle": "Reset all appearance settings?",
+  "personalizationResetAllBody": "This restores Wetar's default colors, fonts, layout, and gestures.",
+  "playbackMinDuration": "Hide tracks shorter than ({seconds}s)",
+  "@playbackMinDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "playbackArtistSeparators": "Multi-artist separators",
+  "playbackFadePlayPause": "Smooth volume fade on play/pause",
+  "playbackSkipSilence": "Skip silence",
+  "playbackReplayGainMode": "ReplayGain normalization",
+  "playbackReplayGainOff": "Off",
+  "playbackReplayGainTrack": "Track",
+  "playbackReplayGainAlbum": "Album",
+  "playbackReplayGainPreamp": "Pre-amp gain",
+  "playbackRememberLongPos": "Remember position for long tracks (>=15 min)",
+  "playbackAutoPlayBt": "Auto-play when headphones/Bluetooth connect",
+  "languageArabic": "العربية",
+  "languageEnglish": "English",
+  "languageNumerals": "Numerals style",
+  "languageNumeralsWestern": "Western (0123)",
+  "languageNumeralsArabicIndic": "Arabic-Indic (٠١٢٣)",
+  "backupExportJson": "Export full local backup (.json)",
+  "backupImportJson": "Restore local backup (.json)",
+  "backupSuccess": "Backup saved successfully",
+  "backupRestored": "Backup restored cleanly",
+  "backupInvalid": "Could not validate backup file",
+  "statsTitle": "Listening Recap (Wetar Wrapped)",
+  "statsTotalTime": "Total listening time",
+  "statsTotalPlays": "Total plays",
+  "statsTopTracks": "Top tracks",
+  "statsTopArtists": "Top artists",
+  "statsSharePoster": "Share Wrapped card",
+  "cacheClearButton": "Clear app caches",
+  "cacheSizeLabel": "Cache usage: {size}",
+  "@cacheSizeLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticsTitle": "Local Diagnostics & Logs",
+  "diagnosticsShare": "Share local log file",
+  "diagnosticsClear": "Clear log file",
+  "batteryGuideTitle": "Keep background music uninterrupted",
+  "batteryGuideBody": "Some Android brands aggressively stop background audio. Set Wetar to Unrestricted battery usage if playback pauses when the screen turns off.",
+  "batteryGuideAction": "Open battery exemption settings",
+  "batteryGuideOptimizedOk": "Battery exemption is already active",
+  "desktopCompactMiniMode": "Compact mini player",
+  "desktopMenuLibrary": "Library",
+  "desktopMenuPlayback": "Playback",
+  "desktopMenuView": "View",
+  "desktopShortcutsHint": "Space: Play/Pause • Arrows: Seek • Cmd+F: Search"
+}
