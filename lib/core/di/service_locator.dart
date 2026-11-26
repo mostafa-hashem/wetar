@@ -92,7 +92,7 @@ Future<void> initServiceLocator() async {
         capabilities: capabilities,
       ),
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'com.yourname.wetar.playback',
+        androidNotificationChannelId: 'com.wetar.playback',
         androidNotificationChannelName: 'Wetar Playback',
         androidNotificationChannelDescription:
             'Offline music playback controls',

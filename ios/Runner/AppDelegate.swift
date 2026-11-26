@@ -40,13 +40,13 @@ final class WetarIosPlugin: NSObject, FlutterPlugin, FlutterStreamHandler, Flutt
   static func register(with registrar: FlutterPluginRegistrar) {
     let instance = WetarIosPlugin()
     let method = FlutterMethodChannel(
-      name: "com.yourname.wetar/platform",
+      name: "com.wetar/platform",
       binaryMessenger: registrar.messenger()
     )
     registrar.addMethodCallDelegate(instance, channel: method)
 
     let events = FlutterEventChannel(
-      name: "com.yourname.wetar/events",
+      name: "com.wetar/events",
       binaryMessenger: registrar.messenger()
     )
     events.setStreamHandler(instance)

@@ -30,7 +30,7 @@ alwaysApply: true
 
 - **Product:** **Wetar** (EN) / **وتر** (AR) — fully offline, lightweight, fast, deeply customizable local music player.
 - **Targets:** Android (`minSdk 24`, `targetSdk 36`), macOS (`10.15+` / `13.0+`), and iOS (`15.0+`), from one Flutter + Dart codebase.
-- **Placeholder ID:** `com.yourname.wetar`
+- **Application ID:** `com.wetar`
 - **Core Invariants:**
   1. **Zero network:** Release builds on Android, iOS, and macOS declare zero network permissions or entitlements, bundle no remote fonts, emit no telemetry or ads, and make zero network calls.
   2. **Folder-whitelist library:** The library contains **only** audio files inside user-selected music folders. Wetar never modifies or deletes user audio files.

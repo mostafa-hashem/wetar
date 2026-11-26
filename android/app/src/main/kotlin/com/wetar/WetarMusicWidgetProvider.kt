@@ -1,4 +1,4 @@
-package com.yourname.wetar
+package com.wetar
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager

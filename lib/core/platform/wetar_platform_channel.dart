@@ -15,10 +15,8 @@ class WetarPlatformChannel
         SystemIntegrationService {
   WetarPlatformChannel();
 
-  static const MethodChannel _method = MethodChannel(
-    'com.yourname.wetar/platform',
-  );
-  static const EventChannel _events = EventChannel('com.yourname.wetar/events');
+  static const MethodChannel _method = MethodChannel('com.wetar/platform');
+  static const EventChannel _events = EventChannel('com.wetar/events');
 
   Stream<PlatformIncomingEvent>? _cachedEvents;
 

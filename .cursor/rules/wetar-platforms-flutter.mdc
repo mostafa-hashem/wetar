@@ -18,7 +18,7 @@ Apply alongside `rules.mdc`, `wetar-engineering-quality.mdc`, and `wetar-audio-a
 
 ---
 
-## 2. Android (`minSdk 24`, `targetSdk 36`, `com.yourname.wetar`)
+## 2. Android (`minSdk 24`, `targetSdk 36`, `com.wetar`)
 
 - `MainActivity` **must extend `AudioServiceFragmentActivity`** (from `com.ryanheise.audioservice`) so `just_audio` + `audio_service` share one FlutterEngine and survive backgrounding.
 - **Minimum Scoped Permissions:**

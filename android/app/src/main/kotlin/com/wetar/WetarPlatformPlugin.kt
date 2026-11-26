@@ -1,4 +1,4 @@
-package com.yourname.wetar
+package com.wetar
 
 import android.Manifest
 import android.app.Activity
@@ -45,11 +45,11 @@ class WetarPlatformPlugin(
 
     private val methodChannel = MethodChannel(
         flutterEngine.dartExecutor.binaryMessenger,
-        "com.yourname.wetar/platform",
+        "com.wetar/platform",
     )
     private val eventChannel = EventChannel(
         flutterEngine.dartExecutor.binaryMessenger,
-        "com.yourname.wetar/events",
+        "com.wetar/events",
     )
 
     private val executor = Executors.newFixedThreadPool(2)
@@ -105,9 +105,9 @@ class WetarPlatformPlugin(
                     "mimeType" to (intent.type ?: activity.contentResolver.getType(uri)),
                 )
             }
-            "com.yourname.wetar.SHORTCUT_SHUFFLE" -> mapOf("type" to "shortcut", "target" to "shuffle_all")
-            "com.yourname.wetar.SHORTCUT_FAVORITES" -> mapOf("type" to "shortcut", "target" to "favorites")
-            "com.yourname.wetar.SHORTCUT_CAR_MODE" -> mapOf("type" to "shortcut", "target" to "car_mode")
+            "com.wetar.SHORTCUT_SHUFFLE" -> mapOf("type" to "shortcut", "target" to "shuffle_all")
+            "com.wetar.SHORTCUT_FAVORITES" -> mapOf("type" to "shortcut", "target" to "favorites")
+            "com.wetar.SHORTCUT_CAR_MODE" -> mapOf("type" to "shortcut", "target" to "car_mode")
             else -> null
         }
         if (payload != null) {

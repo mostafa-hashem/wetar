@@ -66,7 +66,7 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
     let messenger = controller.engine.binaryMessenger
 
     let mChannel = FlutterMethodChannel(
-      name: "com.yourname.wetar/platform",
+      name: "com.wetar/platform",
       binaryMessenger: messenger
     )
     mChannel.setMethodCallHandler { [weak self] call, result in
@@ -75,7 +75,7 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
     self.methodChannel = mChannel
 
     let eChannel = FlutterEventChannel(
-      name: "com.yourname.wetar/events",
+      name: "com.wetar/events",
       binaryMessenger: messenger
     )
     eChannel.setStreamHandler(self)

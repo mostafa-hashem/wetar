@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yourname.wetar"
+    namespace = "com.wetar"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.yourname.wetar"
+        applicationId = "com.wetar"
         minSdk = 24
         targetSdk = 36
         versionCode = flutter.versionCode

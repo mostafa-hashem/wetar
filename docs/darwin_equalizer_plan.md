@@ -28,6 +28,6 @@ All UI (`EqualizerScreen`), BLoC state (`EqualizerCubit`), and SQLite persistenc
 
 ## 3. Rollout Checklist
 1. Implement `DarwinAudioTapProcessor.swift` shared across `ios/Runner` and `macos/Runner`.
-2. Expose `getEqualizerBands`, `setBandGain`, `setEqualizerEnabled`, `setBassBoost`, and `setLoudnessGain` on `com.yourname.wetar/platform`.
+2. Expose `getEqualizerBands`, `setBandGain`, `setEqualizerEnabled`, `setBassBoost`, and `setLoudnessGain` on `com.wetar/platform`.
 3. Flip `supportsNativeEqualizer: true`, `supportsBassBoost: true`, and `supportsLoudnessEnhancer: true` in `PlatformCapabilities.detect()` for `Platform.isIOS` and `Platform.isMacOS`.
 4. Verify zero audio glitches across `44.1 kHz`, `48 kHz`, and `96 kHz` local FLAC/ALAC/MP3 files with screen locked.

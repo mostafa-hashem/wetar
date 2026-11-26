@@ -1,5 +1,5 @@
 # Keep Wetar platform channels and AudioService classes intact under R8
--keep class com.yourname.wetar.** { *; }
+-keep class com.wetar.** { *; }
 -keep class com.ryanheise.audioservice.** { *; }
 -keep class com.ryanheise.just_audio.** { *; }
 -keepclassmembers class * {

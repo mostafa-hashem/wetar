@@ -1,7 +1,7 @@
 # Wetar Release, Store Privacy & Cross-Platform CI Guide
 
 ## 1. Replacing the Placeholder Application / Bundle Identifier
-Wetar ships with the placeholder ID `com.yourname.wetar`. Before publishing, replace it in these 4 locations:
+Wetar ships with the placeholder ID `com.wetar`. Before publishing, replace it in these 4 locations:
 1. **Android**:
    - `android/app/build.gradle.kts` -> `namespace` and `applicationId`
    - `android/app/src/main/AndroidManifest.xml` -> `FileProvider` `android:authorities` (`<your.id>.fileprovider`) and Kotlin package declaration if desired.
@@ -41,7 +41,7 @@ Wetar ships with the placeholder ID `com.yourname.wetar`. Before publishing, rep
 ## 3. Apple Developer Setup (iOS App Store, TestFlight & Mac App Store)
 
 ### Provisioning & Capabilities
-1. Enroll in the **Apple Developer Program** and register the App ID (`com.yourname.wetar`) for **iOS** and **macOS**.
+1. Enroll in the **Apple Developer Program** and register the App ID (`com.wetar`) for **iOS** and **macOS**.
 2. **iOS Capabilities**:
    - Background Modes -> **Audio, AirPlay, and Picture in Picture** (`UIBackgroundModes = [audio]` in `ios/Runner/Info.plist`).
    - Supports Document Browser / Files app sharing (`UIFileSharingEnabled = true`, `LSSupportsOpeningDocumentsInPlace = true`).
