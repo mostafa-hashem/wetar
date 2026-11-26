@@ -1,0 +1,57 @@
+---
+description: Engineering quality, audio stability, performance/RAM/size budgets, isolate offloading, and dependency justification
+alwaysApply: true
+---
+
+# Wetar — Engineering Quality & Performance Budgets
+
+## 1. Zero-Warning Analyzer & Code Hygiene
+
+- After every code change, run `dart format --output=none --set-exit-if-changed lib test` and `flutter analyze`.
+- Maintain **zero errors, zero warnings, and zero info hints** at all times.
+- Never use deprecated Flutter/Dart APIs (`withOpacity`, `Color.value`, `WillPopScope`, `surfaceVariant`). Use `.withValues(alpha: ...)` and `.toARGB32()`.
+- Verify `context.mounted` (or `mounted`) after every `await` before touching `BuildContext`.
+- Wrap async I/O and platform calls in explicit `try/catch` blocks; **never** leave empty `catch (_) {}`. Log unexpected failures via `AppLogger` (never `print`).
+- Always declare explicit return types; prefer `const` widgets and constructors.
+
+---
+
+## 2. Audio Stability & Screen-Off Idle Rules (Top Priority)
+
+- Music playback must **never** crash, stutter, or stop unexpectedly:
+  - Handle missing/corrupt files, revoked permissions, unmounted SD cards, and undownloaded iCloud files gracefully by flagging the track, emitting a localized non-blocking notice, and advancing cleanly.
+  - Handle calls, transient audio ducking, Bluetooth/headphone unplug (`becomingNoisy`), and Android foreground service lifecycle cleanly.
+- Install global error guards (`FlutterError.onError`, `PlatformDispatcher.instance.onError`, `runZonedGuarded`) writing to local `wetar_diagnostics.log`.
+- **Screen-Off Near-Zero CPU Rule:**
+  - When `AppLifecycleState` is `paused` / `hidden` / `detached` (or screen is off), **all** animation tickers (`TickerMode(enabled: false)`) and UI position streams (`PlayerBloc` progress ticker) must pause immediately.
+  - Never block the main isolate: folder scanning, metadata tag reading, artwork color extraction, font binary validation, custom background image downscaling, and JSON backup encoding/decoding run in background isolates (`Isolate.run`) or native background threads.
+
+---
+
+## 3. Hard Performance, Memory & Size Budgets
+
+Measure and verify after every delivery phase — never guess:
+
+| Budget | Target / Limit | Verification |
+| --- | --- | --- |
+| Cold start to first usable frame | `< 1.0s` on mid-range device | Launch from cached Drift DB; never wait for rescan on startup |
+| Large library scrolling (`20,000` tracks) | `60 fps` min (`120 Hz` where supported) | Lazy slivers with fixed `itemExtent` per density, `ResizeImage` LRU cache, paginated heavy queries |
+| Background playback memory | `< 150 MB` on mobile | Profile via DevTools memory view; bounded image/log caches |
+| Android APK download size (arm64 split) | `<= 15 MB` target (`20 MB` hard limit) | R8 (`minifyEnabled`), `shrinkResources`, `--split-per-abi`, tree-shaken icons, bundled fonts `<= 1.5 MB`, `--analyze-size` |
+| Offline & Privacy | `0` network calls, `0` net permissions | Verify release APK via `aapt2 dump permissions` & macOS via `codesign -d --entitlements -` |
+
+---
+
+## 4. "Justify Every Dependency" & Native-First Rule
+
+- Before adding any package to `pubspec.yaml`, record a **one-line justification** in `docs/dependency_audit.md` covering: exact version, license, Android/iOS/macOS platform support, maintenance status, size impact, and the lighter alternative rejected.
+- **Prefer a lean native channel or pure-Dart implementation (< 100–300 lines)** over heavy or unmaintained third-party packages (e.g., custom Kotlin/Swift channels instead of unmaintained `on_audio_query`, `permission_handler`, `file_picker`, `share_plus`, or `home_widget`).
+- Never bundle analytics SDKs, crash-uploaders, ad SDKs, remote font fetchers, or large image packs.
+
+---
+
+## 5. Testing & Terminal Rules
+
+- Write unit tests for search normalization, LRC parsing, queue/shuffle/repeat, sleep timer, ReplayGain math, scan diffing, folder whitelist/exclusion/recovery, hidden out-of-scope entries, settings migration, `.wetarlook` sanitization, and state restoration.
+- Write BLoC tests (`bloc_test`) and RTL/LTR + theme/font widget tests (`flutter_test`).
+- On macOS/zsh here, invoke `/Users/mostafa/Developer/Toolchains/flutter/bin/flutter` and `dart` directly with literal paths; keep `git` sandboxed inside the workspace.

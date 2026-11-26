@@ -1,0 +1,59 @@
+---
+description: Platform integration rules for Android, iOS, and macOS — permissions, background audio, sandboxing, release stripping, and capability gating
+globs: android/**, ios/**, macos/**, lib/core/platform/**, lib/core/capabilities/**
+alwaysApply: false
+---
+
+# Wetar — Cross-Platform Flutter Rules (Android, iOS & macOS)
+
+Apply alongside `rules.mdc`, `wetar-engineering-quality.mdc`, and `wetar-audio-and-storage.mdc`.
+
+---
+
+## 1. Strict Platform Capability Gating
+
+- Every platform-dependent feature (`nativeEqualizer`, `bassBoost`, `virtualizer`, `loudnessEnhancer`, `skipSilence`, `pitchControl`, `inAppFolderPicker`, `systemBookmarks`, `homeWidgets`, `desktopShortcuts`, `batteryGuide`) is queried through **`PlatformCapabilities`**.
+- **Unsupported features on an OS are hidden cleanly in UI** — never shown disabled with errors, never faked, never crashing.
+- Platform-neutral domain, BLoCs, Drift DB, localization, queue logic, LRC parser, playlists, and personalization must **never** import `dart:io` platform-channel internals or `package:flutter/services.dart` plugins directly; depend only on abstract interfaces.
+
+---
+
+## 2. Android (`minSdk 24`, `targetSdk 36`, `com.yourname.wetar`)
+
+- `MainActivity` **must extend `AudioServiceFragmentActivity`** (from `com.ryanheise.audioservice`) so `just_audio` + `audio_service` share one FlutterEngine and survive backgrounding.
+- **Minimum Scoped Permissions:**
+  - `READ_MEDIA_AUDIO` (Android 13+ / API 33+)
+  - `READ_EXTERNAL_STORAGE` with `android:maxSdkVersion="32"` (Android 7–12)
+  - `POST_NOTIFICATIONS` (Android 13+, requested nicely with rationale)
+  - `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MEDIA_PLAYBACK` + `WAKE_LOCK`
+  - Service declaration: `android:foregroundServiceType="mediaPlayback"`
+- **Zero Network in Release:**
+  - Never declare `INTERNET` in `src/main/AndroidManifest.xml` (keep in `debug`/`profile` only for DevTools).
+  - Add `android/app/src/release/AndroidManifest.xml` with `tools:node="remove"` on `android.permission.INTERNET`, `ACCESS_NETWORK_STATE`, and `ACCESS_WIFI_STATE` so ExoPlayer/Media3 cannot merge them into release builds. Verify with `aapt2 dump permissions`.
+- **Android 15+ Edge-to-Edge:** Call `WindowCompat.setDecorFitsSystemWindows(window, false)` and respect `MediaQuery.viewPadding` / `SafeArea`.
+- **Release Optimization:** Enable R8 (`isMinifyEnabled = true`), `isShrinkResources = true`, ProGuard keep rules for `AudioService`/`WetarPlatformPlugin`, and `--split-per-abi` / App Bundle (`<= 15 MB` per ABI target).
+- **OEM Battery Optimization:** Offer a non-nagging, one-screen exemption helper using `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` / power settings intent.
+
+---
+
+## 3. macOS (`10.15+` / `13.0+`, App Sandbox)
+
+- **Entitlements (`Release.entitlements`):**
+  - `com.apple.security.app-sandbox = true`
+  - `com.apple.security.files.user-selected.read-write = true` (exclusively for explicit user exports like `.m3u`, `.wetarlook`, JSON backup via `NSSavePanel` — Wetar code never writes/deletes audio files)
+  - `com.apple.security.files.bookmarks.app-scope = true`
+  - **Zero** `com.apple.security.network.client` or `.server`.
+- **Folders & Watching:** Select folders via `NSOpenPanel`, persist base64 security-scoped bookmarks in Drift, call `startAccessingSecurityScopedResource()` on launch/playback, refresh stale bookmarks, and watch changes via `FSEventStreamCreate`.
+- **Desktop UX:** Enforce sensible minimum window size (`840x560`), compact mini-player window mode, `PlatformMenuBar`, keyboard shortcuts (`Space`, arrows, `Cmd+...`), media keys, right-click context menus, and Finder drag-and-drop.
+
+---
+
+## 4. iOS (`15.0+`)
+
+- **Background Audio & Files:** Declare `UIBackgroundModes = [audio]`, `UIFileSharingEnabled = true`, `LSSupportsOpeningDocumentsInPlace = true`, and `PrivacyInfo.xcprivacy` (`NSPrivacyTracking = false`, zero collected data).
+- **Security-Scoped Bookmarks & iCloud Drive:**
+  - Pick folders via `UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)`.
+  - Resolve bookmarks on launch (`withoutUI`), keep security scope open while scanning/playing tracks from that folder, and handle the app's own `Documents/` folder shared with Files.
+  - Inspect `URLResourceValues` for ubiquitous iCloud Drive items: if `.notDownloaded`, surface a clear cloud-download state and trigger `startDownloadingUbiquitousItem(at:)` on demand without freezing playback or UI.
+- **Audio Session & Remote Commands:** Configure `AVAudioSessionCategory.playback`, handle interruptions/route changes, and verify `MPNowPlayingInfoCenter` + `MPRemoteCommandCenter` metadata.
+- **Equalizer Path:** Until a dedicated `MTAudioProcessingTap` + `AVAudioEngine` native phase ships, hide Android-only EQ/Virtualizer/SkipSilence cleanly on iOS/macOS via `PlatformCapabilities`.

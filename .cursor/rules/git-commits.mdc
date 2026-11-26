@@ -1,0 +1,17 @@
+---
+description: Git commit message standards and allowed Wetar scopes
+alwaysApply: true
+---
+
+# Git Commits — Wetar
+
+When creating commits for Wetar:
+
+1. **Zero AI/Tool Attribution:** **NEVER** add `Co-authored-by: Cursor <cursoragent@cursor.com>` or any AI, agent, or tool co-author trailer (Cursor, Copilot, Claude, Gemini, Antigravity, etc.) to the commit subject or body unless explicitly requested by the user.
+2. **Language & Style:** Write commit messages in **English**, imperative mood, concise, and focused on **why** the change exists (e.g., `feat(folders): persist excluded subfolders across incremental scans`).
+3. **Conventional Format with Wetar Scopes:**
+   `<type>(<scope>): <concise summary>`
+   - **Allowed types:** `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`.
+   - **Allowed scopes (strictly limited to):**
+     `player`, `library`, `folders`, `playlists`, `equalizer`, `lyrics`, `theming`, `personalization`, `l10n`, `settings`, `scan`, `platform`, `build`.
+4. **Pre-Commit Gate:** Before committing Dart/Flutter code, run `dart format --output=none --set-exit-if-changed lib test` and `flutter analyze` and confirm zero errors, zero warnings, and zero info hints.

@@ -1,0 +1,69 @@
+---
+description: Master index of all Wetar agent rules — open/read this file first; it binds the full set
+alwaysApply: true
+---
+
+# Wetar (وتر) — Rules Index
+
+**Rule files** live in `.cursor/rules/`. Cross-cutting rules use **`alwaysApply: true`**. Feature, platform, audio/storage, and theming rules bind automatically via globs and whenever this index is loaded.
+
+**Mandatory full-set binding:** Opening or working in this repository binds **all** rows below immediately. Never wait for individual files to be `@`-mentioned — read and follow the entire set as a single engineering contract.
+
+**Platform shortcut:** `@wetar-platforms-flutter` -> loads `#3-10` + this index for Android, iOS, and macOS builds.
+
+| # | File | Scope |
+| --- | --- | --- |
+| 1 | **`rules.mdc`** (this file) | Master index — project overview, layer map, priority order, reply format |
+| 2 | **`git-commits.mdc`** | Commit messages — English imperative, Wetar scopes, zero AI co-author trailers |
+| 3 | **`english-comments-only.mdc`** | English comments, docs, logs, and commits; Arabic & English UI strings via ARB only |
+| 4 | **`wetar-bloc-and-structure.mdc`** | Feature-first layout, thin screens, BLoC/Cubit discipline, single `AudioHandler` owner |
+| 5 | **`wetar-engineering-quality.mdc`** | Zero-warning analyzer, audio stability, performance/RAM/APK budgets, dependency audit |
+| 6 | **`wetar-interaction-ux.mdc`** | Music UX: thumb-zone actions, mini player, gestures/haptics, queue, folder picker, states |
+| 7 | **`wetar-mandatory-design.mdc`** | Wetar Oud-string identity, tokens, typography, motion, 6 player backgrounds, RTL rules |
+| 8 | **`wetar-platforms-flutter.mdc`** | Android, iOS, and macOS permissions, background audio, sandboxing, release & size rules |
+| 9 | **`wetar-audio-and-storage.mdc`** | Folder-whitelist-only library invariant, incremental scanning, Drift, bounded caches |
+| 10 | **`wetar-personalization-and-theming.mdc`** | Zero hardcoded styling; versioned `AppearanceSettings` -> `WetarTokens`, live preview, Looks |
+
+---
+
+## Project Overview
+
+- **Product:** **Wetar** (EN) / **وتر** (AR) — fully offline, lightweight, fast, deeply customizable local music player.
+- **Targets:** Android (`minSdk 24`, `targetSdk 36`), macOS (`10.15+` / `13.0+`), and iOS (`15.0+`), from one Flutter + Dart codebase.
+- **Placeholder ID:** `com.yourname.wetar`
+- **Core Invariants:**
+  1. **Zero network:** Release builds on Android, iOS, and macOS declare zero network permissions or entitlements, bundle no remote fonts, emit no telemetry or ads, and make zero network calls.
+  2. **Folder-whitelist library:** The library contains **only** audio files inside user-selected music folders. Wetar never modifies or deletes user audio files.
+  3. **Single audio source of truth:** One `WetarAudioHandler` (`audio_service` + `just_audio` + `audio_session`) owns playback, queue, effects, and persistence. UI and BLoCs never call the audio engine directly.
+  4. **Zero hardcoded tokens or strings:** All visual properties come from `WetarTokens` resolved by `AppearanceSettings`; all user-facing strings come from `lib/l10n/app_{en,ar}.arb`.
+  5. **Capability-gated platform features:** Unsupported capabilities (e.g., native EQ or home widgets on unsupported OS targets) are hidden cleanly via `PlatformCapabilities`, never faked or crashing.
+
+---
+
+## Project Layer Map
+
+| Layer | Path | Role |
+| --- | --- | --- |
+| Core | `lib/core/` | `WetarDatabase` (Drift), `WetarPlatformChannel`, `PlatformCapabilities`, `AppLogger`, `CacheManager`, Arabic/numeral helpers |
+| Features | `lib/features/<name>/` | `player`, `library`, `music_folders`, `playlists`, `equalizer`, `lyrics`, `personalization`, `settings`, `onboarding` (`data/`, `domain/`, `presentation/`) |
+| Localization | `lib/l10n/` | `app_en.arb` (LTR) & `app_ar.arb` (RTL, Egyptian-friendly Arabic) via `flutter gen-l10n` |
+| Docs | `docs/` | Design spec, architecture, dependency audit, platform capabilities, manual QA checklist, release/CI guide |
+| Tests | `test/` | Unit, BLoC, RTL/LTR widget, and golden tests |
+
+---
+
+## Priority When Rules Overlap
+
+1. **`wetar-audio-and-storage.mdc`** wins for user file safety, strict folder-whitelist isolation, scanning, Drift schema, and cache boundaries.
+2. **`wetar-personalization-and-theming.mdc`** and **`wetar-mandatory-design.mdc`** win for tokens, dynamic colors, typography, player backgrounds, and RTL/LTR rules.
+3. **`wetar-engineering-quality.mdc`** wins for audio stability, isolate offloading, screen-off idle CPU, performance/RAM/size budgets, and zero-warning analysis.
+4. **`english-comments-only.mdc`** wins for developer text language (English) and user copy (`AppLocalizations` only).
+5. **`wetar-bloc-and-structure.mdc`**, **`wetar-interaction-ux.mdc`**, **`wetar-platforms-flutter.mdc`**, and **`git-commits.mdc`** govern architecture, UX behavior, OS integration, and git commits.
+
+---
+
+## Assistant Replies
+
+- **Prefix with user's name:** Start replies with `Mostafa, ` (in English) or `مصطفى، ` (in Arabic).
+- Keep replies concise while clearly reporting meaningful changes, measured platform metrics, verification results, and any blockers.
+- In Arabic replies, place code snippets, commands, JSON, and file paths in separate LTR blocks.

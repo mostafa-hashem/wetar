@@ -1,0 +1,70 @@
+---
+description: Wetar bespoke Oud-string design system — tokens, palette defaults, typography, motion, player backgrounds, and Arabic/English RTL rules
+globs: lib/**
+alwaysApply: false
+---
+
+# Wetar (وتر) — Design System & Visual Identity
+
+Wetar takes its visual soul from the **Oud string (وتر)** — tactile acoustic warmth, harmonic resonance lines, layered depth, and crisp precision — completely distinct from Qalam or stock Material templates.
+
+---
+
+## 1. Default Built-In Themes (Resolved via `WetarTokens`)
+
+Never hardcode these hex values in feature widgets; define them exclusively inside `BuiltInLooks` and `WetarTokenResolver`:
+
+| Role | Warm Parchment (Light) | Oud Nocturne (Dark Default) | Pure Resonance (AMOLED) |
+| --- | --- | --- | --- |
+| Canvas Background | `#F7F3EC` | `#120F0D` | `#000000` |
+| Surface / Card | `#FFFDF9` | `#1C1714` | `#0D0B0A` |
+| Elevated Surface / Sheet | `#F1E9DC` | `#261F1B` | `#161210` |
+| Primary Accent (Amber Gut) | `#B45309` | `#E69B3A` | `#F0A94D` |
+| Secondary Accent (Cedar Teal) | `#0F766E` | `#38B2AC` | `#4FD1C5` |
+| Primary Ink | `#1F1915` | `#F6EFE6` | `#FAF5EE` |
+| Muted Ink | `#6B5E53` | `#A69788` | `#9E9082` |
+| Hairline Border | `#E2D6C4` | `#322923` | `#241E1A` |
+
+- Artwork-driven adaptive colors blend smoothly with the active base theme using HCT (`material_color_utilities` in an isolate, cached per album) while guaranteeing WCAG AA text contrast across Standard, Medium, and High contrast modes.
+
+---
+
+## 2. Typography & Bundled Fonts (`<= 1.5 MB` Total)
+
+- **Arabic Families (bundled OFL):** `Cairo` (default Arabic), `Almarai`, `Alexandria`
+- **Latin Families (bundled OFL):** `PlusJakartaSans` (default Latin), `Jost`
+- **Additional Options:** System font, plus user-imported `.ttf` / `.otf` loaded at runtime via `FontLoader` (validated in isolate).
+- Apply `fontFamilyFallback` automatically (`PlusJakartaSans` -> `Cairo`, or user's chosen pair) so mixed Arabic + English track titles render harmoniously with zero fallback jumps.
+- Never apply fixed pixel heights (`height` box constraints) around `Text` widgets; allow expansion up to 200% text scaling.
+
+---
+
+## 3. Signature Visual Motifs & Motion
+
+- **Layered Artwork Depth:** Album covers render inside `WetarArtworkFrame` with subtle ambient glow/shadow matched to the extracted album palette and user-selected shape (`roundedSquare`, `squircle`, `circle`, custom radius).
+- **Resonant Seek Bar (`WetarSeekBar`):** Default signature mode renders a deterministic pseudo-waveform seeded from `track.stableKey` paired with a live harmonic Oud-string tension line that animates subtly while playing (disabled when paused, backgrounded, or in Lite Mode).
+- **Motion:** Expressive `cubicBezier(0.22, 1.0, 0.36, 1.0)` curves scaled by `MotionIntensity` (`off`, `reduced`, `balanced`, `expressive`), automatically zeroed when system `disableAnimations` / `reduceMotion` or Lite Mode is active.
+
+---
+
+## 4. Player & App Backgrounds (6 Modes)
+
+Supported modes previewed live before applying (scope: Player Only, Home + Player, or Whole App):
+1. **Blurred Artwork** (adjustable blur + dim + saturation; bypassed in Lite Mode).
+2. **Artwork Gradient** (multi-stop smooth palette wash).
+3. **Solid Color** (theme surface or chosen tint).
+4. **Animated Gradient** (smooth `CustomPainter`, paused off-screen / Lite Mode).
+5. **Procedural Presets** (`aurora`, `waves`, `grain`, `strings` — zero image assets, pure code).
+6. **Custom Image** (copied into app storage, downscaled once to `<= 1080px` long side in isolate).
+
+---
+
+## 5. Arabic & English RTL/LTR Rules
+
+- Support instant live switching between **Arabic (`ar`, primary)** and **English (`en`)** without restarting, plus optional **Arabic-Indic (`٠١٢٣`) vs Western (`0123`) numerals** via `NumeralFormatter`.
+- **Media Control Directionality (Deliberate Standard):**
+  - **Play / Pause** icon is **NEVER mirrored** in RTL.
+  - **Seek Bar & Transport Row (`Shuffle - Previous - Play/Pause - Next - Repeat`)** stay **LTR by default** (`0:00` left -> end right, consistent with standard media players in Arabic), with an Advanced Personalization option (`mirrorTimelineInRtl`) if the user prefers mirrored scrubbing.
+  - **Navigation, drawers/sidebars, bottom bar order, chevrons, list lead/trail, and directional swipes** mirror naturally via `EdgeInsetsDirectional`, `AlignmentDirectional`, and `Directionality`.
+- **Path Isolation:** Wrap every file/folder path widget in `Directionality(textDirection: TextDirection.ltr, child: ...)` so paths never scramble in Arabic UI.
+- **Mixed Text & Lyrics:** Detect dominant script per paragraph/line (`RegExp(r'[\u0600-\u06FF]')`) to set per-line RTL/LTR alignment automatically.

@@ -1,0 +1,26 @@
+---
+description: All code comments, docs, logs, and commit messages must be English; all UI copy must use ARB localization in Arabic and English
+alwaysApply: true
+---
+
+# English Developer Text & Strict ARB Localization
+
+## 1. Comments, Docs, Logs & Commits (English Only)
+
+- Write **all** source code comments (`//`, `/* */`, `///` Dartdoc), SQL comments, developer documentation (`docs/*.md`), diagnostic log messages, and `TODO`/`FIXME` notes strictly in **English**.
+- Explain the non-obvious *why*, invariants, and platform caveats concisely. Do not narrate trivial syntax.
+- Never write non-English text in comments or developer logs.
+- Commit messages must follow **`git-commits.mdc`** in English.
+
+---
+
+## 2. User-Facing Copy (Arabic & English ARB Files Only)
+
+- **Never** hardcode user-facing strings in widgets, BLoCs, services, or platform channels — neither English nor Arabic.
+- Every user-facing label, button, title, hint, accessibility label (`Semantics`), tooltip, error message, toast, and dialog copy MUST live in:
+  - `lib/l10n/app_en.arb` (English LTR)
+  - `lib/l10n/app_ar.arb` (Arabic RTL — natural, Egyptian-friendly wording)
+- Keep all keys 100% synchronized across `app_en.arb` and `app_ar.arb`, with explicit placeholders and ICU plural forms (`{count, plural, ...}`) where needed.
+- Access localized strings via **`AppLocalizations.of(context)!.<key>`** (or `context.l10n.<key>` extension).
+- Add new ARB keys and run `flutter gen-l10n` **before** building the UI widgets that consume them.
+- **Exception (Dynamic User Content):** Track titles, artist/album names, embedded lyrics, folder names, and file paths read from device storage are displayed verbatim without translation, wrapped in proper bidi handling (see **`wetar-mandatory-design.mdc`**).

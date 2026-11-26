@@ -1,0 +1,41 @@
+---
+description: User-selected folder whitelist invariant, incremental scanning, Drift SQLite schema, hidden metadata preservation, and bounded app-private caches
+globs: lib/core/database/**, lib/core/storage/**, lib/features/music_folders/**, lib/features/library/**, lib/features/playlists/**
+alwaysApply: false
+---
+
+# Wetar — Audio Library & Storage Architecture
+
+## 1. Non-Negotiable Core Invariant (Folder-Whitelist-Only Library)
+
+1. **The library contains ONLY tracks inside folders explicitly selected by the user.**
+   - Nothing outside `SelectedFolders` (with `isAvailable = 1`, honoring `includeSubfolders` and `excludedSubfolders`) may **ever** appear in Songs, Albums, Artists, Album Artists, Genres, Years/Decades, Folders, Search, Statistics/Recap, Home blocks, Launcher shortcuts, Home widgets, or Queue suggestions.
+   - Every library query joins or filters by active `SelectedFolders`.
+2. **Wetar NEVER deletes, renames, moves, or edits user audio files or user tags.**
+   - Removing a folder from Wetar removes only its index rows in Drift — never touching disk files.
+   - Open-With / drag-and-drop external audio files play as **temporary queue items** without entering the `Tracks` table (with a subtle dismissible "Add folder to library" prompt).
+
+---
+
+## 2. Folder Selection, Exclusions & Availability Recovery
+
+- Model per selected folder: `id`, `rootPath` (or SAF/bookmark key), `bookmarkData` (macOS/iOS security-scoped bookmark), `displayName`, `volumeLabel`, `includeSubfolders` (default `true`), `excludedSubfoldersJson`, `isAvailable`, `lastScannedAt`.
+- **Unavailable Folder Preservation:** If a selected folder is unmounted, renamed, moved, or temporarily unreachable, mark `isAvailable = false` and show a clear Unavailable state in Settings > Music Folders — **never delete the user's folder selection**. Automatically set `isAvailable = true` and incrementally reconcile when it returns.
+- **Hidden Out-of-Scope User Data:** Playlists, favorites, play counts, remembered positions, and custom lyrics attachments reference tracks by **`stableKey`**. When a folder is deselected or unavailable, matching playlist entries and stats are **filtered out/hidden in queries, never deleted**, so re-selecting that folder restores everything seamlessly.
+
+---
+
+## 3. Incremental Scanning & Isolate Discipline
+
+- Adding a folder scans **only that folder** (never triggering a full rescan of existing folders), reporting cancellable progress (`ScanProgress`).
+- Removing a folder deletes its `Tracks` rows immediately via indexed cascade without touching any other folder.
+- **Diffing:** Compare `(stableKey, dateModifiedSec, sizeBytes)`. Skip unchanged tracks; parse tags only for added or modified tracks in background isolates (`audio_metadata_reader` on iOS/macOS, fast batched projection on Android MediaStore).
+- Folder picker enumeration must use single-query aggregation on Android or fast background directory walk — never per-file heavy tag parsing just to count tracks.
+
+---
+
+## 4. Drift SQLite & Bounded App-Private Caches
+
+- Keep all SQLite tables (`SelectedFolders`, `Tracks`, `AlbumPalettes`, `TrackUserMeta`, `Playlists`, `PlaylistEntries`, `PlayHistoryEvents`, `QueueSnapshots`, `EqualizerPresets`, `RecentSearches`) indexed on `folderId`, `stableKey`, `albumKey`, `artistKey`, and `playedAt`.
+- Store thumbnails (`thumbnails/`), custom art (`custom_art/`, downscaled `<= 1080px`), custom backgrounds (`backgrounds/`), imported fonts (`fonts/`), and logs (`wetar_diagnostics.log`) strictly inside app-private storage (`getApplicationSupportDirectory()` / `getApplicationCacheDirectory()`).
+- Maintain a bounded cache size with orphan cleanup (deleting cached art/thumbnails with no active library or custom-art reference) and expose an accurate "Clear cache" control in Settings.

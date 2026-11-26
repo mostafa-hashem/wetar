@@ -1,0 +1,40 @@
+---
+description: Personalization engine, versioned AppearanceSettings, WetarTokens ThemeExtension, live preview, Lite mode, and look export/import
+globs: lib/features/personalization/**, lib/features/settings/**, lib/features/*/presentation/**
+alwaysApply: false
+---
+
+# Wetar — Personalization & Token Architecture
+
+## 1. Zero Hardcoded Visual Properties in Widgets
+
+- Feature widgets must **NEVER** contain raw `Color(...)`, `Colors.*`, hardcoded `fontFamily`, arbitrary `BorderRadius`, `EdgeInsets`, `Duration`, or magic `Icon` sizes.
+- Every visual value resolves through **`WetarTokens`** (`Theme.of(context).extension<WetarTokens>()!` / `context.wetarTokens`), constructed exclusively from **`AppearanceSettings`** + active dynamic album palette (if enabled).
+
+---
+
+## 2. Single Typed, Versioned `AppearanceSettings` Model
+
+- One immutable model (`schemaVersion: int`, default `1`) persisted via `SharedPreferencesWithCache` as versioned JSON.
+- Every schema change adds an explicit deterministic step in `AppearanceSettingsMigration.migrate(Map<String, dynamic>)` so app updates **never** wipe or reset user customization.
+- Support **instant live preview** before saving/applying (or instant state updates via `PersonalizationCubit`) without restarting the app or rebuilding unrelated routes.
+- Provide **per-section reset** (`resetColors`, `resetTypography`, `resetPlayer`, `resetBackgrounds`, `resetLayout`, `resetMotion`, `resetGestures`) AND **global reset** (confirmation required for global reset).
+
+---
+
+## 3. Customization Surface & Asset Discipline
+
+- **Theme Modes:** System, Light, Dark, AMOLED Black (`#000000` canvas), and Optional Scheduled Dark Mode (start/end time).
+- **Colors:** Curated accent palettes, full HSV + Hex custom color picker, "Adapt colors to current artwork" toggle (cached in Drift `AlbumPalettes` via isolate HCT extraction), Android 12+ system dynamic color (`dynamic_color`), Contrast level (`standard`, `medium`, `high`), Surface Tint intensity, Text Emphasis.
+- **Typography:** Bundled fonts (`Cairo`, `Almarai`, `Alexandria`, `PlusJakartaSans`, `Jost` — `<= 1.5 MB` total), System font option, Scale (`0.85x–1.35x`), Weight override, and user-imported `.ttf`/`.otf` fonts validated in an isolate (header magic bytes + size limit) and loaded via `FontLoader` from app-private `fonts/`.
+- **Player & Mini Player:** 4+ Now Playing layouts (`oudStrings`, `classicCard`, `immersiveBleed`, `minimal`, `vinylDisc`), artwork shape + corner slider, seekbar style, icon style & size, toggleable/reorderable secondary actions, Floating vs Docked Mini Player.
+- **Home & Library:** Tab order & visibility (`<= 5` tabs), default start tab, list density (`compact`, `comfortable`, `spacious`), list/grid toggle & column count, artwork visibility in lists, Home block reorder/hide.
+- **Shape, Depth, Motion & Gestures:** Global corner radius scale, shadow intensity, glass blur intensity, animation speed/off, haptics intensity/off, gesture enable/remap.
+- **Looks (`.wetarlook`):** Ship `6–10` tiny JSON-in-code Looks (`BuiltInLooks`). Support saving custom Looks and exporting/importing `.wetarlook` JSON files with strict schema validation, numeric clamping, and rejection of oversized/malformed files.
+
+---
+
+## 4. Automatic & User-Overridable Lite Mode
+
+- Detect reduced-motion preference (`MediaQuery.disableAnimations`), low-power / battery-saver hints, and manual `LiteModePreference` (`auto`, `alwaysOn`, `alwaysOff`).
+- When **Lite Mode** is active: disable `BackdropFilter` glass blur, flatten deep shadows, replace animated/shader backgrounds with static gradient/solid equivalents, and stop waveform/string idle tickers so low-end devices remain locked at 60fps.

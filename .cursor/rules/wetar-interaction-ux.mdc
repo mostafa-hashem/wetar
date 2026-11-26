@@ -1,0 +1,54 @@
+---
+description: Wetar interaction and UX rules — thumb-zone music flows, mini player, queue, gestures, folder picker, feedback, and empty/loading/error states
+globs: lib/**
+alwaysApply: false
+---
+
+# Wetar — Interaction & UX Guidelines
+
+## 1. Zero-Configuration Ease of Use
+
+- Wetar must feel intuitive on first launch with zero configuration:
+  - Onboarding is at most 3 short, skippable steps: (1) Permission rationale, (2) Choose Music Folders (with a 1-tap "Select all folders with music" shortcut), (3) Pick a Look.
+  - Most common actions (play, shuffle, add to playlist, favorite, queue, sleep timer, search) take **1–2 taps** and sit comfortably within the phone thumb zone.
+  - Bottom navigation uses **at most 5 destinations** (user-reorderable/hideable), always pairing clear localized labels with icons.
+
+---
+
+## 2. Mini Player, Queue & Drag-and-Drop
+
+- **Persistent Mini Player:** Anchored cleanly above bottom navigation (or bottom bar on desktop), supporting both Floating Pill and Docked Bar styles. Tapping opens Now Playing with a smooth shared-element (`Hero`) artwork transition; optional swipe gestures control prev/next/dismiss.
+- **Queue Experience:** Opens as a sleek modal bottom sheet (mobile) or toggleable side panel (macOS/wide screens). Supports smooth drag-to-reorder (`ReorderableListView`), Play Next, Add to Queue, swipe-to-remove with an Undo toast, Clear Queue, and Save as Playlist.
+- **Desktop Drag-and-Drop (macOS):** Dropping folders offers instant addition to Selected Folders; dropping audio files plays or queues them immediately with optional folder-add suggestion. Provide native button/menu alternatives for every drag-and-drop action.
+
+---
+
+## 3. Folder Selection UX
+
+- Present every audio-containing folder grouped by storage volume with folder name, LTR-isolated shortened path, live track count, selection checkbox (tri-state when tree nodes have mixed children), and an "Include subfolders" toggle (default `true`).
+- Include instant search, Select All / Clear, live selected track count total, and an explicit "Add folder via system picker" action.
+- Applying folder changes updates the library **incrementally and immediately** with cancellable progress; never run a full library rescan for a single-folder change.
+
+---
+
+## 4. Gestures, Haptics & Accessibility Parity
+
+- Every gesture (swipe artwork/mini-player, double-tap cover, long-press actions) is customizable/disableable in Personalization > Gestures AND **must always have a visible button alternative**.
+- Show a subtle gesture discovery hint **at most once** per user — never nag repeatedly.
+- Route haptic feedback through a centralized `HapticService` respecting the user's `HapticIntensity` setting (`off`, `light`, `medium`, `strong`).
+- Maintain `>= 48x48 dp` minimum touch targets, semantic labels/roles for TalkBack & VoiceOver, and zero overflow up to **200% system text scale**.
+
+---
+
+## 5. Feedback, Undo, Confirmations & States
+
+- **Centralized Feedback Helper:** Route all snackbars/toasts through `WetarFeedback` (`showInfo`, `showSuccess`, `showError`, `showUndo`) — never scatter raw `ScaffoldMessenger` calls across feature widgets.
+- **Undo over Confirmation for Reversible Actions:** Removing a track from queue, removing from a playlist, or toggling a folder uses an immediate Undo toast.
+- **Confirmation Dialogs ONLY for Irreversible / High-Impact Actions:** Deleting a playlist, clearing all listening history, resetting all personalization settings, or restoring a backup in Replace mode (localized consequence + Cancel/Confirm).
+- **Optimistic UI & Tap Guards:** Favorite toggles, queue adds, and theme switches respond in `0ms`. Disable mutation buttons while async disk/backup jobs run; guard pickers and navigation against double-taps.
+- **Complete State Coverage:**
+  - *Initial Empty (no folders selected):* Warm Oud-inspired illustration + clear "Choose Music Folders" CTA.
+  - *Filtered/Search Empty:* Helpful hint + "Clear filters" button.
+  - *Unavailable Folder:* Clear badge preserving selection & hidden playlists/favorites until storage returns.
+  - *Skeleton Loaders:* Content-shaped placeholders while initial scan or artwork loads (disabled in Lite Mode).
+  - *Recoverable Error:* Plain-language message + direct recovery action (Grant Permission, Relocate Folder, Share Diagnostics).

@@ -1,0 +1,52 @@
+---
+description: Feature-first directory architecture, BLoC/Cubit discipline, and single AudioHandler ownership
+globs: lib/**
+alwaysApply: false
+---
+
+# Wetar — BLoC & Project Structure
+
+## 1. Feature-First Directory Layout
+
+Code lives in `lib/features/<feature>/` using clean layer separation:
+
+- **Feature Modules (strict canonical names):**
+  `player`, `library`, `music_folders`, `playlists`, `equalizer`, `lyrics`, `personalization`, `settings`, `onboarding`
+
+Within each feature:
+
+| Layer | Directory | Contents |
+| --- | --- | --- |
+| **Data** | `data/` | Repository implementations, Drift DAO queries, platform-channel adapters, isolate parsers |
+| **Domain** | `domain/` | Pure Dart entities, repository interfaces, use-case/domain calculators (e.g., LRC parser, ReplayGain math, scan diffing) — **zero Flutter UI or platform imports** |
+| **Presentation** | `presentation/bloc/` | `Bloc` / `Cubit` classes and `Equatable` immutable states |
+| **Presentation** | `presentation/screens/` | Thin screen shells (`*_screen.dart`) composing routes, `BlocProvider`, and adaptive layouts |
+| **Presentation** | `presentation/widgets/` | Scoped, reusable feature widgets |
+
+Shared infrastructure lives in `lib/core/` (`database/`, `capabilities/`, `logging/`, `platform/`, `storage/`, `router/`, `utils/`, `widgets/`).
+
+---
+
+## 2. Single Source of Truth for Playback (`WetarAudioHandler`)
+
+- **Hard Rule:** One singleton **`WetarAudioHandler`** (`audio_service` wrapping `just_audio` + `audio_session`) owns **all** audio playback state, queue state, audio focus, interruptions, sleep timer, A–B loop, ReplayGain attenuation, and state restoration persistence.
+- **UI & BLoCs never talk to `just_audio` or `AudioPlayer` directly.**
+- Widgets only dispatch semantic intents to `PlayerBloc` / `QueueCubit` (e.g., `PlayerPlayTrackRequested`, `PlayerSeekRequested`, `QueueReordered`), and `PlayerBloc` translates those into `WetarAudioHandler` actions and mirrors its streams into immutable UI state.
+- Destroying or recreating the UI (configuration change, backgrounding, navigation, compact desktop toggle) must **never** interrupt or reset `WetarAudioHandler`.
+
+---
+
+## 3. Thin Screens & Zero Business Logic in UI
+
+- `*_screen.dart` files handle layout composition, responsive phone/desktop adaptation, `BlocProvider` wiring, and `BlocListener` navigation/feedback triggers only.
+- Extract sub-sections into small private or `presentation/widgets/` classes before any `build()` method grows complex.
+- Widgets must never run SQL queries, `dart:io` file reads, tag parsing, color extraction, or sorting/filtering math inside `build()`.
+
+---
+
+## 4. State Ownership, Concurrency & Rebuild Scoping
+
+- Every BLoC/Cubit state is immutable (`Equatable` + `copyWith`), explicitly modeling loading, ready, empty, recoverable error, and optimistic mutation states.
+- Use `BlocSelector` and `buildWhen` everywhere lists, seekbars, or artwork update so a 250ms playback position tick **only** rebuilds the seekbar/time labels, never the full player screen or library grid.
+- Deduplicate or cancel superseded async intents (e.g., search queries, folder rescans, palette extractions) so stale results never overwrite newer state.
+- Register singletons and factories cleanly in `get_it` (`lib/core/di/service_locator.dart`), keeping platform-neutral domain/BLoC tests mockable without platform channels.
