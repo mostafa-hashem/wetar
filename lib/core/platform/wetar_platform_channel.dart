@@ -473,7 +473,7 @@ class WetarPlatformChannel
 
   @override
   Future<bool> setKeepScreenOn(bool keepOn) async {
-    if (!Platform.isAndroid) return false;
+    if (!Platform.isAndroid && !Platform.isIOS) return false;
     try {
       return await _method.invokeMethod<bool>(
             'setKeepScreenOn',
