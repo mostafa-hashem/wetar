@@ -136,9 +136,8 @@ void showTrackDetailsSheet(
                 if (!track.isTemporaryExternal)
                   FilledButton.tonalIcon(
                     onPressed: () async {
-                      final picked = await sl<FolderPickerService>().pickFile(
-                        mimeTypes: const <String>['image/*'],
-                      );
+                      final picked = await sl<FolderPickerService>()
+                          .pickGalleryImage();
                       if (picked == null) return;
                       final stored = await sl<CustomImageProcessor>()
                           .processAndStoreAlbumArt(picked, track.stableKey);

@@ -8,6 +8,7 @@ import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
+import 'package:wetar/features/personalization/domain/built_in_wallpapers.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 
@@ -131,13 +132,22 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
     }
 
     if (mode == BackgroundMode.customImage &&
-        settings.customBackgroundImagePath != null &&
-        File(settings.customBackgroundImagePath!).existsSync()) {
-      return _BlurredAndSaturatedImage(
-        filePath: settings.customBackgroundImagePath!,
-        blurSigma: tokens.isLiteMode ? 0.0 : settings.backgroundBlur,
-        saturation: settings.backgroundSaturation,
-      );
+        settings.customBackgroundImagePath != null) {
+      final path = settings.customBackgroundImagePath!;
+      if (path.startsWith(BuiltInWallpapers.assetPrefix)) {
+        return _BlurredAndSaturatedImage(
+          assetPath: path.substring(6),
+          blurSigma: tokens.isLiteMode ? 0.0 : settings.backgroundBlur,
+          saturation: settings.backgroundSaturation,
+        );
+      }
+      if (File(path).existsSync()) {
+        return _BlurredAndSaturatedImage(
+          filePath: path,
+          blurSigma: tokens.isLiteMode ? 0.0 : settings.backgroundBlur,
+          saturation: settings.backgroundSaturation,
+        );
+      }
     }
 
     if (mode == BackgroundMode.blurredArtwork && widget.activeTrack != null) {
@@ -191,22 +201,22 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
 
 class _BlurredAndSaturatedImage extends StatelessWidget {
   const _BlurredAndSaturatedImage({
-    required this.filePath,
+    this.filePath,
+    this.assetPath,
     required this.blurSigma,
     required this.saturation,
   });
 
-  final String filePath;
+  final String? filePath;
+  final String? assetPath;
   final double blurSigma;
   final double saturation;
 
   @override
   Widget build(BuildContext context) {
-    Widget img = Image.file(
-      File(filePath),
-      fit: BoxFit.cover,
-      gaplessPlayback: true,
-    );
+    Widget img = assetPath != null
+        ? Image.asset(assetPath!, fit: BoxFit.cover, gaplessPlayback: true)
+        : Image.file(File(filePath!), fit: BoxFit.cover, gaplessPlayback: true);
     if ((saturation - 1.0).abs() > 0.03) {
       img = ColorFiltered(
         colorFilter: ColorFilter.matrix(_saturationMatrix(saturation)),

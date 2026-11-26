@@ -13,6 +13,7 @@ import 'package:wetar/core/widgets/wetar_setting_control_tile.dart';
 import 'package:wetar/features/personalization/data/custom_font_loader_service.dart';
 import 'package:wetar/features/personalization/data/custom_image_processor.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
+import 'package:wetar/features/personalization/domain/built_in_wallpapers.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 import 'package:wetar/l10n/app_localizations.dart';
@@ -896,49 +897,242 @@ class AppearanceStudioScreen extends StatelessWidget {
                         }
                       },
                     ),
-                    if (s.backgroundMode == BackgroundMode.customImage)
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          final picked = await sl<FolderPickerService>()
-                              .pickFile(mimeTypes: const <String>['image/*']);
-                          if (picked == null) return;
-                          final stored = await sl<CustomImageProcessor>()
-                              .processAndStoreBackground(picked);
-                          if (stored != null) {
-                            await cubit.updateSettings(
-                              s.copyWith(
-                                customBackgroundImagePath: stored,
-                                backgroundMode: BackgroundMode.customImage,
+                    if (s.backgroundMode == BackgroundMode.customImage &&
+                        s.customBackgroundImagePath != null &&
+                        !s.customBackgroundImagePath!.startsWith(
+                          BuiltInWallpapers.assetPrefix,
+                        ) &&
+                        File(s.customBackgroundImagePath!).existsSync())
+                      Container(
+                        margin: EdgeInsets.only(bottom: tokens.spacingMd),
+                        padding: EdgeInsets.all(tokens.spacingSm),
+                        decoration: BoxDecoration(
+                          color: tokens.surface,
+                          borderRadius: BorderRadius.circular(
+                            tokens.radiusCard,
+                          ),
+                          border: Border.all(color: tokens.accentPrimary),
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                tokens.radiusCard * 0.65,
                               ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.image_outlined),
-                        label: Text(l10n.personalizationBgCustomImage),
+                              child: Image.file(
+                                File(s.customBackgroundImagePath!),
+                                width: 52,
+                                height: 52,
+                                fit: BoxFit.cover,
+                                cacheWidth: 160,
+                              ),
+                            ),
+                            SizedBox(width: tokens.spacingMd),
+                            Expanded(
+                              child: Text(
+                                l10n.personalizationBgCustomImage,
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => cubit.updateSettings(
+                                s.copyWith(
+                                  backgroundMode:
+                                      BackgroundMode.artworkGradient,
+                                  customBackgroundImagePath: null,
+                                ),
+                              ),
+                              child: Text(l10n.personalizationRemoveWallpaper),
+                            ),
+                          ],
+                        ),
                       ),
-                    WetarDropdownTile<BackgroundScope>(
+                    WetarStackedControlTile(
                       title: l10n.personalizationBgScope,
-                      value: s.backgroundScope,
-                      items: <DropdownMenuItem<BackgroundScope>>[
-                        DropdownMenuItem(
-                          value: BackgroundScope.playerOnly,
-                          child: Text(l10n.personalizationBgScopePlayer),
+                      child: WetarOptionChips<BackgroundScope>(
+                        selectedValue: s.backgroundScope,
+                        onSelected: (scope) => cubit.updateSettings(
+                          s.copyWith(backgroundScope: scope),
                         ),
-                        DropdownMenuItem(
-                          value: BackgroundScope.homeAndPlayer,
-                          child: Text(l10n.personalizationBgScopeHomePlayer),
-                        ),
-                        DropdownMenuItem(
-                          value: BackgroundScope.wholeApp,
-                          child: Text(l10n.personalizationBgScopeWholeApp),
-                        ),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) {
-                          cubit.updateSettings(s.copyWith(backgroundScope: v));
+                        options: <WetarOptionItem<BackgroundScope>>[
+                          WetarOptionItem(
+                            value: BackgroundScope.playerOnly,
+                            label: l10n.personalizationBgScopePlayer,
+                          ),
+                          WetarOptionItem(
+                            value: BackgroundScope.homeAndPlayer,
+                            label: l10n.personalizationBgScopeHomePlayer,
+                          ),
+                          WetarOptionItem(
+                            value: BackgroundScope.wholeApp,
+                            label: l10n.personalizationBgScopeWholeApp,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: tokens.spacingSm,
+                        bottom: tokens.spacingSm,
+                      ),
+                      child: Text(
+                        l10n.personalizationWallpapersTitle,
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(color: tokens.accentPrimary),
+                      ),
+                    ),
+                    FilledButton.tonalIcon(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      onPressed: () async {
+                        final picked = await sl<FolderPickerService>()
+                            .pickGalleryImage();
+                        if (picked == null || !context.mounted) return;
+                        final stored = await sl<CustomImageProcessor>()
+                            .processAndStoreBackground(picked);
+                        if (stored != null && context.mounted) {
+                          final wasImage =
+                              s.backgroundMode == BackgroundMode.customImage;
+                          await cubit.updateSettings(
+                            s.copyWith(
+                              customBackgroundImagePath: stored,
+                              backgroundMode: BackgroundMode.customImage,
+                              backgroundBlur: wasImage ? s.backgroundBlur : 0.0,
+                              backgroundDim: wasImage ? s.backgroundDim : 0.35,
+                              backgroundScope:
+                                  s.backgroundScope ==
+                                      BackgroundScope.playerOnly
+                                  ? BackgroundScope.homeAndPlayer
+                                  : s.backgroundScope,
+                            ),
+                          );
                         }
                       },
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: Text(l10n.personalizationPickGalleryWallpaper),
                     ),
+                    SizedBox(height: tokens.spacingMd),
+                    Text(
+                      l10n.personalizationNatureWallpapers,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    SizedBox(height: tokens.spacingSm),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: BuiltInWallpapers.all.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            childAspectRatio: 1.45,
+                          ),
+                      itemBuilder: (context, idx) {
+                        final wallpaper = BuiltInWallpapers.all[idx];
+                        final active =
+                            s.backgroundMode == BackgroundMode.customImage &&
+                            s.customBackgroundImagePath == wallpaper.sourceRef;
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(
+                            tokens.radiusCard,
+                          ),
+                          onTap: () {
+                            final wasImage =
+                                s.backgroundMode == BackgroundMode.customImage;
+                            cubit.updateSettings(
+                              s.copyWith(
+                                backgroundMode: BackgroundMode.customImage,
+                                customBackgroundImagePath: wallpaper.sourceRef,
+                                backgroundBlur: wasImage
+                                    ? s.backgroundBlur
+                                    : 0.0,
+                                backgroundDim: wasImage
+                                    ? s.backgroundDim
+                                    : 0.35,
+                                backgroundScope:
+                                    s.backgroundScope ==
+                                        BackgroundScope.playerOnly
+                                    ? BackgroundScope.homeAndPlayer
+                                    : s.backgroundScope,
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(
+                                tokens.radiusCard,
+                              ),
+                              border: Border.all(
+                                color: active
+                                    ? tokens.accentPrimary
+                                    : tokens.borderSubtle,
+                                width: active ? 2.2 : 1.0,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: <Widget>[
+                                Image.asset(
+                                  wallpaper.assetPath,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 360,
+                                ),
+                                DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: <Color>[
+                                        Colors.transparent,
+                                        Colors.black.withValues(alpha: 0.72),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (active)
+                                  PositionedDirectional(
+                                    top: 6,
+                                    end: 6,
+                                    child: CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: tokens.accentPrimary,
+                                      child: const Icon(
+                                        Icons.check_rounded,
+                                        size: 15,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  left: 8,
+                                  right: 8,
+                                  bottom: 6,
+                                  child: Text(
+                                    isArabic
+                                        ? wallpaper.nameAr
+                                        : wallpaper.nameEn,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    SizedBox(height: tokens.spacingMd),
                     ListTile(
                       title: Text(l10n.personalizationBgBlur),
                       subtitle: Slider(

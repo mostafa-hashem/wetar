@@ -1772,6 +1772,30 @@ abstract class AppLocalizations {
   /// **'Custom image'**
   String get personalizationBgCustomImage;
 
+  /// No description provided for @personalizationWallpapersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallpapers'**
+  String get personalizationWallpapersTitle;
+
+  /// No description provided for @personalizationPickGalleryWallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get personalizationPickGalleryWallpaper;
+
+  /// No description provided for @personalizationNatureWallpapers.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature collection'**
+  String get personalizationNatureWallpapers;
+
+  /// No description provided for @personalizationRemoveWallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove image wallpaper'**
+  String get personalizationRemoveWallpaper;
+
   /// No description provided for @personalizationBgBlur.
   ///
   /// In en, this message translates to:

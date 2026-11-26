@@ -43,6 +43,9 @@ flutter:
   uses-material-design: true
   generate: true
 
+  assets:
+    - assets/wallpapers/
+
   fonts:
     - family: Cairo
       fonts:

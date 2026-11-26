@@ -167,6 +167,8 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
       result(true)
     case "pickFile":
       pickFile(result: result)
+    case "pickGalleryImage":
+      pickGalleryImage(result: result)
     case "saveFile":
       let fileName = args["fileName"] as? String ?? "wetar_export"
       let typedBytes = args["bytes"] as? FlutterStandardTypedData
@@ -361,6 +363,31 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
       panel.canChooseFiles = true
       panel.canChooseDirectories = false
       panel.allowsMultipleSelection = false
+
+      let handle: (NSApplication.ModalResponse) -> Void = { response in
+        guard response == .OK, let url = panel.url else {
+          result(nil)
+          return
+        }
+        result(url.path)
+      }
+
+      if let win = self?.window {
+        panel.beginSheetModal(for: win, completionHandler: handle)
+      } else {
+        handle(panel.runModal())
+      }
+    }
+  }
+
+  private func pickGalleryImage(result: @escaping FlutterResult) {
+    DispatchQueue.main.async { [weak self] in
+      let panel = NSOpenPanel()
+      panel.canChooseFiles = true
+      panel.canChooseDirectories = false
+      panel.allowsMultipleSelection = false
+      panel.allowedContentTypes = [.image]
+      panel.directoryURL = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
 
       let handle: (NSApplication.ModalResponse) -> Void = { response in
         guard response == .OK, let url = panel.url else {

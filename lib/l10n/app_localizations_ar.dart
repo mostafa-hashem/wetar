@@ -937,6 +937,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get personalizationBgCustomImage => 'صورة مخصصة';
 
   @override
+  String get personalizationWallpapersTitle => 'خلفيات الصور';
+
+  @override
+  String get personalizationPickGalleryWallpaper => 'اختيار صورة من المعرض';
+
+  @override
+  String get personalizationNatureWallpapers => 'خلفيات طبيعية';
+
+  @override
+  String get personalizationRemoveWallpaper => 'إزالة صورة الخلفية';
+
+  @override
   String get personalizationBgBlur => 'الضبابية';
 
   @override

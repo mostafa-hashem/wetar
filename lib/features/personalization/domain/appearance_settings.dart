@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wetar/features/personalization/domain/built_in_wallpapers.dart';
 
 enum WetarThemeMode { system, light, dark, amoled }
 
@@ -123,9 +124,14 @@ class WetarLookPreset extends Equatable {
         nameEn: cleanEn,
         nameAr: cleanAr,
         isBuiltIn: false,
-        // Drop custom local paths when importing looks across devices.
+        // Drop device-local paths across devices while preserving bundled wallpapers.
         settings: parsed.copyWith(
-          customBackgroundImagePath: null,
+          customBackgroundImagePath:
+              (parsed.customBackgroundImagePath ?? '').startsWith(
+                BuiltInWallpapers.assetPrefix,
+              )
+              ? parsed.customBackgroundImagePath
+              : null,
           importedFontFamily: null,
         ),
       );

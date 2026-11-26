@@ -927,6 +927,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalizationBgCustomImage => 'Custom image';
 
   @override
+  String get personalizationWallpapersTitle => 'Wallpapers';
+
+  @override
+  String get personalizationPickGalleryWallpaper => 'Choose from Gallery';
+
+  @override
+  String get personalizationNatureWallpapers => 'Nature collection';
+
+  @override
+  String get personalizationRemoveWallpaper => 'Remove image wallpaper';
+
+  @override
   String get personalizationBgBlur => 'Blur';
 
   @override

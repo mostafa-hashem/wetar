@@ -232,6 +232,8 @@ abstract interface class FolderPickerService {
 
   Future<String?> pickFile({required List<String> mimeTypes});
 
+  Future<String?> pickGalleryImage();
+
   Future<bool> saveFile({
     required String fileName,
     required String mimeType,

@@ -790,6 +790,8 @@ class _FakePlatformServices
   @override
   Future<String?> pickFile({required List<String> mimeTypes}) async => null;
   @override
+  Future<String?> pickGalleryImage() async => null;
+  @override
   Future<PickedFolderResult?> pickSystemFolder() async => null;
   @override
   Future<WetarPermissionsStatus> requestPermissions({

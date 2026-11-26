@@ -187,6 +187,7 @@ class WetarPlatformPlugin(
                 val mimeTypes = call.argument<List<String>>("mimeTypes") ?: listOf("*/*")
                 launchFilePicker(mimeTypes, result)
             }
+            "pickGalleryImage" -> launchGalleryPicker(result)
             "saveFile" -> {
                 val fileName = call.argument<String>("fileName") ?: "wetar_export"
                 val mimeType = call.argument<String>("mimeType") ?: "application/octet-stream"
@@ -724,6 +725,39 @@ class WetarPlatformPlugin(
             }
         }
         activity.startActivityForResult(intent, REQ_PICK_FILE)
+    }
+
+    private fun launchGalleryPicker(result: MethodChannel.Result) {
+        if (pendingPickerResult != null) {
+            result.error("PICKER_ACTIVE", "Another picker is already open", null)
+            return
+        }
+        pendingPickerResult = result
+        pendingPickerMode = REQ_PICK_FILE
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Intent(MediaStore.ACTION_PICK_IMAGES).apply {
+                type = "image/*"
+            }
+        } else {
+            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+                type = "image/*"
+            }
+        }
+        try {
+            activity.startActivityForResult(intent, REQ_PICK_FILE)
+        } catch (_: Exception) {
+            val fallback = Intent(Intent.ACTION_GET_CONTENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+            }
+            try {
+                activity.startActivityForResult(fallback, REQ_PICK_FILE)
+            } catch (e: Exception) {
+                pendingPickerResult = null
+                pendingPickerMode = 0
+                result.error("PICKER_UNAVAILABLE", e.message, null)
+            }
+        }
     }
 
     private fun launchSavePicker(

@@ -1,4 +1,5 @@
 import Flutter
+import PhotosUI
 import UIKit
 import UniformTypeIdentifiers
 
@@ -19,7 +20,7 @@ import UniformTypeIdentifiers
   }
 }
 
-final class WetarIosPlugin: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterSceneLifeCycleDelegate, UIDocumentPickerDelegate {
+final class WetarIosPlugin: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterSceneLifeCycleDelegate, UIDocumentPickerDelegate, PHPickerViewControllerDelegate {
   private enum PickerMode {
     case folder
     case openFile
@@ -154,6 +155,8 @@ final class WetarIosPlugin: NSObject, FlutterPlugin, FlutterStreamHandler, Flutt
       result(triggerCloudDownload(filePath))
     case "pickFile":
       presentFilePicker(result: result)
+    case "pickGalleryImage":
+      presentGalleryPicker(result: result)
     case "saveFile":
       let fileName = args["fileName"] as? String ?? "wetar_export"
       let typedBytes = args["bytes"] as? FlutterStandardTypedData
@@ -207,6 +210,48 @@ final class WetarIosPlugin: NSObject, FlutterPlugin, FlutterStreamHandler, Flutt
       picker.allowsMultipleSelection = false
       picker.delegate = self
       presenter.present(picker, animated: true)
+    }
+  }
+
+  private func presentGalleryPicker(result: @escaping FlutterResult) {
+    DispatchQueue.main.async { [weak self] in
+      guard let self, let presenter = self.topViewController() else {
+        result(nil)
+        return
+      }
+      self.pendingResult = result
+      var config = PHPickerConfiguration(photoLibrary: .shared())
+      config.selectionLimit = 1
+      config.filter = .images
+      let picker = PHPickerViewController(configuration: config)
+      picker.delegate = self
+      presenter.present(picker, animated: true)
+    }
+  }
+
+  func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+    picker.dismiss(animated: true)
+    let cb = pendingResult
+    pendingResult = nil
+    guard let cb else { return }
+    guard let provider = results.first?.itemProvider,
+          provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) else {
+      cb(nil)
+      return
+    }
+    provider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) { data, _ in
+      guard let data else {
+        DispatchQueue.main.async { cb(nil) }
+        return
+      }
+      let outURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("wetar_gallery_\(Int(Date().timeIntervalSince1970 * 1000)).jpg")
+      do {
+        try data.write(to: outURL, options: .atomic)
+        DispatchQueue.main.async { cb(outURL.path) }
+      } catch {
+        DispatchQueue.main.async { cb(nil) }
+      }
     }
   }
 

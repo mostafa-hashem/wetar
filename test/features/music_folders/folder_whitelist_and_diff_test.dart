@@ -54,6 +54,9 @@ class _FakePicker implements FolderPickerService {
   Future<void> startWatchingFolders(List<String> paths) async {}
   @override
   Future<String?> pickFile({required List<String> mimeTypes}) async => null;
+
+  @override
+  Future<String?> pickGalleryImage() async => null;
   @override
   Future<bool> saveFile({
     required String fileName,

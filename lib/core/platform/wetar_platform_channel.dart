@@ -339,6 +339,21 @@ class WetarPlatformChannel
   }
 
   @override
+  Future<String?> pickGalleryImage() async {
+    try {
+      return await _method.invokeMethod<String>('pickGalleryImage');
+    } catch (e, st) {
+      AppLogger.error(
+        'PlatformChannel',
+        'pickGalleryImage failed',
+        errorObj: e,
+        stackTrace: st,
+      );
+      return null;
+    }
+  }
+
+  @override
   Future<bool> saveFile({
     required String fileName,
     required String mimeType,

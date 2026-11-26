@@ -1,22 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <rect width="1024" height="1024" rx="224" fill="#16120F" />
-  <path
-    d="M 452 184
-       L 572 184
-       C 574 252, 578 308, 622 362
-       C 684 432, 756 480, 756 560
-       C 756 724, 650 832, 512 832
-       C 374 832, 268 724, 268 560
-       C 268 480, 340 432, 402 362
-       C 446 308, 450 252, 452 184 Z"
-    fill="#E69B3A" />
-  <rect x="466" y="208" width="92" height="16" rx="8" fill="#16120F" />
-  <circle cx="512" cy="536" r="128" fill="none" stroke="#16120F" stroke-width="10" />
-  <circle cx="512" cy="536" r="104" fill="#16120F" />
-  <rect x="422" y="708" width="180" height="26" rx="13" fill="#16120F" />
-  <g fill="none" stroke="#F6EFE6" stroke-width="14" stroke-linecap="round">
-    <line x1="476" y1="224" x2="476" y2="708" />
-    <path d="M 512 224 L 512 406 C 512 456, 530 492, 530 536 C 530 580, 512 616, 512 666 L 512 708" />
-    <line x1="548" y1="224" x2="548" y2="708" />
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1612"/>
+      <stop offset="55%" stop-color="#0E0B09"/>
+      <stop offset="100%" stop-color="#060504"/>
+    </linearGradient>
+    <radialGradient id="haloGrad" cx="50%" cy="50%" r="44%">
+      <stop offset="0%" stop-color="#EAA038" stop-opacity="0.22"/>
+      <stop offset="52%" stop-color="#9E4B0D" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#9E4B0D" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldMetallic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF2C2"/>
+      <stop offset="52%" stop-color="#EAA038"/>
+      <stop offset="100%" stop-color="#9E4B0D"/>
+    </linearGradient>
+    <linearGradient id="stringSilk" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F5DCAA"/>
+      <stop offset="100%" stop-color="#D4882A"/>
+    </linearGradient>
+    <linearGradient id="stringHero" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#FFEBB7"/>
+      <stop offset="100%" stop-color="#F0A83C"/>
+    </linearGradient>
+    <mask id="crescentAperture">
+      <rect x="-320" y="-320" width="640" height="640" fill="white"/>
+      <circle cx="12" cy="-10" r="244" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect width="1024" height="1024" rx="228" fill="url(#bgGrad)"/>
+  <circle cx="512" cy="512" r="430" fill="url(#haloGrad)"/>
+  <rect x="4" y="4" width="1016" height="1016" rx="224" fill="none" stroke="#FFF2C2" stroke-opacity="0.18" stroke-width="3"/>
+
+  <g transform="translate(512 512) rotate(-30)">
+    <circle cx="0" cy="0" r="290" fill="url(#goldMetallic)" mask="url(#crescentAperture)"/>
+    <circle cx="12" cy="-10" r="242" fill="#080605"/>
+    <circle cx="12" cy="-10" r="204" fill="none" stroke="#EAA038" stroke-opacity="0.30" stroke-width="5"/>
+
+    <rect x="-118" y="-315" width="236" height="22" rx="11" fill="url(#goldMetallic)"/>
+    <rect x="-118" y="293" width="236" height="22" rx="11" fill="url(#goldMetallic)"/>
+
+    <line x1="-90" y1="-292" x2="-90" y2="292" stroke="url(#stringSilk)" stroke-width="13" stroke-linecap="round"/>
+    <path d="M-32,-292 L-32,-150 C-32,-70 -56,-20 -56,30 C-56,80 -32,130 -32,190 L-32,292" fill="none" stroke="url(#stringSilk)" stroke-width="13" stroke-linecap="round"/>
+    <line x1="90" y1="-292" x2="90" y2="292" stroke="url(#stringSilk)" stroke-width="13" stroke-linecap="round"/>
+
+    <path d="M32,-292 L32,-155 C32,-88 88,-66 88,-20 C88,26 -12,46 -12,92 C-12,134 32,155 32,205 L32,292" fill="none" stroke="url(#stringHero)" stroke-width="20" stroke-linecap="round"/>
   </g>
 </svg>
