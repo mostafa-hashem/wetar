@@ -455,40 +455,28 @@ class AppearanceStudioScreen extends StatelessWidget {
                   children: <Widget>[
                     WetarStackedControlTile(
                       title: l10n.personalizationThemeMode,
-                      child: Wrap(
-                        spacing: tokens.spacingSm,
-                        runSpacing: tokens.spacingSm,
-                        children:
-                            <(WetarThemeMode, String)>[
-                                  (
-                                    WetarThemeMode.system,
-                                    l10n.personalizationThemeSystem,
-                                  ),
-                                  (
-                                    WetarThemeMode.light,
-                                    l10n.personalizationThemeLight,
-                                  ),
-                                  (
-                                    WetarThemeMode.dark,
-                                    l10n.personalizationThemeDark,
-                                  ),
-                                  (
-                                    WetarThemeMode.amoled,
-                                    l10n.personalizationThemeAmoled,
-                                  ),
-                                ]
-                                .map(
-                                  (item) => ChoiceChip(
-                                    label: Text(item.$2),
-                                    selected: s.themeMode == item.$1,
-                                    selectedColor: tokens.accentPrimary
-                                        .withValues(alpha: 0.22),
-                                    onSelected: (_) => cubit.updateSettings(
-                                      s.copyWith(themeMode: item.$1),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                      child: WetarOptionChips<WetarThemeMode>(
+                        selectedValue: s.themeMode,
+                        onSelected: (mode) =>
+                            cubit.updateSettings(s.copyWith(themeMode: mode)),
+                        options: <WetarOptionItem<WetarThemeMode>>[
+                          WetarOptionItem(
+                            value: WetarThemeMode.system,
+                            label: l10n.personalizationThemeSystem,
+                          ),
+                          WetarOptionItem(
+                            value: WetarThemeMode.light,
+                            label: l10n.personalizationThemeLight,
+                          ),
+                          WetarOptionItem(
+                            value: WetarThemeMode.dark,
+                            label: l10n.personalizationThemeDark,
+                          ),
+                          WetarOptionItem(
+                            value: WetarThemeMode.amoled,
+                            label: l10n.personalizationThemeAmoled,
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(height: tokens.spacingMd),
@@ -830,32 +818,21 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ),
                     WetarStackedControlTile(
                       title: l10n.personalizationMiniPlayerStyle,
-                      child: Wrap(
-                        spacing: tokens.spacingSm,
-                        runSpacing: tokens.spacingSm,
-                        children:
-                            <(MiniPlayerStyle, String)>[
-                                  (
-                                    MiniPlayerStyle.floatingPill,
-                                    l10n.personalizationMiniPlayerFloating,
-                                  ),
-                                  (
-                                    MiniPlayerStyle.dockedBar,
-                                    l10n.personalizationMiniPlayerDocked,
-                                  ),
-                                ]
-                                .map(
-                                  (item) => ChoiceChip(
-                                    label: Text(item.$2),
-                                    selected: s.miniPlayerStyle == item.$1,
-                                    selectedColor: tokens.accentPrimary
-                                        .withValues(alpha: 0.22),
-                                    onSelected: (_) => cubit.updateSettings(
-                                      s.copyWith(miniPlayerStyle: item.$1),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                      child: WetarOptionChips<MiniPlayerStyle>(
+                        selectedValue: s.miniPlayerStyle,
+                        onSelected: (style) => cubit.updateSettings(
+                          s.copyWith(miniPlayerStyle: style),
+                        ),
+                        options: <WetarOptionItem<MiniPlayerStyle>>[
+                          WetarOptionItem(
+                            value: MiniPlayerStyle.floatingPill,
+                            label: l10n.personalizationMiniPlayerFloating,
+                          ),
+                          WetarOptionItem(
+                            value: MiniPlayerStyle.dockedBar,
+                            label: l10n.personalizationMiniPlayerDocked,
+                          ),
+                        ],
                       ),
                     ),
                     Align(
@@ -1010,20 +987,15 @@ class AppearanceStudioScreen extends StatelessWidget {
                   children: <Widget>[
                     WetarStackedControlTile(
                       title: l10n.personalizationListDensity,
-                      child: Wrap(
-                        spacing: tokens.spacingSm,
-                        runSpacing: tokens.spacingSm,
-                        children: ListDensity.values
+                      child: WetarOptionChips<ListDensity>(
+                        selectedValue: s.listDensity,
+                        onSelected: (d) =>
+                            cubit.updateSettings(s.copyWith(listDensity: d)),
+                        options: ListDensity.values
                             .map(
-                              (d) => ChoiceChip(
-                                label: Text(_listDensityLabel(l10n, d)),
-                                selected: s.listDensity == d,
-                                selectedColor: tokens.accentPrimary.withValues(
-                                  alpha: 0.22,
-                                ),
-                                onSelected: (_) => cubit.updateSettings(
-                                  s.copyWith(listDensity: d),
-                                ),
+                              (d) => WetarOptionItem<ListDensity>(
+                                value: d,
+                                label: _listDensityLabel(l10n, d),
                               ),
                             )
                             .toList(),
@@ -1031,16 +1003,15 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ),
                     WetarStackedControlTile(
                       title: l10n.personalizationGridColumns,
-                      child: SegmentedButton<int>(
-                        segments: const <ButtonSegment<int>>[
-                          ButtonSegment(value: 2, label: Text('2')),
-                          ButtonSegment(value: 3, label: Text('3')),
-                          ButtonSegment(value: 4, label: Text('4')),
+                      child: WetarOptionChips<int>(
+                        selectedValue: s.gridColumns.clamp(2, 4),
+                        onSelected: (cols) =>
+                            cubit.updateSettings(s.copyWith(gridColumns: cols)),
+                        options: const <WetarOptionItem<int>>[
+                          WetarOptionItem<int>(value: 2, label: '2'),
+                          WetarOptionItem<int>(value: 3, label: '3'),
+                          WetarOptionItem<int>(value: 4, label: '4'),
                         ],
-                        selected: <int>{s.gridColumns.clamp(2, 4)},
-                        onSelectionChanged: (set) => cubit.updateSettings(
-                          s.copyWith(gridColumns: set.first),
-                        ),
                       ),
                     ),
                     SwitchListTile.adaptive(

@@ -142,7 +142,11 @@ class PlaylistsScreen extends StatelessWidget {
                   backgroundColor: tokens.surfaceElevated,
                   child: Icon(item.$3, color: tokens.accentSecondary),
                 ),
-                title: Text(item.$2),
+                title: Text(
+                  item.$2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () async {
                   final tracks = await context
@@ -180,7 +184,11 @@ class PlaylistsScreen extends StatelessWidget {
                     tracks: pl.coverTracks,
                     size: 52,
                   ),
-                  title: Text(pl.name),
+                  title: Text(
+                    pl.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   subtitle: Text(
                     NumeralFormatter.formatString(
                       l10n.foldersTrackCount(pl.trackCount),

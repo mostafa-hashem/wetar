@@ -146,51 +146,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: tokens.accentSecondary,
               ),
               title: l10n.settingsLanguage,
-              child: SegmentedButton<String>(
-                segments: <ButtonSegment<String>>[
-                  ButtonSegment<String>(
+              child: WetarOptionChips<String>(
+                selectedValue: settings.localeCode,
+                onSelected: (code) =>
+                    context.read<SettingsCubit>().setLocaleCode(code),
+                options: <WetarOptionItem<String>>[
+                  WetarOptionItem<String>(
                     value: 'ar',
-                    label: Text(l10n.languageArabic),
+                    label: l10n.languageArabic,
                   ),
-                  ButtonSegment<String>(
+                  WetarOptionItem<String>(
                     value: 'en',
-                    label: Text(l10n.languageEnglish),
+                    label: l10n.languageEnglish,
                   ),
                 ],
-                selected: <String>{settings.localeCode},
-                onSelectionChanged: (set) {
-                  context.read<SettingsCubit>().setLocaleCode(set.first);
-                },
               ),
             ),
             WetarStackedControlTile(
               leading: Icon(Icons.pin_outlined, color: tokens.accentPrimary),
               title: l10n.languageNumerals,
-              child: Wrap(
-                spacing: tokens.spacingSm,
-                runSpacing: tokens.spacingSm,
-                children:
-                    <(NumeralStyle, String)>[
-                          (NumeralStyle.western, l10n.languageNumeralsWestern),
-                          (
-                            NumeralStyle.arabicIndic,
-                            l10n.languageNumeralsArabicIndic,
-                          ),
-                        ]
-                        .map(
-                          (item) => ChoiceChip(
-                            label: Text(item.$2),
-                            selected: settings.numeralStyle == item.$1,
-                            selectedColor: tokens.accentPrimary.withValues(
-                              alpha: 0.22,
-                            ),
-                            onSelected: (_) =>
-                                context.read<SettingsCubit>().update(
-                                  settings.copyWith(numeralStyle: item.$1),
-                                ),
-                          ),
-                        )
-                        .toList(),
+              child: WetarOptionChips<NumeralStyle>(
+                selectedValue: settings.numeralStyle,
+                onSelected: (style) => context.read<SettingsCubit>().update(
+                  settings.copyWith(numeralStyle: style),
+                ),
+                options: <WetarOptionItem<NumeralStyle>>[
+                  WetarOptionItem<NumeralStyle>(
+                    value: NumeralStyle.western,
+                    label: l10n.languageNumeralsWestern,
+                  ),
+                  WetarOptionItem<NumeralStyle>(
+                    value: NumeralStyle.arabicIndic,
+                    label: l10n.languageNumeralsArabicIndic,
+                  ),
+                ],
               ),
             ),
           ],

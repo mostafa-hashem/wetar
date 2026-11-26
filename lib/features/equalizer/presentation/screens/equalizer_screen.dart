@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/core/widgets/wetar_setting_control_tile.dart';
 import 'package:wetar/features/equalizer/presentation/bloc/equalizer_cubit.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 import 'package:wetar/l10n/app_localizations.dart';
@@ -148,9 +149,14 @@ class EqualizerScreen extends StatelessWidget {
                       return Expanded(
                         child: Column(
                           children: <Widget>[
-                            Text(
-                              band.gainDb.toStringAsFixed(1),
-                              style: Theme.of(context).textTheme.labelSmall,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                band.gainDb.toStringAsFixed(1),
+                                maxLines: 1,
+                                softWrap: false,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
                             ),
                             SizedBox(
                               height: 180,
@@ -172,9 +178,14 @@ class EqualizerScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Text(
-                              _formatHz(band.centerFreqHz),
-                              style: Theme.of(context).textTheme.labelSmall,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                _formatHz(band.centerFreqHz),
+                                maxLines: 1,
+                                softWrap: false,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
                             ),
                           ],
                         ),
@@ -186,51 +197,35 @@ class EqualizerScreen extends StatelessWidget {
               SizedBox(height: tokens.spacingMd),
 
               if (caps.supportsBassBoost)
-                ListTile(
-                  title: Text(l10n.equalizerBassBoost),
-                  trailing: Text('${(state.bassBoostStrength / 10).round()}%'),
-                  subtitle: Slider(
-                    min: 0,
-                    max: 1000,
-                    value: state.bassBoostStrength.toDouble().clamp(
-                      0.0,
-                      1000.0,
-                    ),
-                    activeColor: tokens.accentPrimary,
-                    onChanged: (v) => cubit.setBassBoost(v.round()),
-                  ),
+                WetarSliderTile(
+                  title: l10n.equalizerBassBoost,
+                  valueLabel: '${(state.bassBoostStrength / 10).round()}%',
+                  min: 0,
+                  max: 1000,
+                  value: state.bassBoostStrength.toDouble(),
+                  activeColor: tokens.accentPrimary,
+                  onChanged: (v) => cubit.setBassBoost(v.round()),
                 ),
               if (caps.supportsVirtualizer)
-                ListTile(
-                  title: Text(l10n.equalizerVirtualizer),
-                  trailing: Text(
-                    '${(state.virtualizerStrength / 10).round()}%',
-                  ),
-                  subtitle: Slider(
-                    min: 0,
-                    max: 1000,
-                    value: state.virtualizerStrength.toDouble().clamp(
-                      0.0,
-                      1000.0,
-                    ),
-                    activeColor: tokens.accentSecondary,
-                    onChanged: (v) => cubit.setVirtualizer(v.round()),
-                  ),
+                WetarSliderTile(
+                  title: l10n.equalizerVirtualizer,
+                  valueLabel: '${(state.virtualizerStrength / 10).round()}%',
+                  min: 0,
+                  max: 1000,
+                  value: state.virtualizerStrength.toDouble(),
+                  activeColor: tokens.accentSecondary,
+                  onChanged: (v) => cubit.setVirtualizer(v.round()),
                 ),
               if (caps.supportsLoudnessEnhancer) ...<Widget>[
-                ListTile(
-                  title: Text(l10n.equalizerLoudness),
-                  trailing: Text(
-                    '+${state.loudnessGainDb.toStringAsFixed(1)} dB',
-                  ),
-                  subtitle: Slider(
-                    min: 0,
-                    max: 12,
-                    divisions: 24,
-                    value: state.loudnessGainDb.clamp(0.0, 12.0),
-                    activeColor: tokens.accentPrimary,
-                    onChanged: cubit.setLoudnessGain,
-                  ),
+                WetarSliderTile(
+                  title: l10n.equalizerLoudness,
+                  valueLabel: '+${state.loudnessGainDb.toStringAsFixed(1)} dB',
+                  min: 0,
+                  max: 12,
+                  divisions: 24,
+                  value: state.loudnessGainDb,
+                  activeColor: tokens.accentPrimary,
+                  onChanged: cubit.setLoudnessGain,
                 ),
                 if (state.loudnessGainDb >= 6.0)
                   Padding(

@@ -87,59 +87,60 @@ void showShareTrackCardSheet(BuildContext context, WetarTrack track) {
               ),
             ),
             SizedBox(height: tokens.spacingMd),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: tokens.accentPrimary,
-                    ),
-                    onPressed: () async {
-                      final boundary =
-                          cardKey.currentContext?.findRenderObject()
-                              as RenderRepaintBoundary?;
-                      if (boundary == null) return;
-                      final image = await boundary.toImage(pixelRatio: 2.5);
-                      final data = await image.toByteData(
-                        format: ui.ImageByteFormat.png,
-                      );
-                      image.dispose();
-                      if (data == null) return;
-                      final cache = sl<CacheManager>();
-                      await cache.init();
-                      final outPath = p.join(
-                        cache.exportsDir.path,
-                        'wetar_card_${DateTime.now().millisecondsSinceEpoch}.png',
-                      );
-                      await File(outPath)
-                          .writeAsBytes(data.buffer.asUint8List(), flush: true);
-                      if (ctx.mounted) Navigator.of(ctx).pop();
-                      await sl<FolderPickerService>().shareFiles(
-                        paths: <String>[outPath],
-                        mimeType: 'image/png',
-                        subject: track.title,
-                      );
-                    },
-                    icon: const Icon(Icons.image_outlined),
-                    label: Text(l10n.playerShareCard),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    backgroundColor: tokens.accentPrimary,
                   ),
+                  onPressed: () async {
+                    final boundary =
+                        cardKey.currentContext?.findRenderObject()
+                            as RenderRepaintBoundary?;
+                    if (boundary == null) return;
+                    final image = await boundary.toImage(pixelRatio: 2.5);
+                    final data = await image.toByteData(
+                      format: ui.ImageByteFormat.png,
+                    );
+                    image.dispose();
+                    if (data == null) return;
+                    final cache = sl<CacheManager>();
+                    await cache.init();
+                    final outPath = p.join(
+                      cache.exportsDir.path,
+                      'wetar_card_${DateTime.now().millisecondsSinceEpoch}.png',
+                    );
+                    await File(outPath)
+                        .writeAsBytes(data.buffer.asUint8List(), flush: true);
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                    await sl<FolderPickerService>().shareFiles(
+                      paths: <String>[outPath],
+                      mimeType: 'image/png',
+                      subject: track.title,
+                    );
+                  },
+                  icon: const Icon(Icons.image_outlined),
+                  label: Text(l10n.playerShareCard),
                 ),
                 if (!track.filePath.startsWith('content://') &&
                     File(track.filePath).existsSync()) ...<Widget>[
-                  SizedBox(width: tokens.spacingSm),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        if (ctx.mounted) Navigator.of(ctx).pop();
-                        await sl<FolderPickerService>().shareFiles(
-                          paths: <String>[track.filePath],
-                          mimeType: track.mimeType,
-                          subject: track.title,
-                        );
-                      },
-                      icon: const Icon(Icons.audio_file_outlined),
-                      label: Text(l10n.playerShareFile),
+                  SizedBox(height: tokens.spacingSm),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
                     ),
+                    onPressed: () async {
+                      if (ctx.mounted) Navigator.of(ctx).pop();
+                      await sl<FolderPickerService>().shareFiles(
+                        paths: <String>[track.filePath],
+                        mimeType: track.mimeType,
+                        subject: track.title,
+                      );
+                    },
+                    icon: const Icon(Icons.audio_file_outlined),
+                    label: Text(l10n.playerShareFile),
                   ),
                 ],
               ],

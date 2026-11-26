@@ -276,32 +276,30 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
                 SizedBox(height: tokens.spacingMd),
-                Row(
+                Wrap(
+                  spacing: tokens.spacingSm,
+                  runSpacing: tokens.spacingSm,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: <Widget>[
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () =>
-                            context.read<PlayerCubit>().setAbPointA(),
-                        child: Text(
-                          state.abLoop.pointA != null
-                              ? 'A: ${NumeralFormatter.formatDuration(state.abLoop.pointA!, numerals)}'
-                              : l10n.playerAbSetA,
-                        ),
+                    OutlinedButton(
+                      onPressed: () =>
+                          context.read<PlayerCubit>().setAbPointA(),
+                      child: Text(
+                        state.abLoop.pointA != null
+                            ? 'A: ${NumeralFormatter.formatDuration(state.abLoop.pointA!, numerals)}'
+                            : l10n.playerAbSetA,
                       ),
                     ),
-                    SizedBox(width: tokens.spacingSm),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () =>
-                            context.read<PlayerCubit>().setAbPointB(),
-                        child: Text(
-                          state.abLoop.pointB != null
-                              ? 'B: ${NumeralFormatter.formatDuration(state.abLoop.pointB!, numerals)}'
-                              : l10n.playerAbSetB,
-                        ),
+                    OutlinedButton(
+                      onPressed: () =>
+                          context.read<PlayerCubit>().setAbPointB(),
+                      child: Text(
+                        state.abLoop.pointB != null
+                            ? 'B: ${NumeralFormatter.formatDuration(state.abLoop.pointB!, numerals)}'
+                            : l10n.playerAbSetB,
                       ),
                     ),
-                    SizedBox(width: tokens.spacingSm),
                     TextButton(
                       onPressed: () =>
                           context.read<PlayerCubit>().clearAbLoop(),

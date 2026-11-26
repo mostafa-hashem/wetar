@@ -474,6 +474,17 @@ class WetarTokenResolver {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return textTheme.labelSmall?.copyWith(
+            fontSize: 12 * settings.fontScale.clamp(0.85, 1.15),
+            color: isSelected ? tokens.accentPrimary : tokens.inkMuted,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            overflow: TextOverflow.ellipsis,
+          );
+        }),
+      ),
       extensions: <ThemeExtension<dynamic>>[tokens],
     );
   }

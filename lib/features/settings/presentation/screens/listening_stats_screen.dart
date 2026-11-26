@@ -178,6 +178,7 @@ class _ListeningStatsScreenState extends State<ListeningStatsScreen> {
                                   '${NumeralFormatter.formatInt(summary.totalMinutes, numerals)} min',
                             ),
                           ),
+                          SizedBox(width: tokens.spacingSm),
                           Expanded(
                             child: _StatTile(
                               label: l10n.statsTotalPlays,
@@ -250,10 +251,16 @@ class _StatTile extends StatelessWidget {
           style: Theme.of(context).textTheme.labelSmall
               ?.copyWith(color: tokens.inkMuted),
         ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w700),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            value,
+            maxLines: 1,
+            softWrap: false,
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );

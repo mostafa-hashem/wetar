@@ -1,10 +1,9 @@
 import 'package:material_ui/material_ui.dart';
-
-import '../../../../core/utils/numeral_formatter.dart';
-import '../../../../core/widgets/wetar_artwork_image.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../personalization/presentation/theme/wetar_tokens.dart';
-import '../../domain/library_models.dart';
+import 'package:wetar/core/utils/numeral_formatter.dart';
+import 'package:wetar/core/widgets/wetar_artwork_image.dart';
+import 'package:wetar/features/library/domain/library_models.dart';
+import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/l10n/app_localizations.dart';
 
 /// Fixed-extent track row engineered for 60/120fps scrolling across 20,000+ tracks.
 class TrackListTile extends StatelessWidget {

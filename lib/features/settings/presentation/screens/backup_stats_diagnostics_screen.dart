@@ -166,6 +166,7 @@ class _BackupStatsDiagnosticsScreenState
           ],
           const Divider(),
           ListTile(
+            contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.bug_report_outlined),
             title: Text(l10n.diagnosticsTitle),
             trailing: Row(

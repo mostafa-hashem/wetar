@@ -322,13 +322,19 @@ class _ChoiceOptionCard extends StatelessWidget {
               ),
               SizedBox(width: tokens.spacingSm),
               Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: selected ? tokens.accentPrimary : tokens.inkPrimary,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: selected
+                          ? tokens.accentPrimary
+                          : tokens.inkPrimary,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
@@ -538,23 +544,26 @@ class _LookOnboardingStep extends StatelessWidget {
                 style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
               ),
               SizedBox(height: tokens.spacingMd),
-              SegmentedButton<WetarThemeMode>(
-                segments: <ButtonSegment<WetarThemeMode>>[
-                  ButtonSegment<WetarThemeMode>(
-                    value: WetarThemeMode.light,
-                    icon: const Icon(Icons.light_mode_rounded),
-                    label: Text(l10n.personalizationThemeLight),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _ChoiceOptionCard(
+                      icon: Icons.light_mode_rounded,
+                      label: l10n.personalizationThemeLight,
+                      selected: !tokens.isDark,
+                      onTap: () => onThemeSelected(WetarThemeMode.light),
+                    ),
                   ),
-                  ButtonSegment<WetarThemeMode>(
-                    value: WetarThemeMode.dark,
-                    icon: const Icon(Icons.dark_mode_rounded),
-                    label: Text(l10n.personalizationThemeDark),
+                  SizedBox(width: tokens.spacingSm),
+                  Expanded(
+                    child: _ChoiceOptionCard(
+                      icon: Icons.dark_mode_rounded,
+                      label: l10n.personalizationThemeDark,
+                      selected: tokens.isDark,
+                      onTap: () => onThemeSelected(WetarThemeMode.dark),
+                    ),
                   ),
                 ],
-                selected: <WetarThemeMode>{
-                  tokens.isDark ? WetarThemeMode.dark : WetarThemeMode.light,
-                },
-                onSelectionChanged: (set) => onThemeSelected(set.first),
               ),
               SizedBox(height: tokens.spacingMd),
               Expanded(

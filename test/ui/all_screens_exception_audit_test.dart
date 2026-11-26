@@ -30,6 +30,7 @@ import 'package:wetar/features/music_folders/data/music_folders_repository.dart'
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/folder_picker_screen.dart';
 import 'package:wetar/features/music_folders/presentation/screens/music_folders_settings_screen.dart';
+import 'package:wetar/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/personalization/presentation/screens/appearance_studio_screen.dart';
@@ -375,6 +376,10 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        expect(
+          find.byWidgetPredicate((w) => w is SegmentedButton),
+          findsNothing,
+        );
 
         // Expand Advanced section on SettingsScreen.
         final advancedFinder = find.text(
@@ -390,6 +395,21 @@ void main() {
         await tester.tap(advancedFinder);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+
+        // Mount OnboardingScreen (all 3 steps including Look step) and verify no SegmentedButton.
+        await tester.pumpWidget(
+          env.wrapScreen(
+            OnboardingScreen(onFinished: () {}),
+            locale: locale,
+            textScale: 1.35,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(
+          find.byWidgetPredicate((w) => w is SegmentedButton),
+          findsNothing,
+        );
 
         // Mount AppearanceStudioScreen and visit all 7 tabs.
         await tester.pumpWidget(
@@ -433,9 +453,24 @@ void main() {
             isNull,
             reason: 'Tab "$label" (${locale.languageCode}) threw an exception',
           );
+          expect(
+            find.byWidgetPredicate((w) => w is SegmentedButton),
+            findsNothing,
+          );
 
           if (label == 'Home & Library Layout' ||
               label == 'تخطيط الرئيسية والمكتبة') {
+            final densityLabel = locale.languageCode == 'ar'
+                ? 'مريحة'
+                : 'Comfortable';
+            final densityFinder = find.text(densityLabel);
+            expect(densityFinder, findsOneWidget);
+            final densitySize = tester.getSize(densityFinder);
+            expect(densitySize.height, lessThanOrEqualTo(32.0));
+            if (locale.languageCode == 'en') {
+              expect(densitySize.width, greaterThanOrEqualTo(75.0));
+            }
+
             // Drag-to-reorder a Home block via its drag handle.
             final handle = find.byIcon(Icons.drag_handle_rounded).first;
             await tester.ensureVisible(handle);
