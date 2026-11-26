@@ -117,61 +117,64 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: tokens.inkMuted.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(tokens.radiusPill),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  l10n.playerSleepTimer,
-                  style: Theme.of(ctx).textTheme.titleMedium,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: tokens.inkMuted.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(tokens.radiusPill),
                 ),
               ),
-            ),
-            for (final min in <int>[10, 15, 30, 45, 60])
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    l10n.playerSleepTimer,
+                    style: Theme.of(ctx).textTheme.titleMedium,
+                  ),
+                ),
+              ),
+              for (final min in <int>[10, 15, 30, 45, 60])
+                ListTile(
+                  title: Text(l10n.sleepTimerMinutes(min)),
+                  onTap: () {
+                    player.setSleepTimerMinutes(min);
+                    Navigator.of(ctx).pop();
+                  },
+                ),
               ListTile(
-                title: Text(l10n.sleepTimerMinutes(min)),
+                title: Text(l10n.sleepTimerEndOfTrack),
                 onTap: () {
-                  player.setSleepTimerMinutes(min);
+                  player.setSleepTimerEndOfTrack();
                   Navigator.of(ctx).pop();
                 },
               ),
-            ListTile(
-              title: Text(l10n.sleepTimerEndOfTrack),
-              onTap: () {
-                player.setSleepTimerEndOfTrack();
-                Navigator.of(ctx).pop();
-              },
-            ),
-            ListTile(
-              title: Text(l10n.sleepTimerAfterTracks(3)),
-              onTap: () {
-                player.setSleepTimerAfterTracks(3);
-                Navigator.of(ctx).pop();
-              },
-            ),
-            if (state.sleepTimer.isActive)
               ListTile(
-                leading: Icon(Icons.timer_off_outlined, color: tokens.danger),
-                title: Text(l10n.sleepTimerOff),
+                title: Text(l10n.sleepTimerAfterTracks(3)),
                 onTap: () {
-                  player.cancelSleepTimer();
+                  player.setSleepTimerAfterTracks(3);
                   Navigator.of(ctx).pop();
                 },
               ),
-          ],
+              if (state.sleepTimer.isActive)
+                ListTile(
+                  leading: Icon(Icons.timer_off_outlined, color: tokens.danger),
+                  title: Text(l10n.sleepTimerOff),
+                  onTap: () {
+                    player.cancelSleepTimer();
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -184,9 +187,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: BlocBuilder<PlayerCubit, PlayerStateSnapshot>(
-          builder: (ctx, state) => Padding(
+          builder: (ctx, state) => SingleChildScrollView(
             padding: EdgeInsets.all(tokens.spacingMd),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -211,7 +215,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   min: 0.5,
                   max: 2.5,
                   divisions: 20,
-                  value: state.speed,
+                  value: state.speed.clamp(0.5, 2.5),
                   activeColor: tokens.accentPrimary,
                   onChanged: (v) => context.read<PlayerCubit>().setSpeed(v),
                 ),
@@ -227,7 +231,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                     min: 0.5,
                     max: 2.0,
                     divisions: 15,
-                    value: state.pitch,
+                    value: state.pitch.clamp(0.5, 2.0),
                     activeColor: tokens.accentSecondary,
                     onChanged: (v) => context.read<PlayerCubit>().setPitch(v),
                   ),
@@ -259,9 +263,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: BlocBuilder<PlayerCubit, PlayerStateSnapshot>(
-          builder: (ctx, state) => Padding(
+          builder: (ctx, state) => SingleChildScrollView(
             padding: EdgeInsets.all(tokens.spacingMd),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -351,374 +356,430 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             activeTrack: track,
             isPlaying: state.isPlaying,
             child: SafeArea(
-              child: Column(
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: tokens.spacingSm,
-                      vertical: tokens.spacingXs,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompactHeight = constraints.maxHeight < 540;
+                  final artworkStage = Padding(
+                    padding: EdgeInsets.symmetric(horizontal: tokens.spacingLg),
+                    child: _buildArtworkStage(
+                      context,
+                      track: track,
+                      appearance: appearance,
+                      tokens: tokens,
+                      thumbCache: thumbCache,
+                      isPlaying: state.isPlaying,
                     ),
-                    child: Row(
-                      children: <Widget>[
-                        IconButton(
-                          tooltip: l10n.actionClose,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                          onPressed: () => Navigator.of(context).pop(),
+                  );
+                  final columnContent = Column(
+                    mainAxisSize: isCompactHeight
+                        ? MainAxisSize.min
+                        : MainAxisSize.max,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: tokens.spacingSm,
+                          vertical: tokens.spacingXs,
                         ),
-                        Expanded(
-                          child: Column(
-                            children: <Widget>[
-                              Text(
-                                l10n.playerNowPlaying,
-                                style: Theme.of(context).textTheme.labelMedium,
+                        child: Row(
+                          children: <Widget>[
+                            IconButton(
+                              tooltip: l10n.actionClose,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
                               ),
-                              if (state.sleepTimer.isActive)
-                                Text(
-                                  state.sleepTimer.mode ==
-                                          SleepTimerMode.duration
-                                      ? l10n.sleepTimerActiveRemaining(
-                                          NumeralFormatter.formatDuration(
-                                            state.sleepTimer.remainingDuration,
-                                            numerals,
-                                          ),
-                                        )
-                                      : (state.sleepTimer.mode ==
-                                                SleepTimerMode.endOfTrack
-                                            ? l10n.sleepTimerEndOfTrack
-                                            : l10n.sleepTimerAfterTracks(
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: <Widget>[
+                                  Text(
+                                    l10n.playerNowPlaying,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium,
+                                  ),
+                                  if (state.sleepTimer.isActive)
+                                    Text(
+                                      state.sleepTimer.mode ==
+                                              SleepTimerMode.duration
+                                          ? l10n.sleepTimerActiveRemaining(
+                                              NumeralFormatter.formatDuration(
                                                 state
                                                     .sleepTimer
-                                                    .remainingTracks,
-                                              )),
-                                  style: Theme.of(context).textTheme.labelSmall
-                                      ?.copyWith(color: tokens.accentSecondary),
-                                ),
-                            ],
+                                                    .remainingDuration,
+                                                numerals,
+                                              ),
+                                            )
+                                          : (state.sleepTimer.mode ==
+                                                    SleepTimerMode.endOfTrack
+                                                ? l10n.sleepTimerEndOfTrack
+                                                : l10n.sleepTimerAfterTracks(
+                                                    state
+                                                        .sleepTimer
+                                                        .remainingTracks,
+                                                  )),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: tokens.accentSecondary,
+                                          ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (widget.onShareTrack != null)
+                              IconButton(
+                                tooltip: l10n.actionShare,
+                                icon: const Icon(Icons.share_outlined),
+                                onPressed: () => widget.onShareTrack!(track),
+                              ),
+                            if (widget.onOpenTrackDetails != null)
+                              IconButton(
+                                tooltip: l10n.playerTrackDetails,
+                                icon: const Icon(Icons.more_horiz_rounded),
+                                onPressed: () =>
+                                    widget.onOpenTrackDetails!(track),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (_showGestureHint)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: tokens.spacingMd,
+                          ),
+                          child: Material(
+                            color: tokens.surfaceElevated.withValues(
+                              alpha: 0.9,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              tokens.radiusCard,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: tokens.spacingMd,
+                                vertical: tokens.spacingXs,
+                              ),
+                              child: Row(
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.touch_app_outlined,
+                                    size: 16,
+                                    color: tokens.accentPrimary,
+                                  ),
+                                  SizedBox(width: tokens.spacingSm),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.playerGestureHintOnce,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 16),
+                                    onPressed: () => setState(
+                                      () => _showGestureHint = false,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        if (widget.onShareTrack != null)
-                          IconButton(
-                            tooltip: l10n.actionShare,
-                            icon: const Icon(Icons.share_outlined),
-                            onPressed: () => widget.onShareTrack!(track),
-                          ),
-                        if (widget.onOpenTrackDetails != null)
-                          IconButton(
-                            tooltip: l10n.playerTrackDetails,
-                            icon: const Icon(Icons.more_horiz_rounded),
-                            onPressed: () => widget.onOpenTrackDetails!(track),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (_showGestureHint)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: tokens.spacingMd,
-                      ),
-                      child: Material(
-                        color: tokens.surfaceElevated.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(tokens.radiusCard),
-                        child: Padding(
+                      if (track.isTemporaryExternal &&
+                          track.folderPath.isNotEmpty)
+                        Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: tokens.spacingMd,
                             vertical: tokens.spacingXs,
                           ),
-                          child: Row(
-                            children: <Widget>[
-                              Icon(
-                                Icons.touch_app_outlined,
-                                size: 16,
-                                color: tokens.accentPrimary,
-                              ),
-                              SizedBox(width: tokens.spacingSm),
-                              Expanded(
-                                child: Text(
-                                  l10n.playerGestureHintOnce,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 16),
-                                onPressed: () =>
-                                    setState(() => _showGestureHint = false),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (track.isTemporaryExternal && track.folderPath.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: tokens.spacingMd,
-                        vertical: tokens.spacingXs,
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: tokens.spacingMd,
-                          vertical: tokens.spacingXs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tokens.surfaceElevated,
-                          borderRadius: BorderRadius.circular(
-                            tokens.radiusCard,
-                          ),
-                        ),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                l10n.playerExternalTempBanner,
-                                style: Theme.of(context).textTheme.bodySmall,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: tokens.spacingMd,
+                              vertical: tokens.spacingXs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: tokens.surfaceElevated,
+                              borderRadius: BorderRadius.circular(
+                                tokens.radiusCard,
                               ),
                             ),
-                            TextButton(
-                              onPressed: () {
-                                final name = track.folderPath.split('/').last;
-                                context.read<MusicFoldersCubit>().addFolderPath(
-                                  rootPath: track.folderPath,
-                                  displayName: name.isEmpty
-                                      ? track.folderPath
-                                      : name,
-                                );
-                                WetarFeedback.showSuccess(
-                                  context,
-                                  l10n.foldersAddedSuccess(name),
-                                );
-                              },
-                              child: Text(l10n.playerExternalAddFolder),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: tokens.spacingLg,
-                      ),
-                      child: _buildArtworkStage(
-                        context,
-                        track: track,
-                        appearance: appearance,
-                        tokens: tokens,
-                        thumbCache: thumbCache,
-                        isPlaying: state.isPlaying,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: tokens.spacingLg),
-                    child: Column(
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    appearance.playerLayout ==
-                                        PlayerLayoutVariant.minimal
-                                    ? CrossAxisAlignment.center
-                                    : CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    track.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Text(
+                                    l10n.playerExternalTempBanner,
                                     style: Theme.of(context)
                                         .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                        .bodySmall,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${track.displayArtist} • ${track.displayAlbum}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: tokens.inkMuted),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (!track.isTemporaryExternal &&
-                                appearance.playerLayout !=
-                                    PlayerLayoutVariant.minimal)
-                              IconButton(
-                                tooltip: l10n.actionFavorite,
-                                icon: Icon(
-                                  track.isFavorite
-                                      ? Icons.favorite_rounded
-                                      : Icons.favorite_border_rounded,
-                                  color: track.isFavorite
-                                      ? tokens.accentPrimary
-                                      : tokens.inkMuted,
                                 ),
-                                onPressed: () {
-                                  HapticService.trigger(
-                                    appearance.hapticsIntensity,
-                                  );
-                                  context.read<LibraryCubit>().toggleFavorite(
-                                    track.stableKey,
-                                  );
-                                },
-                              ),
-                          ],
-                        ),
-                        SizedBox(height: tokens.spacingSm),
-                        Directionality(
-                          textDirection: appearance.mirrorTimelineInRtl
-                              ? Directionality.of(context)
-                              : TextDirection.ltr,
-                          child: Column(
-                            children: <Widget>[
-                              WetarSeekBar(
-                                seedKey: track.stableKey,
-                                style: appearance.seekBarStyle,
-                                position: state.position,
-                                duration: track.duration,
-                                isPlaying: state.isPlaying,
-                                abLoop: state.abLoop,
-                                hapticsIntensity: appearance.hapticsIntensity,
-                                onSeek: (d) =>
-                                    context.read<PlayerCubit>().seek(d),
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  Text(
-                                    NumeralFormatter.formatDuration(
-                                      state.position,
-                                      numerals,
-                                    ),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall,
-                                  ),
-                                  Text(
-                                    NumeralFormatter.formatDuration(
-                                      track.duration,
-                                      numerals,
-                                    ),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: tokens.spacingSm),
-                        Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              IconButton(
-                                tooltip: l10n.actionShuffle,
-                                icon: Icon(
-                                  Icons.shuffle_rounded,
-                                  color: state.shuffleEnabled
-                                      ? tokens.accentPrimary
-                                      : tokens.inkMuted,
-                                ),
-                                onPressed: () {
-                                  HapticService.trigger(
-                                    appearance.hapticsIntensity,
-                                  );
-                                  context.read<PlayerCubit>().toggleShuffle();
-                                },
-                              ),
-                              IconButton(
-                                tooltip: l10n.actionPrevious,
-                                iconSize: 34 * tokens.iconScale,
-                                icon: const Icon(Icons.skip_previous_rounded),
-                                onPressed: () {
-                                  HapticService.trigger(
-                                    appearance.hapticsIntensity,
-                                  );
-                                  context.read<PlayerCubit>().previous();
-                                },
-                              ),
-                              SizedBox(
-                                width: 68,
-                                height: 68,
-                                child: FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    shape: const CircleBorder(),
-                                    backgroundColor: tokens.accentPrimary,
-                                    padding: EdgeInsets.zero,
-                                  ),
+                                TextButton(
                                   onPressed: () {
-                                    HapticService.trigger(
-                                      appearance.hapticsIntensity,
-                                      heavy: true,
-                                    );
+                                    final name = track.folderPath
+                                        .split('/')
+                                        .last;
                                     context
-                                        .read<PlayerCubit>()
-                                        .togglePlayPause();
+                                        .read<MusicFoldersCubit>()
+                                        .addFolderPath(
+                                          rootPath: track.folderPath,
+                                          displayName: name.isEmpty
+                                              ? track.folderPath
+                                              : name,
+                                        );
+                                    WetarFeedback.showSuccess(
+                                      context,
+                                      l10n.foldersAddedSuccess(name),
+                                    );
                                   },
-                                  child: Icon(
-                                    state.isPlaying
-                                        ? Icons.pause_rounded
-                                        : Icons.play_arrow_rounded,
-                                    size: 36 * tokens.iconScale,
-                                  ),
+                                  child: Text(l10n.playerExternalAddFolder),
                                 ),
-                              ),
-                              IconButton(
-                                tooltip: l10n.actionNext,
-                                iconSize: 34 * tokens.iconScale,
-                                icon: const Icon(Icons.skip_next_rounded),
-                                onPressed: () {
-                                  HapticService.trigger(
-                                    appearance.hapticsIntensity,
-                                  );
-                                  context.read<PlayerCubit>().next();
-                                },
-                              ),
-                              IconButton(
-                                tooltip: switch (state.repeatMode) {
-                                  WetarRepeatMode.off => l10n.actionRepeatOff,
-                                  WetarRepeatMode.all => l10n.actionRepeatAll,
-                                  WetarRepeatMode.one => l10n.actionRepeatOne,
-                                },
-                                icon: Icon(
-                                  state.repeatMode == WetarRepeatMode.one
-                                      ? Icons.repeat_one_rounded
-                                      : Icons.repeat_rounded,
-                                  color: state.repeatMode != WetarRepeatMode.off
-                                      ? tokens.accentPrimary
-                                      : tokens.inkMuted,
-                                ),
-                                onPressed: () {
-                                  HapticService.trigger(
-                                    appearance.hapticsIntensity,
-                                  );
-                                  context.read<PlayerCubit>().cycleRepeatMode();
-                                },
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                        SizedBox(height: tokens.spacingSm),
-                        _buildSecondaryActionsBar(
-                          context,
-                          appearance: appearance,
-                          track: track,
-                          state: state,
-                          caps: caps,
+                      if (isCompactHeight)
+                        SizedBox(
+                          height: math.max(120.0, constraints.maxHeight * 0.42),
+                          child: artworkStage,
+                        )
+                      else
+                        Expanded(child: artworkStage),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: tokens.spacingLg,
                         ),
-                        SizedBox(height: tokens.spacingMd),
-                      ],
-                    ),
-                  ),
-                ],
+                        child: Column(
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        appearance.playerLayout ==
+                                            PlayerLayoutVariant.minimal
+                                        ? CrossAxisAlignment.center
+                                        : CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        track.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${track.displayArtist} • ${track.displayAlbum}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(color: tokens.inkMuted),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (!track.isTemporaryExternal &&
+                                    appearance.playerLayout !=
+                                        PlayerLayoutVariant.minimal)
+                                  IconButton(
+                                    tooltip: l10n.actionFavorite,
+                                    icon: Icon(
+                                      track.isFavorite
+                                          ? Icons.favorite_rounded
+                                          : Icons.favorite_border_rounded,
+                                      color: track.isFavorite
+                                          ? tokens.accentPrimary
+                                          : tokens.inkMuted,
+                                    ),
+                                    onPressed: () {
+                                      HapticService.trigger(
+                                        appearance.hapticsIntensity,
+                                      );
+                                      context
+                                          .read<LibraryCubit>()
+                                          .toggleFavorite(track.stableKey);
+                                    },
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: tokens.spacingSm),
+                            Directionality(
+                              textDirection: appearance.mirrorTimelineInRtl
+                                  ? Directionality.of(context)
+                                  : TextDirection.ltr,
+                              child: Column(
+                                children: <Widget>[
+                                  WetarSeekBar(
+                                    seedKey: track.stableKey,
+                                    style: appearance.seekBarStyle,
+                                    position: state.position,
+                                    duration: track.duration,
+                                    isPlaying: state.isPlaying,
+                                    abLoop: state.abLoop,
+                                    hapticsIntensity:
+                                        appearance.hapticsIntensity,
+                                    onSeek: (d) =>
+                                        context.read<PlayerCubit>().seek(d),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      Text(
+                                        NumeralFormatter.formatDuration(
+                                          state.position,
+                                          numerals,
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall,
+                                      ),
+                                      Text(
+                                        NumeralFormatter.formatDuration(
+                                          track.duration,
+                                          numerals,
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: tokens.spacingSm),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  IconButton(
+                                    tooltip: l10n.actionShuffle,
+                                    icon: Icon(
+                                      Icons.shuffle_rounded,
+                                      color: state.shuffleEnabled
+                                          ? tokens.accentPrimary
+                                          : tokens.inkMuted,
+                                    ),
+                                    onPressed: () {
+                                      HapticService.trigger(
+                                        appearance.hapticsIntensity,
+                                      );
+                                      context
+                                          .read<PlayerCubit>()
+                                          .toggleShuffle();
+                                    },
+                                  ),
+                                  IconButton(
+                                    tooltip: l10n.actionPrevious,
+                                    iconSize: 34 * tokens.iconScale,
+                                    icon: const Icon(
+                                      Icons.skip_previous_rounded,
+                                    ),
+                                    onPressed: () {
+                                      HapticService.trigger(
+                                        appearance.hapticsIntensity,
+                                      );
+                                      context.read<PlayerCubit>().previous();
+                                    },
+                                  ),
+                                  SizedBox(
+                                    width: 68,
+                                    height: 68,
+                                    child: FilledButton(
+                                      style: FilledButton.styleFrom(
+                                        shape: const CircleBorder(),
+                                        backgroundColor: tokens.accentPrimary,
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      onPressed: () {
+                                        HapticService.trigger(
+                                          appearance.hapticsIntensity,
+                                          heavy: true,
+                                        );
+                                        context
+                                            .read<PlayerCubit>()
+                                            .togglePlayPause();
+                                      },
+                                      child: Icon(
+                                        state.isPlaying
+                                            ? Icons.pause_rounded
+                                            : Icons.play_arrow_rounded,
+                                        size: 36 * tokens.iconScale,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: l10n.actionNext,
+                                    iconSize: 34 * tokens.iconScale,
+                                    icon: const Icon(Icons.skip_next_rounded),
+                                    onPressed: () {
+                                      HapticService.trigger(
+                                        appearance.hapticsIntensity,
+                                      );
+                                      context.read<PlayerCubit>().next();
+                                    },
+                                  ),
+                                  IconButton(
+                                    tooltip: switch (state.repeatMode) {
+                                      WetarRepeatMode.off =>
+                                        l10n.actionRepeatOff,
+                                      WetarRepeatMode.all =>
+                                        l10n.actionRepeatAll,
+                                      WetarRepeatMode.one =>
+                                        l10n.actionRepeatOne,
+                                    },
+                                    icon: Icon(
+                                      state.repeatMode == WetarRepeatMode.one
+                                          ? Icons.repeat_one_rounded
+                                          : Icons.repeat_rounded,
+                                      color:
+                                          state.repeatMode !=
+                                              WetarRepeatMode.off
+                                          ? tokens.accentPrimary
+                                          : tokens.inkMuted,
+                                    ),
+                                    onPressed: () {
+                                      HapticService.trigger(
+                                        appearance.hapticsIntensity,
+                                      );
+                                      context
+                                          .read<PlayerCubit>()
+                                          .cycleRepeatMode();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: tokens.spacingSm),
+                            _buildSecondaryActionsBar(
+                              context,
+                              appearance: appearance,
+                              track: track,
+                              state: state,
+                              caps: caps,
+                            ),
+                            SizedBox(height: tokens.spacingMd),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                  return isCompactHeight
+                      ? SingleChildScrollView(child: columnContent)
+                      : columnContent;
+                },
               ),
             ),
           ),
@@ -754,11 +815,31 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       child: Center(
         child: LayoutBuilder(
           builder: (context, box) {
-            final maxSize = math.min(box.maxWidth, box.maxHeight);
-            final artSize =
+            final framePadW =
+                appearance.playerLayout == PlayerLayoutVariant.oudStrings
+                ? 40.0
+                : (appearance.playerLayout == PlayerLayoutVariant.classicCard
+                      ? tokens.spacingMd * 2 + 4
+                      : 0.0);
+            final framePadH =
+                appearance.playerLayout == PlayerLayoutVariant.oudStrings
+                ? 26.0
+                : (appearance.playerLayout == PlayerLayoutVariant.classicCard
+                      ? tokens.spacingMd * 2 + 4
+                      : 0.0);
+            final availW = math.max(0.0, box.maxWidth - framePadW);
+            final availH = math.max(0.0, box.maxHeight - framePadH);
+            final rawMax = math.min(availW, availH);
+            if (rawMax <= 0) {
+              return const SizedBox.shrink();
+            }
+            final target =
                 appearance.playerLayout == PlayerLayoutVariant.immersiveBleed
-                ? maxSize.clamp(200.0, 380.0)
-                : (maxSize * 0.86).clamp(170.0, 320.0);
+                ? rawMax
+                : rawMax * 0.88;
+            final artSize = target
+                .clamp(math.min(64.0, rawMax), 360.0)
+                .toDouble();
 
             Widget artwork = Hero(
               tag: 'wetar_artwork_${track.stableKey}',

@@ -1,13 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-
-import '../../../../core/di/service_locator.dart';
-import '../../../../core/widgets/wetar_artwork_image.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../personalization/domain/appearance_settings.dart';
-import '../../../personalization/presentation/bloc/personalization_cubit.dart';
-import '../../../personalization/presentation/theme/wetar_tokens.dart';
-import '../bloc/player_cubit.dart';
+import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/core/widgets/wetar_artwork_image.dart';
+import 'package:wetar/features/personalization/domain/appearance_settings.dart';
+import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
+import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
+import 'package:wetar/l10n/app_localizations.dart';
 
 /// Persistent Mini Player anchored above navigation with Hero artwork transition.
 class WetarMiniPlayer extends StatelessWidget {

@@ -398,9 +398,8 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> reorderQueue(int oldIndex, int newIndex) async {
     final list = List<WetarTrack>.from(_queueTracksSubject.value);
     if (oldIndex < 0 || oldIndex >= list.length) return;
-    var targetIndex = newIndex;
-    if (targetIndex > oldIndex) targetIndex -= 1;
-    targetIndex = targetIndex.clamp(0, list.length - 1);
+    final targetIndex = newIndex.clamp(0, list.length - 1);
+    if (targetIndex == oldIndex) return;
     final moved = list.removeAt(oldIndex);
     list.insert(targetIndex, moved);
     _queueTracksSubject.add(List<WetarTrack>.unmodifiable(list));

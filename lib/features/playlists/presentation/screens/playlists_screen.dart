@@ -441,6 +441,10 @@ class _PlaylistTracksViewState extends State<_PlaylistTracksView> {
     final tokens = context.wetarTokens;
     final numerals = context.select((SettingsCubit c) => c.state.numeralStyle);
     final thumbCache = sl<ThumbnailPathCache>();
+    final textScale = MediaQuery.textScalerOf(context).scale(14.0) / 14.0;
+    final effectiveExtent = textScale > 1.2
+        ? tokens.listRowExtent * (textScale * 0.72).clamp(1.0, 1.55)
+        : tokens.listRowExtent;
 
     return Scaffold(
       appBar: AppBar(
@@ -462,7 +466,7 @@ class _PlaylistTracksViewState extends State<_PlaylistTracksView> {
           ? Center(child: Text(l10n.libraryFilteredEmpty))
           : widget.playlistId == null
           ? ListView.builder(
-              itemExtent: tokens.listRowExtent,
+              itemExtent: effectiveExtent,
               itemCount: _tracks.length,
               itemBuilder: (ctx, i) => TrackListTile(
                 track: _tracks[i],
@@ -478,12 +482,14 @@ class _PlaylistTracksViewState extends State<_PlaylistTracksView> {
               ),
             )
           : ReorderableListView.builder(
-              itemExtent: tokens.listRowExtent,
+              itemExtent: effectiveExtent,
               itemCount: _tracks.length,
               onReorderItem: (oldIndex, newIndex) async {
+                if (oldIndex < 0 || oldIndex >= _tracks.length) return;
                 setState(() {
                   final moved = _tracks.removeAt(oldIndex);
-                  _tracks.insert(newIndex, moved);
+                  final safeNew = newIndex.clamp(0, _tracks.length);
+                  _tracks.insert(safeNew, moved);
                 });
                 await context.read<PlaylistsCubit>().reorderTracks(
                   widget.playlistId!,
@@ -503,19 +509,22 @@ class _PlaylistTracksViewState extends State<_PlaylistTracksView> {
                       removed.stableKey,
                     );
                   },
-                  child: TrackListTile(
-                    track: t,
-                    isPlayingTrack: false,
-                    showArtwork: true,
-                    numeralStyle: numerals,
-                    thumbnailCache: thumbCache,
-                    onTap: () => context.read<PlayerCubit>().playTracks(
-                      _tracks,
-                      index: i,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: TrackListTile(
+                      track: t,
+                      isPlayingTrack: false,
+                      showArtwork: true,
+                      numeralStyle: numerals,
+                      thumbnailCache: thumbCache,
+                      onTap: () => context.read<PlayerCubit>().playTracks(
+                        _tracks,
+                        index: i,
+                      ),
+                      onMorePressed: widget.onOpenTrackDetails == null
+                          ? null
+                          : () => widget.onOpenTrackDetails!(t),
                     ),
-                    onMorePressed: widget.onOpenTrackDetails == null
-                        ? null
-                        : () => widget.onOpenTrackDetails!(t),
                   ),
                 );
               },

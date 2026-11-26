@@ -147,6 +147,7 @@ class QueuePanel extends StatelessWidget {
               child: state.queue.isEmpty
                   ? Center(child: Text(l10n.queueEmpty))
                   : ReorderableListView.builder(
+                      buildDefaultDragHandles: false,
                       itemCount: state.queue.length,
                       onReorderItem: (oldIndex, newIndex) {
                         unawaited(
@@ -172,37 +173,47 @@ class QueuePanel extends StatelessWidget {
                               onUndo: () => player.playNext(track),
                             );
                           },
-                          child: ListTile(
-                            leading: WetarArtworkImage(
-                              cacheKey: track.albumKey,
-                              size: 42,
-                              artworkUri: track.artworkUri,
-                              filePath: track.filePath,
-                              customArtPath: track.customArtPath,
-                              thumbnailCache: thumbCache,
-                              decodeSizePx: 128,
-                            ),
-                            title: Text(
-                              track.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: active
-                                    ? tokens.accentPrimary
-                                    : tokens.inkPrimary,
-                                fontWeight: active
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              leading: WetarArtworkImage(
+                                cacheKey: track.albumKey,
+                                size: 42,
+                                artworkUri: track.artworkUri,
+                                filePath: track.filePath,
+                                customArtPath: track.customArtPath,
+                                thumbnailCache: thumbCache,
+                                decodeSizePx: 128,
                               ),
+                              title: Text(
+                                track.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: active
+                                      ? tokens.accentPrimary
+                                      : tokens.inkPrimary,
+                                  fontWeight: active
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                              subtitle: Text(
+                                track.displayArtist,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: ReorderableDragStartListener(
+                                index: i,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(Icons.drag_handle_rounded),
+                                ),
+                              ),
+                              onTap: () => context
+                                  .read<PlayerCubit>()
+                                  .skipToQueueIndex(i),
                             ),
-                            subtitle: Text(
-                              track.displayArtist,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: const Icon(Icons.drag_handle_rounded),
-                            onTap: () =>
-                                context.read<PlayerCubit>().skipToQueueIndex(i),
                           ),
                         );
                       },

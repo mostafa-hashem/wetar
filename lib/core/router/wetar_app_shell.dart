@@ -98,6 +98,7 @@ class _WetarAppShellState extends State<WetarAppShell> {
   int _navIndex = 0;
   bool _initialTabApplied = false;
   bool _isCompactWindow = false;
+  bool _isNowPlayingOpen = false;
   _DesktopRightPane _rightPane = _DesktopRightPane.none;
   String? _lastPaletteAlbumKey;
   StreamSubscription<PlatformIncomingEvent>? _eventsSub;
@@ -281,19 +282,25 @@ class _WetarAppShellState extends State<WetarAppShell> {
   }
 
   void _openNowPlaying() {
+    if (_isNowPlayingOpen) return;
+    _isNowPlayingOpen = true;
     unawaited(
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (ctx) => NowPlayingScreen(
-            onOpenQueue: () => showWetarQueueSheet(ctx),
-            onOpenLyrics: _openLyrics,
-            onOpenEqualizer: _openEqualizer,
-            onOpenCarMode: _openCarMode,
-            onOpenTrackDetails: _openTrackDetails,
-            onShareTrack: (track) => showShareTrackCardSheet(ctx, track),
-          ),
-        ),
-      ),
+      Navigator.of(context)
+          .push(
+            MaterialPageRoute<void>(
+              builder: (ctx) => NowPlayingScreen(
+                onOpenQueue: () => showWetarQueueSheet(ctx),
+                onOpenLyrics: _openLyrics,
+                onOpenEqualizer: _openEqualizer,
+                onOpenCarMode: _openCarMode,
+                onOpenTrackDetails: _openTrackDetails,
+                onShareTrack: (track) => showShareTrackCardSheet(ctx, track),
+              ),
+            ),
+          )
+          .whenComplete(() {
+            if (mounted) _isNowPlayingOpen = false;
+          }),
     );
   }
 

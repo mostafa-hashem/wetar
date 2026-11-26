@@ -1,15 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-
-import '../../../../core/capabilities/platform_capabilities.dart';
-import '../../../../core/di/service_locator.dart';
-import '../../../../core/platform/platform_interfaces.dart';
-import '../../../../core/utils/numeral_formatter.dart';
-import '../../../../core/widgets/wetar_feedback.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../personalization/presentation/theme/wetar_tokens.dart';
-import '../../../settings/presentation/bloc/settings_cubit.dart';
-import '../bloc/music_folders_cubit.dart';
+import 'package:wetar/core/capabilities/platform_capabilities.dart';
+import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/core/platform/platform_interfaces.dart';
+import 'package:wetar/core/utils/numeral_formatter.dart';
+import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
+import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:wetar/l10n/app_localizations.dart';
 
 /// In-app audio folder picker grouped by volume with live track totals,
 /// search filter, select all/clear, and manual SAF picker entry point.
@@ -174,7 +173,7 @@ class _FolderPickerScreenState extends State<FolderPickerScreen> {
                     ? const Center(child: CircularProgressIndicator())
                     : !state.permissions.audioGranted
                     ? Center(
-                        child: Padding(
+                        child: SingleChildScrollView(
                           padding: EdgeInsets.all(tokens.spacingLg),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -234,6 +233,7 @@ class _FolderPickerScreenState extends State<FolderPickerScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
                                     Directionality(

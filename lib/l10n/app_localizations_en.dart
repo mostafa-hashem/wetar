@@ -864,7 +864,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalizationArtShape => 'Artwork shape';
 
   @override
+  String get personalizationArtRoundedSquare => 'Rounded Square';
+
+  @override
+  String get personalizationArtSquircle => 'Squircle';
+
+  @override
+  String get personalizationArtCircle => 'Circle';
+
+  @override
   String get personalizationSeekBarStyle => 'Seek bar style';
+
+  @override
+  String get personalizationSeekStringWaveform => 'Oud String Waveform';
+
+  @override
+  String get personalizationSeekStylizedBars => 'Stylized Bars';
+
+  @override
+  String get personalizationSeekThinLine => 'Thin Line';
+
+  @override
+  String get personalizationSeekThickPill => 'Thick Pill';
 
   @override
   String get personalizationMiniPlayerStyle => 'Mini player style';
@@ -939,10 +960,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalizationMotionIntensity => 'Animation intensity';
 
   @override
+  String get personalizationMotionOff => 'Off';
+
+  @override
+  String get personalizationMotionReduced => 'Reduced';
+
+  @override
+  String get personalizationMotionBalanced => 'Balanced';
+
+  @override
+  String get personalizationMotionExpressive => 'Expressive';
+
+  @override
   String get personalizationHapticsIntensity => 'Haptic intensity';
 
   @override
+  String get personalizationHapticsOff => 'Off';
+
+  @override
+  String get personalizationHapticsLight => 'Light';
+
+  @override
+  String get personalizationHapticsMedium => 'Medium';
+
+  @override
+  String get personalizationHapticsStrong => 'Strong';
+
+  @override
   String get personalizationListDensity => 'List density';
+
+  @override
+  String get personalizationDensityCompact => 'Compact';
+
+  @override
+  String get personalizationDensityComfortable => 'Comfortable';
+
+  @override
+  String get personalizationDensitySpacious => 'Spacious';
 
   @override
   String get personalizationGridColumns => 'Grid columns';

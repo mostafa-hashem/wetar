@@ -1,29 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/platform/platform_interfaces.dart';
-
-import '../../../../core/utils/arabic_normalizer.dart';
-import '../../../../core/utils/numeral_formatter.dart';
-import '../../../../core/widgets/wetar_artwork_image.dart';
-import '../../../../core/widgets/wetar_feedback.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../music_folders/presentation/bloc/music_folders_cubit.dart';
-import '../../../music_folders/presentation/screens/folder_picker_screen.dart';
-import '../../../personalization/domain/appearance_settings.dart';
-import '../../../personalization/presentation/bloc/personalization_cubit.dart';
-import '../../../personalization/presentation/theme/wetar_tokens.dart';
-import '../../../player/presentation/bloc/player_cubit.dart';
-import '../../../playlists/presentation/screens/playlists_screen.dart';
-import '../../../settings/presentation/bloc/settings_cubit.dart';
-import '../../data/library_repository.dart';
-import '../../domain/library_models.dart';
-import '../bloc/library_cubit.dart';
-import '../widgets/track_list_tile.dart';
-import '../widgets/wetar_fast_scrollbar.dart';
-import 'search_screen.dart';
+import 'package:wetar/core/utils/arabic_normalizer.dart';
+import 'package:wetar/core/utils/numeral_formatter.dart';
+import 'package:wetar/core/widgets/wetar_artwork_image.dart';
+import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/features/library/data/library_repository.dart';
+import 'package:wetar/features/library/domain/library_models.dart';
+import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
+import 'package:wetar/features/library/presentation/screens/search_screen.dart';
+import 'package:wetar/features/library/presentation/widgets/track_list_tile.dart';
+import 'package:wetar/features/library/presentation/widgets/wetar_fast_scrollbar.dart';
+import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
+import 'package:wetar/features/music_folders/presentation/screens/folder_picker_screen.dart';
+import 'package:wetar/features/personalization/domain/appearance_settings.dart';
+import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
+import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
+import 'package:wetar/features/playlists/presentation/screens/playlists_screen.dart';
+import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:wetar/l10n/app_localizations.dart';
 
 /// Multi-facet folder-scoped music library supporting List & Grid views,
 /// fixed-extent lazy scrolling, fast alphabet rail, sort, and multi-select.
@@ -543,6 +541,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final appearance = context.read<PersonalizationCubit>().state.settings;
     final numerals = context.read<SettingsCubit>().state.numeralStyle;
     final thumbCache = sl<ThumbnailPathCache>();
+    final textScale = MediaQuery.textScalerOf(context).scale(14.0) / 14.0;
+    final effectiveExtent = textScale > 1.2
+        ? tokens.listRowExtent * (textScale * 0.72).clamp(1.0, 1.55)
+        : tokens.listRowExtent;
 
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -558,7 +560,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ],
           ),
           body: ListView.builder(
-            itemExtent: tokens.listRowExtent,
+            itemExtent: effectiveExtent,
             itemCount: tracks.length,
             itemBuilder: (ctx, i) {
               final track = tracks[i];
@@ -711,7 +713,7 @@ class _EmptyNoFoldersView extends StatelessWidget {
     final tokens = context.wetarTokens;
     final caps = sl<PlatformCapabilities>();
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.all(tokens.spacingLg),
         child: Column(
           mainAxisSize: MainAxisSize.min,

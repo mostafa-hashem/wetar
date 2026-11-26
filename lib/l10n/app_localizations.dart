@@ -1646,11 +1646,53 @@ abstract class AppLocalizations {
   /// **'Artwork shape'**
   String get personalizationArtShape;
 
+  /// No description provided for @personalizationArtRoundedSquare.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded Square'**
+  String get personalizationArtRoundedSquare;
+
+  /// No description provided for @personalizationArtSquircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Squircle'**
+  String get personalizationArtSquircle;
+
+  /// No description provided for @personalizationArtCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Circle'**
+  String get personalizationArtCircle;
+
   /// No description provided for @personalizationSeekBarStyle.
   ///
   /// In en, this message translates to:
   /// **'Seek bar style'**
   String get personalizationSeekBarStyle;
+
+  /// No description provided for @personalizationSeekStringWaveform.
+  ///
+  /// In en, this message translates to:
+  /// **'Oud String Waveform'**
+  String get personalizationSeekStringWaveform;
+
+  /// No description provided for @personalizationSeekStylizedBars.
+  ///
+  /// In en, this message translates to:
+  /// **'Stylized Bars'**
+  String get personalizationSeekStylizedBars;
+
+  /// No description provided for @personalizationSeekThinLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Thin Line'**
+  String get personalizationSeekThinLine;
+
+  /// No description provided for @personalizationSeekThickPill.
+  ///
+  /// In en, this message translates to:
+  /// **'Thick Pill'**
+  String get personalizationSeekThickPill;
 
   /// No description provided for @personalizationMiniPlayerStyle.
   ///
@@ -1796,17 +1838,83 @@ abstract class AppLocalizations {
   /// **'Animation intensity'**
   String get personalizationMotionIntensity;
 
+  /// No description provided for @personalizationMotionOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get personalizationMotionOff;
+
+  /// No description provided for @personalizationMotionReduced.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduced'**
+  String get personalizationMotionReduced;
+
+  /// No description provided for @personalizationMotionBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get personalizationMotionBalanced;
+
+  /// No description provided for @personalizationMotionExpressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Expressive'**
+  String get personalizationMotionExpressive;
+
   /// No description provided for @personalizationHapticsIntensity.
   ///
   /// In en, this message translates to:
   /// **'Haptic intensity'**
   String get personalizationHapticsIntensity;
 
+  /// No description provided for @personalizationHapticsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get personalizationHapticsOff;
+
+  /// No description provided for @personalizationHapticsLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get personalizationHapticsLight;
+
+  /// No description provided for @personalizationHapticsMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get personalizationHapticsMedium;
+
+  /// No description provided for @personalizationHapticsStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get personalizationHapticsStrong;
+
   /// No description provided for @personalizationListDensity.
   ///
   /// In en, this message translates to:
   /// **'List density'**
   String get personalizationListDensity;
+
+  /// No description provided for @personalizationDensityCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get personalizationDensityCompact;
+
+  /// No description provided for @personalizationDensityComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get personalizationDensityComfortable;
+
+  /// No description provided for @personalizationDensitySpacious.
+  ///
+  /// In en, this message translates to:
+  /// **'Spacious'**
+  String get personalizationDensitySpacious;
 
   /// No description provided for @personalizationGridColumns.
   ///

@@ -1,15 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-
-import '../../../../core/di/service_locator.dart';
-import '../../../../core/widgets/wetar_artwork_image.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../personalization/presentation/theme/wetar_tokens.dart';
-import '../../../player/presentation/bloc/player_cubit.dart';
-import '../../../settings/presentation/bloc/settings_cubit.dart';
-import '../../domain/library_models.dart';
-import '../bloc/search_cubit.dart';
-import '../widgets/track_list_tile.dart';
+import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/core/widgets/wetar_artwork_image.dart';
+import 'package:wetar/features/library/domain/library_models.dart';
+import 'package:wetar/features/library/presentation/bloc/search_cubit.dart';
+import 'package:wetar/features/library/presentation/widgets/track_list_tile.dart';
+import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
+import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:wetar/l10n/app_localizations.dart';
 
 /// Instant bilingual search screen with Arabic tashkeel/letter normalization,
 /// filter chips, and persisted recent search queries.

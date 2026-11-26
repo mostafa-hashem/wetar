@@ -23,7 +23,7 @@ void showShareTrackCardSheet(BuildContext context, WetarTrack track) {
     context: context,
     isScrollControlled: true,
     builder: (ctx) => SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.all(tokens.spacingMd),
         child: Column(
           mainAxisSize: MainAxisSize.min,

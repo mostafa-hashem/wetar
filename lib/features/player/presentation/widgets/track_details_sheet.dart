@@ -25,7 +25,7 @@ void showTrackDetailsSheet(
     context: context,
     isScrollControlled: true,
     builder: (ctx) => SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.all(tokens.spacingMd),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -182,7 +182,15 @@ class _DetailRow extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall
                 ?.copyWith(color: tokens.inkMuted),
           ),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          SizedBox(width: tokens.spacingMd),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
         ],
       ),
     );

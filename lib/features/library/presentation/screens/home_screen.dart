@@ -88,6 +88,7 @@ class HomeScreen extends StatelessWidget {
             ),
             if (foldersState.selectedFolders.isEmpty)
               SliverFillRemaining(
+                hasScrollBody: false,
                 child: Center(
                   child: Padding(
                     padding: EdgeInsets.all(tokens.spacingLg),

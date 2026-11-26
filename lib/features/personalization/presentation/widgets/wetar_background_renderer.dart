@@ -90,7 +90,7 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
     }
 
     if (!shouldRender) {
-      return ColoredBox(color: tokens.canvas, child: widget.child);
+      return Material(color: tokens.canvas, child: widget.child);
     }
 
     return Stack(
@@ -114,7 +114,7 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
               ),
             ),
           ),
-        widget.child,
+        Material(type: MaterialType.transparency, child: widget.child),
       ],
     );
   }

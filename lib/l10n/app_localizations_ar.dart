@@ -874,7 +874,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get personalizationArtShape => 'شكل الغلاف';
 
   @override
+  String get personalizationArtRoundedSquare => 'مربع بحواف ناعمة';
+
+  @override
+  String get personalizationArtSquircle => 'منحني فائق';
+
+  @override
+  String get personalizationArtCircle => 'دائري';
+
+  @override
   String get personalizationSeekBarStyle => 'نمط شريط التقدم';
+
+  @override
+  String get personalizationSeekStringWaveform => 'موجة وتر العود';
+
+  @override
+  String get personalizationSeekStylizedBars => 'أعمدة متدرجة';
+
+  @override
+  String get personalizationSeekThinLine => 'خط رفيع';
+
+  @override
+  String get personalizationSeekThickPill => 'شريط عريض';
 
   @override
   String get personalizationMiniPlayerStyle => 'نمط المشغل المصغر';
@@ -949,10 +970,43 @@ class AppLocalizationsAr extends AppLocalizations {
   String get personalizationMotionIntensity => 'شدة الحركة';
 
   @override
+  String get personalizationMotionOff => 'متوقفة';
+
+  @override
+  String get personalizationMotionReduced => 'خفيفة';
+
+  @override
+  String get personalizationMotionBalanced => 'متوازنة';
+
+  @override
+  String get personalizationMotionExpressive => 'غنية';
+
+  @override
   String get personalizationHapticsIntensity => 'شدة الاهتزاز';
 
   @override
+  String get personalizationHapticsOff => 'متوقف';
+
+  @override
+  String get personalizationHapticsLight => 'خفيف';
+
+  @override
+  String get personalizationHapticsMedium => 'متوسط';
+
+  @override
+  String get personalizationHapticsStrong => 'قوي';
+
+  @override
   String get personalizationListDensity => 'كثافة القوائم';
+
+  @override
+  String get personalizationDensityCompact => 'مضغوطة';
+
+  @override
+  String get personalizationDensityComfortable => 'مريحة';
+
+  @override
+  String get personalizationDensitySpacious => 'واسعة';
 
   @override
   String get personalizationGridColumns => 'أعمدة الشبكة';

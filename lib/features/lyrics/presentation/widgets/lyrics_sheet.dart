@@ -137,7 +137,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
                         child: Slider(
                           min: 14,
                           max: 30,
-                          value: lyricsState.fontSize,
+                          value: lyricsState.fontSize.clamp(14.0, 30.0),
                           onChanged: (v) =>
                               context.read<LyricsCubit>().setFontSize(v),
                         ),
@@ -150,7 +150,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
                       ? const Center(child: CircularProgressIndicator())
                       : lyricsState.parsed.lines.isEmpty
                       ? Center(
-                          child: Padding(
+                          child: SingleChildScrollView(
                             padding: EdgeInsets.all(tokens.spacingLg),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,

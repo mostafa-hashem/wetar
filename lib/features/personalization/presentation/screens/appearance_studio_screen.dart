@@ -85,7 +85,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                   Slider(
                     min: 0,
                     max: 360,
-                    value: hsv.hue,
+                    value: hsv.hue.clamp(0.0, 360.0),
                     onChanged: (v) {
                       setDialogState(() {
                         hsv = hsv.withHue(v);
@@ -259,6 +259,55 @@ class AppearanceStudioScreen extends StatelessWidget {
       HomeBlockKind.mostPlayed => l10n.homeMostPlayed,
       HomeBlockKind.folders => l10n.homeYourFolders,
       HomeBlockKind.playlists => l10n.homeYourPlaylists,
+    };
+  }
+
+  String _seekBarStyleLabel(AppLocalizations l10n, SeekBarStyle style) {
+    return switch (style) {
+      SeekBarStyle.stringWaveform => l10n.personalizationSeekStringWaveform,
+      SeekBarStyle.stylizedBars => l10n.personalizationSeekStylizedBars,
+      SeekBarStyle.thinLine => l10n.personalizationSeekThinLine,
+      SeekBarStyle.thickPill => l10n.personalizationSeekThickPill,
+    };
+  }
+
+  String _artworkShapeLabel(AppLocalizations l10n, ArtworkShapeStyle shape) {
+    return switch (shape) {
+      ArtworkShapeStyle.roundedSquare => l10n.personalizationArtRoundedSquare,
+      ArtworkShapeStyle.squircle => l10n.personalizationArtSquircle,
+      ArtworkShapeStyle.circle => l10n.personalizationArtCircle,
+    };
+  }
+
+  String _listDensityLabel(AppLocalizations l10n, ListDensity density) {
+    return switch (density) {
+      ListDensity.compact => l10n.personalizationDensityCompact,
+      ListDensity.comfortable => l10n.personalizationDensityComfortable,
+      ListDensity.spacious => l10n.personalizationDensitySpacious,
+    };
+  }
+
+  String _motionIntensityLabel(
+    AppLocalizations l10n,
+    MotionIntensity intensity,
+  ) {
+    return switch (intensity) {
+      MotionIntensity.off => l10n.personalizationMotionOff,
+      MotionIntensity.reduced => l10n.personalizationMotionReduced,
+      MotionIntensity.balanced => l10n.personalizationMotionBalanced,
+      MotionIntensity.expressive => l10n.personalizationMotionExpressive,
+    };
+  }
+
+  String _hapticsIntensityLabel(
+    AppLocalizations l10n,
+    HapticsIntensity intensity,
+  ) {
+    return switch (intensity) {
+      HapticsIntensity.off => l10n.personalizationHapticsOff,
+      HapticsIntensity.light => l10n.personalizationHapticsLight,
+      HapticsIntensity.medium => l10n.personalizationHapticsMedium,
+      HapticsIntensity.strong => l10n.personalizationHapticsStrong,
     };
   }
 
@@ -519,7 +568,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ListTile(
                       title: Text(l10n.personalizationSurfaceTint),
                       subtitle: Slider(
-                        value: s.surfaceTintIntensity,
+                        value: s.surfaceTintIntensity.clamp(0.0, 1.0),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(surfaceTintIntensity: v),
                         ),
@@ -530,7 +579,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                       subtitle: Slider(
                         min: 0.75,
                         max: 1.25,
-                        value: s.textEmphasis,
+                        value: s.textEmphasis.clamp(0.75, 1.25),
                         onChanged: (v) =>
                             cubit.updateSettings(s.copyWith(textEmphasis: v)),
                       ),
@@ -631,7 +680,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                         min: 0.85,
                         max: 1.35,
                         divisions: 10,
-                        value: s.fontScale,
+                        value: s.fontScale.clamp(0.85, 1.35),
                         onChanged: (v) =>
                             cubit.updateSettings(s.copyWith(fontScale: v)),
                       ),
@@ -642,7 +691,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                         min: -1,
                         max: 2,
                         divisions: 3,
-                        value: s.fontWeightStep.toDouble(),
+                        value: s.fontWeightStep.toDouble().clamp(-1.0, 2.0),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(fontWeightStep: v.round()),
                         ),
@@ -739,8 +788,10 @@ class AppearanceStudioScreen extends StatelessWidget {
                       value: s.seekBarStyle,
                       items: SeekBarStyle.values
                           .map(
-                            (e) =>
-                                DropdownMenuItem(value: e, child: Text(e.name)),
+                            (e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(_seekBarStyleLabel(l10n, e)),
+                            ),
                           )
                           .toList(),
                       onChanged: (v) {
@@ -754,8 +805,10 @@ class AppearanceStudioScreen extends StatelessWidget {
                       value: s.artworkShape,
                       items: ArtworkShapeStyle.values
                           .map(
-                            (e) =>
-                                DropdownMenuItem(value: e, child: Text(e.name)),
+                            (e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(_artworkShapeLabel(l10n, e)),
+                            ),
                           )
                           .toList(),
                       onChanged: (v) {
@@ -769,7 +822,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                       subtitle: Slider(
                         min: 4,
                         max: 40,
-                        value: s.artworkCornerRadius,
+                        value: s.artworkCornerRadius.clamp(4.0, 40.0),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(artworkCornerRadius: v),
                         ),
@@ -777,21 +830,32 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ),
                     WetarStackedControlTile(
                       title: l10n.personalizationMiniPlayerStyle,
-                      child: SegmentedButton<MiniPlayerStyle>(
-                        segments: <ButtonSegment<MiniPlayerStyle>>[
-                          ButtonSegment(
-                            value: MiniPlayerStyle.floatingPill,
-                            label: Text(l10n.personalizationMiniPlayerFloating),
-                          ),
-                          ButtonSegment(
-                            value: MiniPlayerStyle.dockedBar,
-                            label: Text(l10n.personalizationMiniPlayerDocked),
-                          ),
-                        ],
-                        selected: <MiniPlayerStyle>{s.miniPlayerStyle},
-                        onSelectionChanged: (set) => cubit.updateSettings(
-                          s.copyWith(miniPlayerStyle: set.first),
-                        ),
+                      child: Wrap(
+                        spacing: tokens.spacingSm,
+                        runSpacing: tokens.spacingSm,
+                        children:
+                            <(MiniPlayerStyle, String)>[
+                                  (
+                                    MiniPlayerStyle.floatingPill,
+                                    l10n.personalizationMiniPlayerFloating,
+                                  ),
+                                  (
+                                    MiniPlayerStyle.dockedBar,
+                                    l10n.personalizationMiniPlayerDocked,
+                                  ),
+                                ]
+                                .map(
+                                  (item) => ChoiceChip(
+                                    label: Text(item.$2),
+                                    selected: s.miniPlayerStyle == item.$1,
+                                    selectedColor: tokens.accentPrimary
+                                        .withValues(alpha: 0.22),
+                                    onSelected: (_) => cubit.updateSettings(
+                                      s.copyWith(miniPlayerStyle: item.$1),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                       ),
                     ),
                     Align(
@@ -903,7 +967,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                       subtitle: Slider(
                         min: 0,
                         max: 48,
-                        value: s.backgroundBlur,
+                        value: s.backgroundBlur.clamp(0.0, 48.0),
                         onChanged: (v) =>
                             cubit.updateSettings(s.copyWith(backgroundBlur: v)),
                       ),
@@ -913,7 +977,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                       subtitle: Slider(
                         min: 0,
                         max: 0.85,
-                        value: s.backgroundDim,
+                        value: s.backgroundDim.clamp(0.0, 0.85),
                         onChanged: (v) =>
                             cubit.updateSettings(s.copyWith(backgroundDim: v)),
                       ),
@@ -923,7 +987,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                       subtitle: Slider(
                         min: 0.4,
                         max: 1.6,
-                        value: s.backgroundSaturation,
+                        value: s.backgroundSaturation.clamp(0.4, 1.6),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(backgroundSaturation: v),
                         ),
@@ -946,17 +1010,23 @@ class AppearanceStudioScreen extends StatelessWidget {
                   children: <Widget>[
                     WetarStackedControlTile(
                       title: l10n.personalizationListDensity,
-                      child: SegmentedButton<ListDensity>(
-                        segments: ListDensity.values
+                      child: Wrap(
+                        spacing: tokens.spacingSm,
+                        runSpacing: tokens.spacingSm,
+                        children: ListDensity.values
                             .map(
-                              (d) =>
-                                  ButtonSegment(value: d, label: Text(d.name)),
+                              (d) => ChoiceChip(
+                                label: Text(_listDensityLabel(l10n, d)),
+                                selected: s.listDensity == d,
+                                selectedColor: tokens.accentPrimary.withValues(
+                                  alpha: 0.22,
+                                ),
+                                onSelected: (_) => cubit.updateSettings(
+                                  s.copyWith(listDensity: d),
+                                ),
+                              ),
                             )
                             .toList(),
-                        selected: <ListDensity>{s.listDensity},
-                        onSelectionChanged: (set) => cubit.updateSettings(
-                          s.copyWith(listDensity: set.first),
-                        ),
                       ),
                     ),
                     WetarStackedControlTile(
@@ -967,7 +1037,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                           ButtonSegment(value: 3, label: Text('3')),
                           ButtonSegment(value: 4, label: Text('4')),
                         ],
-                        selected: <int>{s.gridColumns},
+                        selected: <int>{s.gridColumns.clamp(2, 4)},
                         onSelectionChanged: (set) => cubit.updateSettings(
                           s.copyWith(gridColumns: set.first),
                         ),
@@ -991,37 +1061,54 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ),
                     ReorderableListView(
                       shrinkWrap: true,
+                      buildDefaultDragHandles: false,
                       physics: const NeverScrollableScrollPhysics(),
                       onReorderItem: (oldIndex, newIndex) {
                         final list = List<HomeBlockKind>.from(
                           s.homeBlocksOrder,
                         );
+                        if (oldIndex < 0 || oldIndex >= list.length) return;
                         final moved = list.removeAt(oldIndex);
-                        list.insert(newIndex, moved);
+                        final safeNew = newIndex.clamp(0, list.length);
+                        list.insert(safeNew, moved);
                         cubit.updateSettings(s.copyWith(homeBlocksOrder: list));
                       },
-                      children: s.homeBlocksOrder.map((block) {
-                        final hidden = s.hiddenHomeBlocks.contains(block);
-                        return CheckboxListTile(
-                          key: ValueKey<HomeBlockKind>(block),
-                          value: !hidden,
-                          title: Text(_homeBlockLabel(l10n, block)),
-                          secondary: const Icon(Icons.drag_handle_rounded),
-                          onChanged: (show) {
-                            final next = Set<HomeBlockKind>.from(
-                              s.hiddenHomeBlocks,
-                            );
-                            if (show == true) {
-                              next.remove(block);
-                            } else {
-                              next.add(block);
-                            }
-                            cubit.updateSettings(
-                              s.copyWith(hiddenHomeBlocks: next.toList()),
-                            );
-                          },
-                        );
-                      }).toList(),
+                      children: <Widget>[
+                        for (var i = 0; i < s.homeBlocksOrder.length; i++)
+                          Material(
+                            key: ValueKey<HomeBlockKind>(s.homeBlocksOrder[i]),
+                            color: Colors.transparent,
+                            child: CheckboxListTile(
+                              value: !s.hiddenHomeBlocks.contains(
+                                s.homeBlocksOrder[i],
+                              ),
+                              title: Text(
+                                _homeBlockLabel(l10n, s.homeBlocksOrder[i]),
+                              ),
+                              secondary: ReorderableDragStartListener(
+                                index: i,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(Icons.drag_handle_rounded),
+                                ),
+                              ),
+                              onChanged: (show) {
+                                final block = s.homeBlocksOrder[i];
+                                final next = Set<HomeBlockKind>.from(
+                                  s.hiddenHomeBlocks,
+                                );
+                                if (show == true) {
+                                  next.remove(block);
+                                } else {
+                                  next.add(block);
+                                }
+                                cubit.updateSettings(
+                                  s.copyWith(hiddenHomeBlocks: next.toList()),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
                     ),
                     Align(
                       alignment: AlignmentDirectional.centerEnd,
@@ -1067,8 +1154,10 @@ class AppearanceStudioScreen extends StatelessWidget {
                       value: s.motionIntensity,
                       items: MotionIntensity.values
                           .map(
-                            (m) =>
-                                DropdownMenuItem(value: m, child: Text(m.name)),
+                            (m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(_motionIntensityLabel(l10n, m)),
+                            ),
                           )
                           .toList(),
                       onChanged: (v) {
@@ -1082,8 +1171,10 @@ class AppearanceStudioScreen extends StatelessWidget {
                       value: s.hapticsIntensity,
                       items: HapticsIntensity.values
                           .map(
-                            (h) =>
-                                DropdownMenuItem(value: h, child: Text(h.name)),
+                            (h) => DropdownMenuItem(
+                              value: h,
+                              child: Text(_hapticsIntensityLabel(l10n, h)),
+                            ),
                           )
                           .toList(),
                       onChanged: (v) {
@@ -1095,7 +1186,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ListTile(
                       title: Text(l10n.personalizationShadowIntensity),
                       subtitle: Slider(
-                        value: s.shadowIntensity,
+                        value: s.shadowIntensity.clamp(0.0, 1.0),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(shadowIntensity: v),
                         ),
@@ -1104,7 +1195,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                     ListTile(
                       title: Text(l10n.personalizationBlurIntensity),
                       subtitle: Slider(
-                        value: s.glassBlurIntensity,
+                        value: s.glassBlurIntensity.clamp(0.0, 1.0),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(glassBlurIntensity: v),
                         ),
@@ -1115,7 +1206,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                       subtitle: Slider(
                         min: 0.25,
                         max: 1.6,
-                        value: s.cornerRadiusScale,
+                        value: s.cornerRadiusScale.clamp(0.25, 1.6),
                         onChanged: (v) => cubit.updateSettings(
                           s.copyWith(cornerRadiusScale: v),
                         ),

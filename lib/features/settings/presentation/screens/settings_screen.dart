@@ -166,23 +166,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
             WetarStackedControlTile(
               leading: Icon(Icons.pin_outlined, color: tokens.accentPrimary),
               title: l10n.languageNumerals,
-              child: SegmentedButton<NumeralStyle>(
-                segments: <ButtonSegment<NumeralStyle>>[
-                  ButtonSegment<NumeralStyle>(
-                    value: NumeralStyle.western,
-                    label: Text(l10n.languageNumeralsWestern),
-                  ),
-                  ButtonSegment<NumeralStyle>(
-                    value: NumeralStyle.arabicIndic,
-                    label: Text(l10n.languageNumeralsArabicIndic),
-                  ),
-                ],
-                selected: <NumeralStyle>{settings.numeralStyle},
-                onSelectionChanged: (set) {
-                  context.read<SettingsCubit>().update(
-                    settings.copyWith(numeralStyle: set.first),
-                  );
-                },
+              child: Wrap(
+                spacing: tokens.spacingSm,
+                runSpacing: tokens.spacingSm,
+                children:
+                    <(NumeralStyle, String)>[
+                          (NumeralStyle.western, l10n.languageNumeralsWestern),
+                          (
+                            NumeralStyle.arabicIndic,
+                            l10n.languageNumeralsArabicIndic,
+                          ),
+                        ]
+                        .map(
+                          (item) => ChoiceChip(
+                            label: Text(item.$2),
+                            selected: settings.numeralStyle == item.$1,
+                            selectedColor: tokens.accentPrimary.withValues(
+                              alpha: 0.22,
+                            ),
+                            onSelected: (_) =>
+                                context.read<SettingsCubit>().update(
+                                  settings.copyWith(numeralStyle: item.$1),
+                                ),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
           ],
@@ -233,7 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 min: 0,
                 max: 90,
                 divisions: 9,
-                value: settings.minTrackDurationSec.toDouble(),
+                value: settings.minTrackDurationSec.toDouble().clamp(0.0, 90.0),
                 onChanged: (v) => context.read<SettingsCubit>().update(
                   settings.copyWith(minTrackDurationSec: v.round()),
                 ),
@@ -277,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   min: -12,
                   max: 12,
                   divisions: 24,
-                  value: settings.replayGainPreampDb,
+                  value: settings.replayGainPreampDb.clamp(-12.0, 12.0),
                   onChanged: (v) => context.read<SettingsCubit>().update(
                     settings.copyWith(replayGainPreampDb: v),
                   ),

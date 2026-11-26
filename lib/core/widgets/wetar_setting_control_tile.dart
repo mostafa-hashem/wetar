@@ -91,6 +91,9 @@ class WetarDropdownTile<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.wetarTokens;
+    final T? effectiveValue = items.any((item) => item.value == value)
+        ? value
+        : (items.isNotEmpty ? items.first.value : null);
     return WetarStackedControlTile(
       leading: leading,
       title: title,
@@ -108,7 +111,7 @@ class WetarDropdownTile<T> extends StatelessWidget {
         child: DropdownButtonHideUnderline(
           child: DropdownButton<T>(
             isExpanded: true,
-            value: value,
+            value: effectiveValue,
             dropdownColor: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(tokens.radiusCard),
             items: items,

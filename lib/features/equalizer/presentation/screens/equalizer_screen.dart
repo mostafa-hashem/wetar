@@ -192,7 +192,10 @@ class EqualizerScreen extends StatelessWidget {
                   subtitle: Slider(
                     min: 0,
                     max: 1000,
-                    value: state.bassBoostStrength.toDouble(),
+                    value: state.bassBoostStrength.toDouble().clamp(
+                      0.0,
+                      1000.0,
+                    ),
                     activeColor: tokens.accentPrimary,
                     onChanged: (v) => cubit.setBassBoost(v.round()),
                   ),
@@ -206,7 +209,10 @@ class EqualizerScreen extends StatelessWidget {
                   subtitle: Slider(
                     min: 0,
                     max: 1000,
-                    value: state.virtualizerStrength.toDouble(),
+                    value: state.virtualizerStrength.toDouble().clamp(
+                      0.0,
+                      1000.0,
+                    ),
                     activeColor: tokens.accentSecondary,
                     onChanged: (v) => cubit.setVirtualizer(v.round()),
                   ),
@@ -221,7 +227,7 @@ class EqualizerScreen extends StatelessWidget {
                     min: 0,
                     max: 12,
                     divisions: 24,
-                    value: state.loudnessGainDb,
+                    value: state.loudnessGainDb.clamp(0.0, 12.0),
                     activeColor: tokens.accentPrimary,
                     onChanged: cubit.setLoudnessGain,
                   ),
