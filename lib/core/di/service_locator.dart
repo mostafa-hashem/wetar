@@ -3,12 +3,20 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../features/library/data/library_repository.dart';
-import '../../features/library/presentation/bloc/library_cubit.dart';
-import '../../features/library/presentation/bloc/search_cubit.dart';
-import '../../features/music_folders/data/music_folders_repository.dart';
-import '../../features/music_folders/presentation/bloc/music_folders_cubit.dart';
-import '../../features/personalization/presentation/bloc/personalization_cubit.dart';
+import 'package:wetar/features/equalizer/presentation/bloc/equalizer_cubit.dart';
+import 'package:wetar/features/library/data/library_repository.dart';
+import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
+import 'package:wetar/features/library/presentation/bloc/search_cubit.dart';
+import 'package:wetar/features/lyrics/presentation/bloc/lyrics_cubit.dart';
+import 'package:wetar/features/music_folders/data/music_folders_repository.dart';
+import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
+import 'package:wetar/features/personalization/data/artwork_palette_extractor.dart';
+import 'package:wetar/features/personalization/data/custom_font_loader_service.dart';
+import 'package:wetar/features/personalization/data/custom_image_processor.dart';
+import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
+import 'package:wetar/features/playlists/data/playlists_repository.dart';
+import 'package:wetar/features/playlists/presentation/bloc/playlists_cubit.dart';
+
 import '../../features/player/data/wetar_audio_handler.dart';
 import '../../features/player/presentation/bloc/player_cubit.dart';
 import '../../features/settings/data/settings_repository.dart';
@@ -38,7 +46,15 @@ Future<void> initServiceLocator() async {
 
   final foldersRepo = MusicFoldersRepository(db, channel, channel);
   final libraryRepo = LibraryRepository(db);
+  final playlistsRepo = PlaylistsRepository(db, libraryRepo);
   final thumbCache = ThumbnailPathCache(channel, cacheManager);
+  final paletteExtractor = ArtworkPaletteExtractor(db, thumbCache);
+  final fontLoaderService = CustomFontLoaderService(cacheManager);
+  final imageProcessor = CustomImageProcessor(cacheManager);
+  final savedAppearance = settingsRepo.loadAppearance();
+  await fontLoaderService.reloadStoredFontIfNeeded(
+    savedAppearance.importedFontFamily,
+  );
 
   sl
     ..registerSingleton<WetarDatabase>(db)
@@ -51,8 +67,12 @@ Future<void> initServiceLocator() async {
     ..registerSingleton<SystemIntegrationService>(channel)
     ..registerSingleton<PlatformCapabilities>(capabilities)
     ..registerSingleton<ThumbnailPathCache>(thumbCache)
+    ..registerSingleton<ArtworkPaletteExtractor>(paletteExtractor)
+    ..registerSingleton<CustomFontLoaderService>(fontLoaderService)
+    ..registerSingleton<CustomImageProcessor>(imageProcessor)
     ..registerSingleton<MusicFoldersRepository>(foldersRepo)
-    ..registerSingleton<LibraryRepository>(libraryRepo);
+    ..registerSingleton<LibraryRepository>(libraryRepo)
+    ..registerSingleton<PlaylistsRepository>(playlistsRepo);
 
   late final WetarAudioHandler audioHandler;
   if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
@@ -104,5 +124,12 @@ Future<void> initServiceLocator() async {
       ),
     )
     ..registerFactory<SearchCubit>(() => SearchCubit(libraryRepo))
+    ..registerLazySingleton<PlaylistsCubit>(() => PlaylistsCubit(playlistsRepo))
+    ..registerLazySingleton<EqualizerCubit>(
+      () => EqualizerCubit(db, audioHandler, channel, capabilities),
+    )
+    ..registerLazySingleton<LyricsCubit>(
+      () => LyricsCubit(libraryRepo, channel),
+    )
     ..registerLazySingleton<PlayerCubit>(() => PlayerCubit(audioHandler));
 }

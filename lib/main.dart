@@ -9,12 +9,15 @@ import 'core/di/service_locator.dart';
 import 'core/logging/app_logger.dart';
 import 'core/router/wetar_app_shell.dart';
 import 'core/widgets/wetar_feedback.dart';
+import 'features/equalizer/presentation/bloc/equalizer_cubit.dart';
 import 'features/library/presentation/bloc/library_cubit.dart';
+import 'features/lyrics/presentation/bloc/lyrics_cubit.dart';
 import 'features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'features/personalization/presentation/theme/wetar_tokens.dart';
 import 'features/player/data/wetar_audio_handler.dart';
 import 'features/player/presentation/bloc/player_cubit.dart';
+import 'features/playlists/presentation/bloc/playlists_cubit.dart';
 import 'features/settings/domain/playback_settings.dart';
 import 'features/settings/presentation/bloc/settings_cubit.dart';
 import 'l10n/app_localizations.dart';
@@ -88,6 +91,9 @@ class _WetarRootAppState extends State<WetarRootApp> {
         BlocProvider<SettingsCubit>.value(value: sl<SettingsCubit>()),
         BlocProvider<MusicFoldersCubit>.value(value: sl<MusicFoldersCubit>()),
         BlocProvider<LibraryCubit>.value(value: sl<LibraryCubit>()),
+        BlocProvider<PlaylistsCubit>.value(value: sl<PlaylistsCubit>()),
+        BlocProvider<EqualizerCubit>.value(value: sl<EqualizerCubit>()),
+        BlocProvider<LyricsCubit>.value(value: sl<LyricsCubit>()),
         BlocProvider<PlayerCubit>.value(value: sl<PlayerCubit>()),
       ],
       child: DynamicColorBuilder(
@@ -145,8 +151,10 @@ class _WetarRootAppState extends State<WetarRootApp> {
                     scaffoldMessengerKey: WetarFeedback.messengerKey,
                     locale: Locale(localeCode),
                     supportedLocales: AppLocalizations.supportedLocales,
-                    localizationsDelegates:
-                        AppLocalizations.localizationsDelegates,
+                    localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                      AppLocalizations.delegate,
+                      ...GlobalMaterialLocalizations.delegates,
+                    ],
                     onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appName,
                     theme: theme,
                     home: const WetarAppShell(),
