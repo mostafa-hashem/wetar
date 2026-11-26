@@ -198,7 +198,10 @@ void main() {
         'Home & Library Layout',
         'Shape, Depth & Motion',
       ]) {
-        await tester.tap(find.text(tabLabel));
+        final tabFinder = find.text(tabLabel);
+        await tester.ensureVisible(tabFinder);
+        await tester.pumpAndSettle();
+        await tester.tap(tabFinder);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       }
