@@ -2,8 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
-import 'package:wetar/core/widgets/wetar_brand_logo.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
+import 'package:wetar/core/widgets/wetar_brand_logo.dart';
+import 'package:wetar/core/widgets/wetar_setting_control_tile.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/music_folders_settings_screen.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
@@ -43,7 +44,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tokens = context.wetarTokens;
-    final caps = sl<PlatformCapabilities>();
+    final caps = sl.isRegistered<PlatformCapabilities>()
+        ? sl<PlatformCapabilities>()
+        : PlatformCapabilities.detect();
     final settings = context.watch<SettingsCubit>().state;
     final appearance = context.watch<PersonalizationCubit>().state.settings;
     final foldersCount = context.select(
@@ -137,18 +140,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             l10n.settingsLanguage,
             l10n.settingsLanguageSubtitle,
           )) ...<Widget>[
-            ListTile(
+            WetarStackedControlTile(
               leading: Icon(
                 Icons.translate_rounded,
                 color: tokens.accentSecondary,
               ),
-              title: Text(l10n.settingsLanguage),
-              subtitle: Text(
-                settings.localeCode == 'ar'
-                    ? l10n.languageArabic
-                    : l10n.languageEnglish,
-              ),
-              trailing: SegmentedButton<String>(
+              title: l10n.settingsLanguage,
+              child: SegmentedButton<String>(
                 segments: <ButtonSegment<String>>[
                   ButtonSegment<String>(
                     value: 'ar',
@@ -165,20 +163,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
-            SwitchListTile.adaptive(
-              title: Text(l10n.languageNumeralsArabicIndic),
-              subtitle: Text(l10n.languageNumerals),
-              value: settings.numeralStyle == NumeralStyle.arabicIndic,
-              activeTrackColor: tokens.accentPrimary,
-              onChanged: (arabicDigits) {
-                context.read<SettingsCubit>().update(
-                  settings.copyWith(
-                    numeralStyle: arabicDigits
-                        ? NumeralStyle.arabicIndic
-                        : NumeralStyle.western,
+            WetarStackedControlTile(
+              leading: Icon(Icons.pin_outlined, color: tokens.accentPrimary),
+              title: l10n.languageNumerals,
+              child: SegmentedButton<NumeralStyle>(
+                segments: <ButtonSegment<NumeralStyle>>[
+                  ButtonSegment<NumeralStyle>(
+                    value: NumeralStyle.western,
+                    label: Text(l10n.languageNumeralsWestern),
                   ),
-                );
-              },
+                  ButtonSegment<NumeralStyle>(
+                    value: NumeralStyle.arabicIndic,
+                    label: Text(l10n.languageNumeralsArabicIndic),
+                  ),
+                ],
+                selected: <NumeralStyle>{settings.numeralStyle},
+                onSelectionChanged: (set) {
+                  context.read<SettingsCubit>().update(
+                    settings.copyWith(numeralStyle: set.first),
+                  );
+                },
+              ),
             ),
           ],
           if (_matches(
@@ -239,33 +244,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onExpansionChanged: (v) => setState(() => _showAdvanced = v),
             title: Text(l10n.settingsAdvanced),
             children: <Widget>[
-              ListTile(
-                title: Text(l10n.playbackReplayGainMode),
-                trailing: DropdownButton<ReplayGainMode>(
-                  value: settings.replayGainMode,
-                  underline: const SizedBox.shrink(),
-                  items: <DropdownMenuItem<ReplayGainMode>>[
-                    DropdownMenuItem(
-                      value: ReplayGainMode.off,
-                      child: Text(l10n.playbackReplayGainOff),
-                    ),
-                    DropdownMenuItem(
-                      value: ReplayGainMode.track,
-                      child: Text(l10n.playbackReplayGainTrack),
-                    ),
-                    DropdownMenuItem(
-                      value: ReplayGainMode.album,
-                      child: Text(l10n.playbackReplayGainAlbum),
-                    ),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) {
-                      context.read<SettingsCubit>().update(
-                        settings.copyWith(replayGainMode: v),
-                      );
-                    }
-                  },
-                ),
+              WetarDropdownTile<ReplayGainMode>(
+                title: l10n.playbackReplayGainMode,
+                value: settings.replayGainMode,
+                items: <DropdownMenuItem<ReplayGainMode>>[
+                  DropdownMenuItem(
+                    value: ReplayGainMode.off,
+                    child: Text(l10n.playbackReplayGainOff),
+                  ),
+                  DropdownMenuItem(
+                    value: ReplayGainMode.track,
+                    child: Text(l10n.playbackReplayGainTrack),
+                  ),
+                  DropdownMenuItem(
+                    value: ReplayGainMode.album,
+                    child: Text(l10n.playbackReplayGainAlbum),
+                  ),
+                ],
+                onChanged: (v) {
+                  if (v != null) {
+                    context.read<SettingsCubit>().update(
+                      settings.copyWith(replayGainMode: v),
+                    );
+                  }
+                },
               ),
               ListTile(
                 title: Text(

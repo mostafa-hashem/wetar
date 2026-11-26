@@ -9,6 +9,7 @@ import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/platform/platform_interfaces.dart';
 import 'package:wetar/core/storage/cache_manager.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_setting_control_tile.dart';
 import 'package:wetar/features/personalization/data/custom_font_loader_service.dart';
 import 'package:wetar/features/personalization/data/custom_image_processor.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
@@ -250,11 +251,24 @@ class AppearanceStudioScreen extends StatelessWidget {
     }
   }
 
+  String _homeBlockLabel(AppLocalizations l10n, HomeBlockKind kind) {
+    return switch (kind) {
+      HomeBlockKind.continueListening => l10n.homeContinueListening,
+      HomeBlockKind.quickActions => l10n.homeQuickActions,
+      HomeBlockKind.recentlyAdded => l10n.homeRecentlyAdded,
+      HomeBlockKind.mostPlayed => l10n.homeMostPlayed,
+      HomeBlockKind.folders => l10n.homeYourFolders,
+      HomeBlockKind.playlists => l10n.homeYourPlaylists,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tokens = context.wetarTokens;
-    final caps = sl<PlatformCapabilities>();
+    final caps = sl.isRegistered<PlatformCapabilities>()
+        ? sl<PlatformCapabilities>()
+        : PlatformCapabilities.detect();
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return DefaultTabController(
@@ -390,33 +404,42 @@ class AppearanceStudioScreen extends StatelessWidget {
                 ListView(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   children: <Widget>[
-                    Text(
-                      l10n.personalizationThemeMode,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    SizedBox(height: tokens.spacingSm),
-                    SegmentedButton<WetarThemeMode>(
-                      segments: <ButtonSegment<WetarThemeMode>>[
-                        ButtonSegment(
-                          value: WetarThemeMode.system,
-                          label: Text(l10n.personalizationThemeSystem),
-                        ),
-                        ButtonSegment(
-                          value: WetarThemeMode.light,
-                          label: Text(l10n.personalizationThemeLight),
-                        ),
-                        ButtonSegment(
-                          value: WetarThemeMode.dark,
-                          label: Text(l10n.personalizationThemeDark),
-                        ),
-                        ButtonSegment(
-                          value: WetarThemeMode.amoled,
-                          label: Text(l10n.personalizationThemeAmoled),
-                        ),
-                      ],
-                      selected: <WetarThemeMode>{s.themeMode},
-                      onSelectionChanged: (set) => cubit.updateSettings(
-                        s.copyWith(themeMode: set.first),
+                    WetarStackedControlTile(
+                      title: l10n.personalizationThemeMode,
+                      child: Wrap(
+                        spacing: tokens.spacingSm,
+                        runSpacing: tokens.spacingSm,
+                        children:
+                            <(WetarThemeMode, String)>[
+                                  (
+                                    WetarThemeMode.system,
+                                    l10n.personalizationThemeSystem,
+                                  ),
+                                  (
+                                    WetarThemeMode.light,
+                                    l10n.personalizationThemeLight,
+                                  ),
+                                  (
+                                    WetarThemeMode.dark,
+                                    l10n.personalizationThemeDark,
+                                  ),
+                                  (
+                                    WetarThemeMode.amoled,
+                                    l10n.personalizationThemeAmoled,
+                                  ),
+                                ]
+                                .map(
+                                  (item) => ChoiceChip(
+                                    label: Text(item.$2),
+                                    selected: s.themeMode == item.$1,
+                                    selectedColor: tokens.accentPrimary
+                                        .withValues(alpha: 0.22),
+                                    onSelected: (_) => cubit.updateSettings(
+                                      s.copyWith(themeMode: item.$1),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                       ),
                     ),
                     SizedBox(height: tokens.spacingMd),
@@ -470,31 +493,28 @@ class AppearanceStudioScreen extends StatelessWidget {
                           s.copyWith(useSystemDynamicColor: v),
                         ),
                       ),
-                    ListTile(
-                      title: Text(l10n.personalizationContrast),
-                      trailing: DropdownButton<WetarContrastLevel>(
-                        value: s.contrastLevel,
-                        underline: const SizedBox.shrink(),
-                        items: <DropdownMenuItem<WetarContrastLevel>>[
-                          DropdownMenuItem(
-                            value: WetarContrastLevel.standard,
-                            child: Text(l10n.personalizationContrastStandard),
-                          ),
-                          DropdownMenuItem(
-                            value: WetarContrastLevel.medium,
-                            child: Text(l10n.personalizationContrastMedium),
-                          ),
-                          DropdownMenuItem(
-                            value: WetarContrastLevel.high,
-                            child: Text(l10n.personalizationContrastHigh),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(contrastLevel: v));
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<WetarContrastLevel>(
+                      title: l10n.personalizationContrast,
+                      value: s.contrastLevel,
+                      items: <DropdownMenuItem<WetarContrastLevel>>[
+                        DropdownMenuItem(
+                          value: WetarContrastLevel.standard,
+                          child: Text(l10n.personalizationContrastStandard),
+                        ),
+                        DropdownMenuItem(
+                          value: WetarContrastLevel.medium,
+                          child: Text(l10n.personalizationContrastMedium),
+                        ),
+                        DropdownMenuItem(
+                          value: WetarContrastLevel.high,
+                          child: Text(l10n.personalizationContrastHigh),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(contrastLevel: v));
+                        }
+                      },
                     ),
                     ListTile(
                       title: Text(l10n.personalizationSurfaceTint),
@@ -536,80 +556,74 @@ class AppearanceStudioScreen extends StatelessWidget {
                       onChanged: (v) =>
                           cubit.updateSettings(s.copyWith(useSystemFont: v)),
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationFontArabic),
-                      trailing: DropdownButton<String>(
-                        value: s.arabicFontFamily,
-                        underline: const SizedBox.shrink(),
-                        items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                            value: 'Cairo',
-                            child: Text(
-                              'Cairo / القاهرة',
-                              style: TextStyle(fontFamily: 'Cairo'),
-                            ),
+                    WetarDropdownTile<String>(
+                      title: l10n.personalizationFontArabic,
+                      value: s.arabicFontFamily,
+                      items: const <DropdownMenuItem<String>>[
+                        DropdownMenuItem(
+                          value: 'Cairo',
+                          child: Text(
+                            'Cairo / القاهرة',
+                            style: TextStyle(fontFamily: 'Cairo'),
                           ),
-                          DropdownMenuItem(
-                            value: 'Almarai',
-                            child: Text(
-                              'Almarai / المراعي',
-                              style: TextStyle(fontFamily: 'Almarai'),
-                            ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Almarai',
+                          child: Text(
+                            'Almarai / المراعي',
+                            style: TextStyle(fontFamily: 'Almarai'),
                           ),
-                          DropdownMenuItem(
-                            value: 'Alexandria',
-                            child: Text(
-                              'Alexandria / الإسكندرية',
-                              style: TextStyle(fontFamily: 'Alexandria'),
-                            ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Alexandria',
+                          child: Text(
+                            'Alexandria / الإسكندرية',
+                            style: TextStyle(fontFamily: 'Alexandria'),
                           ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(
-                                arabicFontFamily: v,
-                                importedFontFamily: null,
-                                useSystemFont: false,
-                              ),
-                            );
-                          }
-                        },
-                      ),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(
+                            s.copyWith(
+                              arabicFontFamily: v,
+                              importedFontFamily: null,
+                              useSystemFont: false,
+                            ),
+                          );
+                        }
+                      },
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationFontLatin),
-                      trailing: DropdownButton<String>(
-                        value: s.latinFontFamily,
-                        underline: const SizedBox.shrink(),
-                        items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                            value: 'PlusJakartaSans',
-                            child: Text(
-                              'Plus Jakarta Sans',
-                              style: TextStyle(fontFamily: 'PlusJakartaSans'),
-                            ),
+                    WetarDropdownTile<String>(
+                      title: l10n.personalizationFontLatin,
+                      value: s.latinFontFamily,
+                      items: const <DropdownMenuItem<String>>[
+                        DropdownMenuItem(
+                          value: 'PlusJakartaSans',
+                          child: Text(
+                            'Plus Jakarta Sans',
+                            style: TextStyle(fontFamily: 'PlusJakartaSans'),
                           ),
-                          DropdownMenuItem(
-                            value: 'Jost',
-                            child: Text(
-                              'Jost',
-                              style: TextStyle(fontFamily: 'Jost'),
-                            ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Jost',
+                          child: Text(
+                            'Jost',
+                            style: TextStyle(fontFamily: 'Jost'),
                           ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(
-                                latinFontFamily: v,
-                                importedFontFamily: null,
-                                useSystemFont: false,
-                              ),
-                            );
-                          }
-                        },
-                      ),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(
+                            s.copyWith(
+                              latinFontFamily: v,
+                              importedFontFamily: null,
+                              useSystemFont: false,
+                            ),
+                          );
+                        }
+                      },
                     ),
                     ListTile(
                       title: Text(l10n.personalizationFontScale),
@@ -689,79 +703,66 @@ class AppearanceStudioScreen extends StatelessWidget {
                 ListView(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   children: <Widget>[
-                    ListTile(
-                      title: Text(l10n.personalizationPlayerLayout),
-                      trailing: DropdownButton<PlayerLayoutVariant>(
-                        value: s.playerLayout,
-                        underline: const SizedBox.shrink(),
-                        items: <DropdownMenuItem<PlayerLayoutVariant>>[
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.oudStrings,
-                            child: Text(l10n.personalizationLayoutOudStrings),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.classicCard,
-                            child: Text(l10n.personalizationLayoutClassic),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.immersiveBleed,
-                            child: Text(l10n.personalizationLayoutImmersive),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.minimal,
-                            child: Text(l10n.personalizationLayoutMinimal),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.vinylDisc,
-                            child: Text(l10n.personalizationLayoutVinyl),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(playerLayout: v));
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<PlayerLayoutVariant>(
+                      title: l10n.personalizationPlayerLayout,
+                      value: s.playerLayout,
+                      items: <DropdownMenuItem<PlayerLayoutVariant>>[
+                        DropdownMenuItem(
+                          value: PlayerLayoutVariant.oudStrings,
+                          child: Text(l10n.personalizationLayoutOudStrings),
+                        ),
+                        DropdownMenuItem(
+                          value: PlayerLayoutVariant.classicCard,
+                          child: Text(l10n.personalizationLayoutClassic),
+                        ),
+                        DropdownMenuItem(
+                          value: PlayerLayoutVariant.immersiveBleed,
+                          child: Text(l10n.personalizationLayoutImmersive),
+                        ),
+                        DropdownMenuItem(
+                          value: PlayerLayoutVariant.minimal,
+                          child: Text(l10n.personalizationLayoutMinimal),
+                        ),
+                        DropdownMenuItem(
+                          value: PlayerLayoutVariant.vinylDisc,
+                          child: Text(l10n.personalizationLayoutVinyl),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(playerLayout: v));
+                        }
+                      },
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationSeekBarStyle),
-                      trailing: DropdownButton<SeekBarStyle>(
-                        value: s.seekBarStyle,
-                        underline: const SizedBox.shrink(),
-                        items: SeekBarStyle.values
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(seekBarStyle: v));
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<SeekBarStyle>(
+                      title: l10n.personalizationSeekBarStyle,
+                      value: s.seekBarStyle,
+                      items: SeekBarStyle.values
+                          .map(
+                            (e) =>
+                                DropdownMenuItem(value: e, child: Text(e.name)),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(seekBarStyle: v));
+                        }
+                      },
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationArtShape),
-                      trailing: DropdownButton<ArtworkShapeStyle>(
-                        value: s.artworkShape,
-                        underline: const SizedBox.shrink(),
-                        items: ArtworkShapeStyle.values
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(artworkShape: v));
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<ArtworkShapeStyle>(
+                      title: l10n.personalizationArtShape,
+                      value: s.artworkShape,
+                      items: ArtworkShapeStyle.values
+                          .map(
+                            (e) =>
+                                DropdownMenuItem(value: e, child: Text(e.name)),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(artworkShape: v));
+                        }
+                      },
                     ),
                     ListTile(
                       title: Text(l10n.personalizationCornerRadius),
@@ -774,9 +775,9 @@ class AppearanceStudioScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationMiniPlayerStyle),
-                      trailing: SegmentedButton<MiniPlayerStyle>(
+                    WetarStackedControlTile(
+                      title: l10n.personalizationMiniPlayerStyle,
+                      child: SegmentedButton<MiniPlayerStyle>(
                         segments: <ButtonSegment<MiniPlayerStyle>>[
                           ButtonSegment(
                             value: MiniPlayerStyle.floatingPill,
@@ -807,57 +808,52 @@ class AppearanceStudioScreen extends StatelessWidget {
                 ListView(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   children: <Widget>[
-                    ListTile(
-                      title: Text(l10n.personalizationBackgroundMode),
-                      trailing: DropdownButton<BackgroundMode>(
-                        value: s.backgroundMode,
-                        underline: const SizedBox.shrink(),
-                        items: <DropdownMenuItem<BackgroundMode>>[
-                          DropdownMenuItem(
-                            value: BackgroundMode.blurredArtwork,
-                            child: Text(l10n.personalizationBgBlurredArt),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.artworkGradient,
-                            child: Text(l10n.personalizationBgArtGradient),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.solidColor,
-                            child: Text(l10n.personalizationBgSolid),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.animatedGradient,
-                            child: Text(l10n.personalizationBgAnimatedGradient),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralAurora,
-                            child: Text(l10n.personalizationBgProceduralAurora),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralWaves,
-                            child: Text(l10n.personalizationBgProceduralWaves),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralGrain,
-                            child: Text(l10n.personalizationBgProceduralGrain),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralStrings,
-                            child: Text(
-                              l10n.personalizationBgProceduralStrings,
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.customImage,
-                            child: Text(l10n.personalizationBgCustomImage),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(backgroundMode: v));
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<BackgroundMode>(
+                      title: l10n.personalizationBackgroundMode,
+                      value: s.backgroundMode,
+                      items: <DropdownMenuItem<BackgroundMode>>[
+                        DropdownMenuItem(
+                          value: BackgroundMode.blurredArtwork,
+                          child: Text(l10n.personalizationBgBlurredArt),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.artworkGradient,
+                          child: Text(l10n.personalizationBgArtGradient),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.solidColor,
+                          child: Text(l10n.personalizationBgSolid),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.animatedGradient,
+                          child: Text(l10n.personalizationBgAnimatedGradient),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.proceduralAurora,
+                          child: Text(l10n.personalizationBgProceduralAurora),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.proceduralWaves,
+                          child: Text(l10n.personalizationBgProceduralWaves),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.proceduralGrain,
+                          child: Text(l10n.personalizationBgProceduralGrain),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.proceduralStrings,
+                          child: Text(l10n.personalizationBgProceduralStrings),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundMode.customImage,
+                          child: Text(l10n.personalizationBgCustomImage),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(backgroundMode: v));
+                        }
+                      },
                     ),
                     if (s.backgroundMode == BackgroundMode.customImage)
                       OutlinedButton.icon(
@@ -879,33 +875,28 @@ class AppearanceStudioScreen extends StatelessWidget {
                         icon: const Icon(Icons.image_outlined),
                         label: Text(l10n.personalizationBgCustomImage),
                       ),
-                    ListTile(
-                      title: Text(l10n.personalizationBgScope),
-                      trailing: DropdownButton<BackgroundScope>(
-                        value: s.backgroundScope,
-                        underline: const SizedBox.shrink(),
-                        items: <DropdownMenuItem<BackgroundScope>>[
-                          DropdownMenuItem(
-                            value: BackgroundScope.playerOnly,
-                            child: Text(l10n.personalizationBgScopePlayer),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundScope.homeAndPlayer,
-                            child: Text(l10n.personalizationBgScopeHomePlayer),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundScope.wholeApp,
-                            child: Text(l10n.personalizationBgScopeWholeApp),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(backgroundScope: v),
-                            );
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<BackgroundScope>(
+                      title: l10n.personalizationBgScope,
+                      value: s.backgroundScope,
+                      items: <DropdownMenuItem<BackgroundScope>>[
+                        DropdownMenuItem(
+                          value: BackgroundScope.playerOnly,
+                          child: Text(l10n.personalizationBgScopePlayer),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundScope.homeAndPlayer,
+                          child: Text(l10n.personalizationBgScopeHomePlayer),
+                        ),
+                        DropdownMenuItem(
+                          value: BackgroundScope.wholeApp,
+                          child: Text(l10n.personalizationBgScopeWholeApp),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(backgroundScope: v));
+                        }
+                      },
                     ),
                     ListTile(
                       title: Text(l10n.personalizationBgBlur),
@@ -953,9 +944,9 @@ class AppearanceStudioScreen extends StatelessWidget {
                 ListView(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   children: <Widget>[
-                    ListTile(
-                      title: Text(l10n.personalizationListDensity),
-                      trailing: SegmentedButton<ListDensity>(
+                    WetarStackedControlTile(
+                      title: l10n.personalizationListDensity,
+                      child: SegmentedButton<ListDensity>(
                         segments: ListDensity.values
                             .map(
                               (d) =>
@@ -968,9 +959,9 @@ class AppearanceStudioScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationGridColumns),
-                      trailing: SegmentedButton<int>(
+                    WetarStackedControlTile(
+                      title: l10n.personalizationGridColumns,
+                      child: SegmentedButton<int>(
                         segments: const <ButtonSegment<int>>[
                           ButtonSegment(value: 2, label: Text('2')),
                           ButtonSegment(value: 3, label: Text('3')),
@@ -1014,7 +1005,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                         return CheckboxListTile(
                           key: ValueKey<HomeBlockKind>(block),
                           value: !hidden,
-                          title: Text(block.name),
+                          title: Text(_homeBlockLabel(l10n, block)),
                           secondary: const Icon(Icons.drag_handle_rounded),
                           onChanged: (show) {
                             final next = Set<HomeBlockKind>.from(
@@ -1046,77 +1037,60 @@ class AppearanceStudioScreen extends StatelessWidget {
                 ListView(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   children: <Widget>[
-                    ListTile(
-                      title: Text(l10n.personalizationLiteMode),
-                      trailing: DropdownButton<LiteModePreference>(
-                        value: s.liteModePreference,
-                        underline: const SizedBox.shrink(),
-                        items: <DropdownMenuItem<LiteModePreference>>[
-                          DropdownMenuItem(
-                            value: LiteModePreference.auto,
-                            child: Text(l10n.personalizationLiteModeAuto),
-                          ),
-                          DropdownMenuItem(
-                            value: LiteModePreference.alwaysOn,
-                            child: Text(l10n.personalizationLiteModeOn),
-                          ),
-                          DropdownMenuItem(
-                            value: LiteModePreference.alwaysOff,
-                            child: Text(l10n.personalizationLiteModeOff),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(liteModePreference: v),
-                            );
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<LiteModePreference>(
+                      title: l10n.personalizationLiteMode,
+                      value: s.liteModePreference,
+                      items: <DropdownMenuItem<LiteModePreference>>[
+                        DropdownMenuItem(
+                          value: LiteModePreference.auto,
+                          child: Text(l10n.personalizationLiteModeAuto),
+                        ),
+                        DropdownMenuItem(
+                          value: LiteModePreference.alwaysOn,
+                          child: Text(l10n.personalizationLiteModeOn),
+                        ),
+                        DropdownMenuItem(
+                          value: LiteModePreference.alwaysOff,
+                          child: Text(l10n.personalizationLiteModeOff),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(
+                            s.copyWith(liteModePreference: v),
+                          );
+                        }
+                      },
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationMotionIntensity),
-                      trailing: DropdownButton<MotionIntensity>(
-                        value: s.motionIntensity,
-                        underline: const SizedBox.shrink(),
-                        items: MotionIntensity.values
-                            .map(
-                              (m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(m.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(motionIntensity: v),
-                            );
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<MotionIntensity>(
+                      title: l10n.personalizationMotionIntensity,
+                      value: s.motionIntensity,
+                      items: MotionIntensity.values
+                          .map(
+                            (m) =>
+                                DropdownMenuItem(value: m, child: Text(m.name)),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(motionIntensity: v));
+                        }
+                      },
                     ),
-                    ListTile(
-                      title: Text(l10n.personalizationHapticsIntensity),
-                      trailing: DropdownButton<HapticsIntensity>(
-                        value: s.hapticsIntensity,
-                        underline: const SizedBox.shrink(),
-                        items: HapticsIntensity.values
-                            .map(
-                              (h) => DropdownMenuItem(
-                                value: h,
-                                child: Text(h.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(hapticsIntensity: v),
-                            );
-                          }
-                        },
-                      ),
+                    WetarDropdownTile<HapticsIntensity>(
+                      title: l10n.personalizationHapticsIntensity,
+                      value: s.hapticsIntensity,
+                      items: HapticsIntensity.values
+                          .map(
+                            (h) =>
+                                DropdownMenuItem(value: h, child: Text(h.name)),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          cubit.updateSettings(s.copyWith(hapticsIntensity: v));
+                        }
+                      },
                     ),
                     ListTile(
                       title: Text(l10n.personalizationShadowIntensity),
