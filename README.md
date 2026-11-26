@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/branding/wetar_logo.svg" alt="Wetar Logo" width="108" height="108" />
+</p>
+
 # Wetar
 
 > **A fast, lightweight, 100% offline, deeply customizable local music player for Android, iOS, and macOS — built with Flutter.**

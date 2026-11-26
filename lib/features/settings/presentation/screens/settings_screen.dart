@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/core/widgets/wetar_brand_logo.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/music_folders_settings_screen.dart';
@@ -299,7 +300,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           ListTile(
-            leading: const Icon(Icons.info_outline),
+            leading: const WetarBrandLogo(size: 36),
             title: Text(l10n.settingsAbout),
             subtitle: Text('${l10n.appName} • ${l10n.appTagline}'),
           ),

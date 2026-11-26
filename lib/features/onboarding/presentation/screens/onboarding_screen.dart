@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/core/widgets/wetar_brand_logo.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/folder_picker_screen.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
@@ -169,25 +170,7 @@ class _WelcomeLanguageAndThemeStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           SizedBox(height: tokens.spacingSm),
-          Center(
-            child: Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: tokens.accentPrimary.withValues(alpha: 0.14),
-                border: Border.all(
-                  color: tokens.accentPrimary.withValues(alpha: 0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: Icon(
-                Icons.graphic_eq_rounded,
-                size: 42,
-                color: tokens.accentPrimary,
-              ),
-            ),
-          ),
+          const Center(child: WetarBrandLogo(size: 86)),
           SizedBox(height: tokens.spacingMd),
           Text(
             l10n.onboardingWelcomeTitle,

@@ -9,6 +9,7 @@ import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/platform/platform_interfaces.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
+import 'package:wetar/core/widgets/wetar_brand_logo.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
 import 'package:wetar/features/equalizer/presentation/screens/equalizer_screen.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
@@ -519,10 +520,7 @@ class _WetarAppShellState extends State<WetarAppShell> {
                           padding: EdgeInsets.all(tokens.spacingMd),
                           child: Row(
                             children: <Widget>[
-                              Icon(
-                                Icons.graphic_eq_rounded,
-                                color: tokens.accentPrimary,
-                              ),
+                              const WetarBrandLogo(size: 28),
                               SizedBox(width: tokens.spacingSm),
                               Expanded(
                                 child: Text(
