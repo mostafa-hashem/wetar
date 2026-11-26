@@ -45,6 +45,12 @@ class WetarPlatformChannel
               return FolderChangedIncomingEvent(
                 map['folderPath'] as String? ?? '',
               );
+            case 'folder_dropped':
+              return FolderDroppedIncomingEvent(
+                rootPath: map['rootPath'] as String? ?? '',
+                displayName: map['displayName'] as String? ?? '',
+                bookmarkData: map['bookmarkData'] as String?,
+              );
             case 'shortcut':
             default:
               return ShortcutIncomingEvent(map['target'] as String? ?? '');

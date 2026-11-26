@@ -41,106 +41,117 @@ class TrackListTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: tokens.listRowExtent),
-      child: Material(
-        color: isSelected
-            ? tokens.accentPrimary.withValues(alpha: 0.14)
-            : Colors.transparent,
-        child: InkWell(
-          onTap: track.isCloudPending ? onCloudTap : onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: tokens.spacingMd,
-              vertical: tokens.spacingXs,
-            ),
-            child: Row(
-              children: <Widget>[
-                if (isSelectionMode)
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(end: tokens.spacingSm),
-                    child: Checkbox(
-                      value: isSelected,
-                      activeColor: tokens.accentPrimary,
-                      onChanged: (_) => onTap(),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onSecondaryTapUp: (onMorePressed != null && !isSelectionMode)
+          ? (_) => onMorePressed!()
+          : null,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: tokens.listRowExtent),
+        child: Material(
+          color: isSelected
+              ? tokens.accentPrimary.withValues(alpha: 0.14)
+              : Colors.transparent,
+          child: InkWell(
+            onTap: track.isCloudPending ? onCloudTap : onTap,
+            onLongPress: onLongPress,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: tokens.spacingMd,
+                vertical: tokens.spacingXs,
+              ),
+              child: Row(
+                children: <Widget>[
+                  if (isSelectionMode)
+                    Padding(
+                      padding: EdgeInsetsDirectional.only(
+                        end: tokens.spacingSm,
+                      ),
+                      child: Checkbox(
+                        value: isSelected,
+                        activeColor: tokens.accentPrimary,
+                        onChanged: (_) => onTap(),
+                      ),
+                    )
+                  else if (showArtwork) ...<Widget>[
+                    WetarArtworkImage(
+                      cacheKey: track.albumKey,
+                      size: tokens.listRowExtent - 18,
+                      artworkUri: track.artworkUri,
+                      filePath: track.filePath,
+                      customArtPath: track.customArtPath,
+                      thumbnailCache: thumbnailCache,
+                      decodeSizePx: 144,
                     ),
-                  )
-                else if (showArtwork) ...<Widget>[
-                  WetarArtworkImage(
-                    cacheKey: track.albumKey,
-                    size: tokens.listRowExtent - 18,
-                    artworkUri: track.artworkUri,
-                    filePath: track.filePath,
-                    customArtPath: track.customArtPath,
-                    thumbnailCache: thumbnailCache,
-                    decodeSizePx: 144,
-                  ),
-                  SizedBox(width: tokens.spacingMd * 0.75),
-                ],
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        track.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: isPlayingTrack
-                              ? tokens.accentPrimary
-                              : tokens.inkPrimary,
-                          fontWeight: isPlayingTrack
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: <Widget>[
-                          if (track.isCloudPending)
-                            Padding(
-                              padding: EdgeInsetsDirectional.only(
-                                end: tokens.spacingXs,
-                              ),
-                              child: Icon(
-                                Icons.cloud_download_outlined,
-                                size: 14,
-                                color: tokens.accentSecondary,
-                              ),
-                            ),
-                          Expanded(
-                            child: Text(
-                              track.artist.isNotEmpty
-                                  ? '${track.artist} • ${track.album.isNotEmpty ? track.album : l10n.libraryUnknownAlbum}'
-                                  : l10n.libraryUnknownArtist,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.bodySmall,
-                            ),
+                    SizedBox(width: tokens.spacingMd * 0.75),
+                  ],
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          track.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: isPlayingTrack
+                                ? tokens.accentPrimary
+                                : tokens.inkPrimary,
+                            fontWeight: isPlayingTrack
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: <Widget>[
+                            if (track.isCloudPending)
+                              Padding(
+                                padding: EdgeInsetsDirectional.only(
+                                  end: tokens.spacingXs,
+                                ),
+                                child: Icon(
+                                  Icons.cloud_download_outlined,
+                                  size: 14,
+                                  color: tokens.accentSecondary,
+                                ),
+                              ),
+                            Expanded(
+                              child: Text(
+                                track.artist.isNotEmpty
+                                    ? '${track.artist} • ${track.album.isNotEmpty ? track.album : l10n.libraryUnknownAlbum}'
+                                    : l10n.libraryUnknownArtist,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(width: tokens.spacingSm),
-                Text(
-                  NumeralFormatter.formatDuration(track.duration, numeralStyle),
-                  style: textTheme.labelMedium?.copyWith(
-                    color: tokens.inkMuted,
+                  SizedBox(width: tokens.spacingSm),
+                  Text(
+                    NumeralFormatter.formatDuration(
+                      track.duration,
+                      numeralStyle,
+                    ),
+                    style: textTheme.labelMedium?.copyWith(
+                      color: tokens.inkMuted,
+                    ),
                   ),
-                ),
-                if (onMorePressed != null && !isSelectionMode)
-                  IconButton(
-                    icon: const Icon(Icons.more_vert_rounded, size: 20),
-                    color: tokens.inkMuted,
-                    onPressed: onMorePressed,
-                    tooltip: l10n.playerTrackDetails,
-                  ),
-              ],
+                  if (onMorePressed != null && !isSelectionMode)
+                    IconButton(
+                      icon: const Icon(Icons.more_vert_rounded, size: 20),
+                      color: tokens.inkMuted,
+                      onPressed: onMorePressed,
+                      tooltip: l10n.playerTrackDetails,
+                    ),
+                ],
+              ),
             ),
           ),
         ),

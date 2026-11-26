@@ -8,6 +8,7 @@ import 'package:wetar/features/library/data/library_repository.dart';
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
 import 'package:wetar/features/library/presentation/bloc/search_cubit.dart';
 import 'package:wetar/features/lyrics/presentation/bloc/lyrics_cubit.dart';
+import 'package:wetar/features/music_folders/data/file_system_library_source.dart';
 import 'package:wetar/features/music_folders/data/music_folders_repository.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/personalization/data/artwork_palette_extractor.dart';
@@ -43,12 +44,15 @@ Future<void> initServiceLocator() async {
 
   final db = WetarDatabase();
   final channel = WetarPlatformChannel();
+  final LibrarySource librarySource = (Platform.isMacOS || Platform.isIOS)
+      ? FileSystemLibrarySource()
+      : channel;
   final capabilities = PlatformCapabilities.detect();
 
-  final foldersRepo = MusicFoldersRepository(db, channel, channel);
+  final foldersRepo = MusicFoldersRepository(db, librarySource, channel);
   final libraryRepo = LibraryRepository(db);
   final playlistsRepo = PlaylistsRepository(db, libraryRepo);
-  final thumbCache = ThumbnailPathCache(channel, cacheManager);
+  final thumbCache = ThumbnailPathCache(librarySource, cacheManager);
   final paletteExtractor = ArtworkPaletteExtractor(db, thumbCache);
   final fontLoaderService = CustomFontLoaderService(cacheManager);
   final imageProcessor = CustomImageProcessor(cacheManager);
@@ -62,7 +66,7 @@ Future<void> initServiceLocator() async {
     ..registerSingleton<CacheManager>(cacheManager)
     ..registerSingleton<SettingsRepository>(settingsRepo)
     ..registerSingleton<WetarPlatformChannel>(channel)
-    ..registerSingleton<LibrarySource>(channel)
+    ..registerSingleton<LibrarySource>(librarySource)
     ..registerSingleton<FolderPickerService>(channel)
     ..registerSingleton<NativeAudioEffectsService>(channel)
     ..registerSingleton<SystemIntegrationService>(channel)

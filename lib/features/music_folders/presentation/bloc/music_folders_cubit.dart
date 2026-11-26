@@ -136,10 +136,28 @@ class MusicFoldersCubit extends Cubit<MusicFoldersState> {
   Future<void> addFolderPath({
     required String rootPath,
     required String displayName,
+    String sourceKind = 'mediastore',
+    String? bookmarkData,
   }) async {
     await _repo.addOrReactivateFolder(
       rootPath: rootPath,
       displayName: displayName,
+      sourceKind: sourceKind,
+      bookmarkData: bookmarkData,
+    );
+  }
+
+  Future<void> addDroppedFolder({
+    required String rootPath,
+    required String displayName,
+    String? bookmarkData,
+  }) async {
+    await _repo.addOrReactivateFolder(
+      rootPath: rootPath,
+      displayName: displayName,
+      sourceKind: 'bookmark',
+      volumeLabel: 'Mac',
+      bookmarkData: bookmarkData,
     );
   }
 

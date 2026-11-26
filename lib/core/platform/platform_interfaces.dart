@@ -191,6 +191,18 @@ class FolderChangedIncomingEvent extends PlatformIncomingEvent {
   final String folderPath;
 }
 
+class FolderDroppedIncomingEvent extends PlatformIncomingEvent {
+  const FolderDroppedIncomingEvent({
+    required this.rootPath,
+    required this.displayName,
+    this.bookmarkData,
+  });
+
+  final String rootPath;
+  final String displayName;
+  final String? bookmarkData;
+}
+
 /// Abstract audio library scanner source (MediaStore/SAF on Android, filesystem on Apple).
 abstract interface class LibrarySource {
   Future<List<DiscoveredAudioFolder>> listAudioFolders();
