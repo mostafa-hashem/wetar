@@ -225,7 +225,28 @@ class WetarPlatformPlugin(
                 result.success(true)
             }
             "updateHomeWidget" -> {
-                // Wired in Phase 4 when WetarMusicWidgetProvider is added.
+                val title = call.argument<String>("title")
+                val artist = call.argument<String>("artist")
+                val artworkPath = call.argument<String>("artworkPath")
+                val isPlaying = call.argument<Boolean>("isPlaying") ?: false
+                WetarMusicWidgetProvider.updateAll(
+                    activity,
+                    title,
+                    artist,
+                    artworkPath,
+                    isPlaying,
+                )
+                result.success(true)
+            }
+            "setKeepScreenOn" -> {
+                val keepOn = call.argument<Boolean>("keepOn") ?: false
+                mainHandler.post {
+                    if (keepOn) {
+                        activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    } else {
+                        activity.window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
+                }
                 result.success(true)
             }
             else -> result.notImplemented()

@@ -16,6 +16,7 @@ import 'package:wetar/features/personalization/data/custom_image_processor.dart'
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/playlists/data/playlists_repository.dart';
 import 'package:wetar/features/playlists/presentation/bloc/playlists_cubit.dart';
+import 'package:wetar/features/settings/data/backup_service.dart';
 
 import '../../features/player/data/wetar_audio_handler.dart';
 import '../../features/player/presentation/bloc/player_cubit.dart';
@@ -131,5 +132,8 @@ Future<void> initServiceLocator() async {
     ..registerLazySingleton<LyricsCubit>(
       () => LyricsCubit(libraryRepo, channel),
     )
-    ..registerLazySingleton<PlayerCubit>(() => PlayerCubit(audioHandler));
+    ..registerLazySingleton<PlayerCubit>(() => PlayerCubit(audioHandler))
+    ..registerLazySingleton<BackupService>(
+      () => BackupService(db, sl<PersonalizationCubit>(), sl<SettingsCubit>()),
+    );
 }

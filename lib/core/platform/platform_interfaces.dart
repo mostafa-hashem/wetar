@@ -252,6 +252,7 @@ abstract interface class SystemIntegrationService {
   Future<bool> openAppSettings();
   Future<bool> isIgnoringBatteryOptimizations();
   Future<bool> openBatteryOptimizationSettings();
+  Future<bool> setKeepScreenOn(bool keepOn);
   Future<bool> setCompactMiniPlayerMode(bool compact);
   Future<bool> triggerCloudDownload(String filePath);
   Future<void> updateHomeWidget({

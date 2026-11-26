@@ -19,13 +19,16 @@ import 'package:wetar/features/personalization/presentation/bloc/personalization
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 import 'package:wetar/features/personalization/presentation/widgets/wetar_background_renderer.dart';
 import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
+import 'package:wetar/features/player/presentation/screens/car_mode_screen.dart';
 import 'package:wetar/features/player/presentation/screens/now_playing_screen.dart';
 import 'package:wetar/features/player/presentation/widgets/queue_sheet.dart';
+import 'package:wetar/features/player/presentation/widgets/share_track_card_sheet.dart';
 import 'package:wetar/features/player/presentation/widgets/track_details_sheet.dart';
 import 'package:wetar/features/player/presentation/widgets/wetar_mini_player.dart';
 import 'package:wetar/features/playlists/presentation/screens/playlists_screen.dart';
 import 'package:wetar/features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:wetar/features/settings/presentation/screens/backup_stats_diagnostics_screen.dart';
 import 'package:wetar/features/settings/presentation/screens/settings_screen.dart';
 import 'package:wetar/l10n/app_localizations.dart';
 
@@ -84,6 +87,8 @@ class _WetarAppShellState extends State<WetarAppShell> {
         } else if (event.target == 'favorites') {
           context.read<LibraryCubit>().setCategory(LibraryCategory.favorites);
           _jumpToTab(WetarNavTab.library);
+        } else if (event.target == 'car_mode') {
+          _openCarMode();
         }
       }
     });
@@ -152,6 +157,23 @@ class _WetarAppShellState extends State<WetarAppShell> {
     );
   }
 
+  void _openCarMode() {
+    unawaited(
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const CarModeScreen())),
+    );
+  }
+
+  void _openBackupAndStats() {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const BackupStatsDiagnosticsScreen(),
+        ),
+      ),
+    );
+  }
+
   void _openNowPlaying() {
     unawaited(
       Navigator.of(context).push(
@@ -160,7 +182,9 @@ class _WetarAppShellState extends State<WetarAppShell> {
             onOpenQueue: () => showWetarQueueSheet(ctx),
             onOpenLyrics: _openLyrics,
             onOpenEqualizer: _openEqualizer,
+            onOpenCarMode: _openCarMode,
             onOpenTrackDetails: _openTrackDetails,
+            onShareTrack: (track) => showShareTrackCardSheet(ctx, track),
           ),
         ),
       ),
@@ -197,7 +221,7 @@ class _WetarAppShellState extends State<WetarAppShell> {
             _jumpToTab(WetarNavTab.library);
           },
           onOpenPlaylists: () => _jumpToTab(WetarNavTab.playlists),
-          onOpenCarMode: () {},
+          onOpenCarMode: _openCarMode,
           onOpenTrackDetails: _openTrackDetails,
           onAddToPlaylistRequested: _openAddToPlaylist,
         );
@@ -211,7 +235,10 @@ class _WetarAppShellState extends State<WetarAppShell> {
       case WetarNavTab.playlists:
         return PlaylistsScreen(onOpenTrackDetails: _openTrackDetails);
       case WetarNavTab.settings:
-        return SettingsScreen(onOpenEqualizer: _openEqualizer);
+        return SettingsScreen(
+          onOpenEqualizer: _openEqualizer,
+          onOpenBackupAndStats: _openBackupAndStats,
+        );
     }
   }
 

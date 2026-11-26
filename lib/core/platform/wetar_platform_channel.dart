@@ -466,6 +466,20 @@ class WetarPlatformChannel
   }
 
   @override
+  Future<bool> setKeepScreenOn(bool keepOn) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      return await _method.invokeMethod<bool>(
+            'setKeepScreenOn',
+            <String, Object?>{'keepOn': keepOn},
+          ) ??
+          false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
   Future<bool> setCompactMiniPlayerMode(bool compact) async {
     if (!Platform.isMacOS) return false;
     try {

@@ -41,8 +41,8 @@ class TrackListTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
 
-    return SizedBox(
-      height: tokens.listRowExtent,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: tokens.listRowExtent),
       child: Material(
         color: isSelected
             ? tokens.accentPrimary.withValues(alpha: 0.14)
@@ -51,7 +51,10 @@ class TrackListTile extends StatelessWidget {
           onTap: track.isCloudPending ? onCloudTap : onTap,
           onLongPress: onLongPress,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
+            padding: EdgeInsets.symmetric(
+              horizontal: tokens.spacingMd,
+              vertical: tokens.spacingXs,
+            ),
             child: Row(
               children: <Widget>[
                 if (isSelectionMode)
@@ -77,6 +80,7 @@ class TrackListTile extends StatelessWidget {
                 ],
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[

@@ -653,14 +653,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
       );
     }
 
+    final textScale = MediaQuery.textScalerOf(context).scale(14.0) / 14.0;
+    final effectiveExtent = textScale > 1.2
+        ? tokens.listRowExtent * (textScale * 0.72).clamp(1.0, 1.55)
+        : tokens.listRowExtent;
+
     return WetarFastScrollbar(
       controller: _scrollController,
       itemCount: tracks.length,
-      itemExtent: tokens.listRowExtent,
+      itemExtent: effectiveExtent,
       labelForIndex: (idx) => ArabicNormalizer.indexLetter(tracks[idx].title),
       child: ListView.builder(
         controller: _scrollController,
-        itemExtent: tokens.listRowExtent,
+        itemExtent: effectiveExtent,
         itemCount: tracks.length,
         itemBuilder: (context, index) {
           final track = tracks[index];
@@ -834,8 +839,13 @@ class _GroupCollectionView<T> extends StatelessWidget {
       );
     }
 
+    final textScale = MediaQuery.textScalerOf(context).scale(14.0) / 14.0;
+    final effectiveExtent = textScale > 1.2
+        ? tokens.listRowExtent * (textScale * 0.72).clamp(1.0, 1.55)
+        : tokens.listRowExtent;
+
     return ListView.builder(
-      itemExtent: tokens.listRowExtent,
+      itemExtent: effectiveExtent,
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
