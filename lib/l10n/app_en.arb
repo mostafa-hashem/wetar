@@ -71,6 +71,8 @@
   "onboardingSelectAllMusicFolders": "Select all folders containing music",
   "onboardingLookTitle": "Pick your starting look",
   "onboardingLookSubtitle": "You can customize colors, fonts, backgrounds, and player layouts anytime.",
+  "onboardingLanguageLabel": "App language",
+  "onboardingThemeLabel": "App theme",
   "foldersTitle": "Music Folders",
   "foldersPickerTitle": "Choose Music Folders",
   "foldersEmptyTitle": "No music folders selected yet",

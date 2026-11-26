@@ -230,6 +230,12 @@ class AppLocalizationsAr extends AppLocalizations {
       'يمكنك تغيير الألوان والخطوط والخلفيات وشكل المشغل في أي وقت.';
 
   @override
+  String get onboardingLanguageLabel => 'لغة التطبيق';
+
+  @override
+  String get onboardingThemeLabel => 'مظهر التطبيق';
+
+  @override
   String get foldersTitle => 'مجلدات الموسيقى';
 
   @override

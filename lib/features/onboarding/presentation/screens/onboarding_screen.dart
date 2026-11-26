@@ -1,23 +1,26 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-
-import '../../../../core/capabilities/platform_capabilities.dart';
-import '../../../../core/di/service_locator.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../music_folders/presentation/bloc/music_folders_cubit.dart';
-import '../../../personalization/domain/appearance_settings.dart';
-import '../../../personalization/presentation/bloc/personalization_cubit.dart';
-import '../../../personalization/presentation/theme/wetar_tokens.dart';
-import '../../../settings/presentation/bloc/settings_cubit.dart';
-
+import 'package:wetar/core/capabilities/platform_capabilities.dart';
+import 'package:wetar/core/di/service_locator.dart';
+import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/folder_picker_screen.dart';
+import 'package:wetar/features/personalization/domain/appearance_settings.dart';
+import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
+import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:wetar/l10n/app_localizations.dart';
 
-/// Minimal 3-step skippable onboarding explaining offline audio permissions,
-/// guiding user-selected folder choice, and offering a starting Look preset.
+/// 3-step skippable onboarding featuring live Arabic/English language selection,
+/// Light/Dark theme selection, strictly scoped music folder setup, and starting Look presets.
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key, required this.onFinished});
+  const OnboardingScreen({
+    super.key,
+    required this.onFinished,
+    this.capabilities,
+  });
 
   final VoidCallback onFinished;
+  final PlatformCapabilities? capabilities;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -26,6 +29,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _page = 0;
+  bool _userPickedThemeMode = false;
 
   @override
   void dispose() {
@@ -42,6 +46,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Future<void> _setThemeMode(WetarThemeMode mode) async {
+    _userPickedThemeMode = true;
+    final cubit = context.read<PersonalizationCubit>();
+    await cubit.updateSettings(
+      cubit.state.settings.copyWith(
+        themeMode: mode,
+        scheduledDarkEnabled: false,
+      ),
+    );
+  }
+
   Future<void> _finish() async {
     await context.read<SettingsCubit>().completeOnboarding();
     if (mounted) {
@@ -53,7 +68,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tokens = context.wetarTokens;
-    final caps = sl<PlatformCapabilities>();
+    final caps =
+        widget.capabilities ??
+        (sl.isRegistered<PlatformCapabilities>()
+            ? sl<PlatformCapabilities>()
+            : PlatformCapabilities.detect());
 
     return Scaffold(
       backgroundColor: tokens.canvas,
@@ -98,15 +117,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _pageController,
                 onPageChanged: (i) => setState(() => _page = i),
                 children: <Widget>[
-                  _WelcomeAndPermissionStep(
-                    capabilities: caps,
+                  _WelcomeLanguageAndThemeStep(
+                    onThemeSelected: _setThemeMode,
                     onContinue: () => _goToPage(1),
                   ),
-                  _FoldersOnboardingStep(
+                  _PermissionAndFoldersStep(
                     capabilities: caps,
                     onContinue: () => _goToPage(2),
                   ),
-                  _LookOnboardingStep(onFinish: _finish),
+                  _LookOnboardingStep(
+                    preserveThemeMode: _userPickedThemeMode,
+                    onThemeSelected: _setThemeMode,
+                    onFinish: _finish,
+                  ),
                 ],
               ),
             ),
@@ -117,8 +140,225 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-class _WelcomeAndPermissionStep extends StatelessWidget {
-  const _WelcomeAndPermissionStep({
+class _WelcomeLanguageAndThemeStep extends StatelessWidget {
+  const _WelcomeLanguageAndThemeStep({
+    required this.onThemeSelected,
+    required this.onContinue,
+  });
+
+  final ValueChanged<WetarThemeMode> onThemeSelected;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tokens = context.wetarTokens;
+    final textTheme = Theme.of(context).textTheme;
+    final localeCode = context.select((SettingsCubit c) => c.state.localeCode);
+    final appearance = context.select(
+      (PersonalizationCubit c) => c.state.settings,
+    );
+    final isDark = WetarTokenResolver.resolveDarkMode(
+      appearance,
+      MediaQuery.platformBrightnessOf(context),
+    );
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(tokens.spacingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          SizedBox(height: tokens.spacingSm),
+          Center(
+            child: Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: tokens.accentPrimary.withValues(alpha: 0.14),
+                border: Border.all(
+                  color: tokens.accentPrimary.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                Icons.graphic_eq_rounded,
+                size: 42,
+                color: tokens.accentPrimary,
+              ),
+            ),
+          ),
+          SizedBox(height: tokens.spacingMd),
+          Text(
+            l10n.onboardingWelcomeTitle,
+            textAlign: TextAlign.center,
+            style: textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: tokens.spacingXs),
+          Text(
+            l10n.onboardingWelcomeSubtitle,
+            textAlign: TextAlign.center,
+            style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
+          ),
+          SizedBox(height: tokens.spacingMd),
+          Center(
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: tokens.spacingMd,
+                vertical: tokens.spacingSm,
+              ),
+              decoration: BoxDecoration(
+                color: tokens.surfaceElevated,
+                borderRadius: BorderRadius.circular(tokens.radiusPill),
+                border: Border.all(color: tokens.borderSubtle),
+              ),
+              child: Text(
+                l10n.onboardingOfflinePill,
+                style: textTheme.labelMedium?.copyWith(
+                  color: tokens.accentSecondary,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: tokens.spacingLg),
+          Text(
+            l10n.onboardingLanguageLabel,
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: tokens.spacingSm),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _ChoiceOptionCard(
+                  icon: Icons.translate_rounded,
+                  label: l10n.languageArabic,
+                  selected: localeCode == 'ar',
+                  onTap: () =>
+                      context.read<SettingsCubit>().setLocaleCode('ar'),
+                ),
+              ),
+              SizedBox(width: tokens.spacingSm),
+              Expanded(
+                child: _ChoiceOptionCard(
+                  icon: Icons.language_rounded,
+                  label: l10n.languageEnglish,
+                  selected: localeCode == 'en',
+                  onTap: () =>
+                      context.read<SettingsCubit>().setLocaleCode('en'),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.spacingMd),
+          Text(
+            l10n.onboardingThemeLabel,
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: tokens.spacingSm),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _ChoiceOptionCard(
+                  icon: Icons.light_mode_rounded,
+                  label: l10n.personalizationThemeLight,
+                  selected: !isDark,
+                  onTap: () => onThemeSelected(WetarThemeMode.light),
+                ),
+              ),
+              SizedBox(width: tokens.spacingSm),
+              Expanded(
+                child: _ChoiceOptionCard(
+                  icon: Icons.dark_mode_rounded,
+                  label: l10n.personalizationThemeDark,
+                  selected: isDark,
+                  onTap: () => onThemeSelected(WetarThemeMode.dark),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.spacingLg),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              backgroundColor: tokens.accentPrimary,
+            ),
+            onPressed: onContinue,
+            child: Text(l10n.actionContinue),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChoiceOptionCard extends StatelessWidget {
+  const _ChoiceOptionCard({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.wetarTokens;
+    return Material(
+      color: selected
+          ? tokens.accentPrimary.withValues(alpha: 0.14)
+          : tokens.surface,
+      borderRadius: BorderRadius.circular(tokens.radiusCard),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(tokens.radiusCard),
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.spacingMd,
+            vertical: tokens.spacingMd * 0.85,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(tokens.radiusCard),
+            border: Border.all(
+              color: selected ? tokens.accentPrimary : tokens.borderSubtle,
+              width: selected ? 2.0 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(
+                icon,
+                size: 20,
+                color: selected ? tokens.accentPrimary : tokens.inkMuted,
+              ),
+              SizedBox(width: tokens.spacingSm),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: selected ? tokens.accentPrimary : tokens.inkPrimary,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PermissionAndFoldersStep extends StatelessWidget {
+  const _PermissionAndFoldersStep({
     required this.capabilities,
     required this.onContinue,
   });
@@ -134,67 +374,27 @@ class _WelcomeAndPermissionStep extends StatelessWidget {
 
     return BlocBuilder<MusicFoldersCubit, MusicFoldersState>(
       builder: (context, state) {
-        final granted = state.permissions.audioGranted;
+        final needsAudioPermission =
+            capabilities.supportsInAppFolderPicker &&
+            !state.permissions.audioGranted;
+
         return SingleChildScrollView(
           padding: EdgeInsets.all(tokens.spacingLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              SizedBox(height: tokens.spacingMd),
-              Center(
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: tokens.accentPrimary.withValues(alpha: 0.14),
-                    border: Border.all(
-                      color: tokens.accentPrimary.withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.graphic_eq_rounded,
-                    size: 46,
-                    color: tokens.accentPrimary,
-                  ),
-                ),
-              ),
-              SizedBox(height: tokens.spacingLg),
               Text(
-                l10n.onboardingWelcomeTitle,
-                textAlign: TextAlign.center,
-                style: textTheme.headlineMedium?.copyWith(
+                l10n.onboardingFoldersTitle,
+                style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(height: tokens.spacingSm),
               Text(
-                l10n.onboardingWelcomeSubtitle,
-                textAlign: TextAlign.center,
-                style: textTheme.bodyLarge?.copyWith(color: tokens.inkMuted),
+                l10n.onboardingFoldersSubtitle,
+                style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
               ),
               SizedBox(height: tokens.spacingMd),
-              Center(
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: tokens.spacingMd,
-                    vertical: tokens.spacingSm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: tokens.surfaceElevated,
-                    borderRadius: BorderRadius.circular(tokens.radiusPill),
-                    border: Border.all(color: tokens.borderSubtle),
-                  ),
-                  child: Text(
-                    l10n.onboardingOfflinePill,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: tokens.accentSecondary,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: tokens.spacingLg),
               Card(
                 child: Padding(
                   padding: EdgeInsets.all(tokens.spacingMd),
@@ -228,84 +428,26 @@ class _WelcomeAndPermissionStep extends StatelessWidget {
                 ),
               ),
               SizedBox(height: tokens.spacingLg),
-              if (capabilities.supportsInAppFolderPicker && !granted)
+              if (needsAudioPermission)
                 FilledButton.icon(
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     backgroundColor: tokens.accentPrimary,
                   ),
-                  onPressed: () async {
-                    final res = await context
-                        .read<MusicFoldersCubit>()
-                        .requestPermissions(includeNotifications: true);
-                    if (res.audioGranted) {
-                      onContinue();
-                    }
-                  },
+                  onPressed: () => context
+                      .read<MusicFoldersCubit>()
+                      .requestPermissions(includeNotifications: true),
                   icon: const Icon(Icons.verified_user_outlined),
                   label: Text(l10n.onboardingGrantPermission),
                 )
-              else
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    backgroundColor: tokens.accentPrimary,
-                  ),
-                  onPressed: onContinue,
-                  child: Text(l10n.actionContinue),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _FoldersOnboardingStep extends StatelessWidget {
-  const _FoldersOnboardingStep({
-    required this.capabilities,
-    required this.onContinue,
-  });
-
-  final PlatformCapabilities capabilities;
-  final VoidCallback onContinue;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final tokens = context.wetarTokens;
-    final textTheme = Theme.of(context).textTheme;
-
-    return BlocBuilder<MusicFoldersCubit, MusicFoldersState>(
-      builder: (context, state) {
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(tokens.spacingLg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                l10n.onboardingFoldersTitle,
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: tokens.spacingSm),
-              Text(
-                l10n.onboardingFoldersSubtitle,
-                style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
-              ),
-              SizedBox(height: tokens.spacingLg),
-              if (capabilities.supportsInAppFolderPicker) ...<Widget>[
+              else if (capabilities.supportsInAppFolderPicker) ...<Widget>[
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  onPressed: () async {
-                    await context
-                        .read<MusicFoldersCubit>()
-                        .selectAllDiscoveredMusicFolders();
-                  },
+                  onPressed: () => context
+                      .read<MusicFoldersCubit>()
+                      .selectAllDiscoveredMusicFolders(),
                   icon: const Icon(Icons.library_music_outlined),
                   label: Text(l10n.onboardingSelectAllMusicFolders),
                 ),
@@ -324,7 +466,7 @@ class _FoldersOnboardingStep extends StatelessWidget {
                   icon: const Icon(Icons.checklist_rounded),
                   label: Text(l10n.foldersChooseCta),
                 ),
-              ] else ...<Widget>[
+              ] else
                 FilledButton.tonalIcon(
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
@@ -334,7 +476,6 @@ class _FoldersOnboardingStep extends StatelessWidget {
                   icon: const Icon(Icons.create_new_folder_outlined),
                   label: Text(l10n.foldersChooseCta),
                 ),
-              ],
               SizedBox(height: tokens.spacingLg),
               if (state.selectedFolders.isNotEmpty)
                 Container(
@@ -377,8 +518,14 @@ class _FoldersOnboardingStep extends StatelessWidget {
 }
 
 class _LookOnboardingStep extends StatelessWidget {
-  const _LookOnboardingStep({required this.onFinish});
+  const _LookOnboardingStep({
+    required this.preserveThemeMode,
+    required this.onThemeSelected,
+    required this.onFinish,
+  });
 
+  final bool preserveThemeMode;
+  final ValueChanged<WetarThemeMode> onThemeSelected;
   final VoidCallback onFinish;
 
   @override
@@ -390,6 +537,7 @@ class _LookOnboardingStep extends StatelessWidget {
 
     return BlocBuilder<PersonalizationCubit, PersonalizationState>(
       builder: (context, pState) {
+        final currentMode = pState.settings.themeMode;
         return Padding(
           padding: EdgeInsets.all(tokens.spacingLg),
           child: Column(
@@ -401,10 +549,29 @@ class _LookOnboardingStep extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: tokens.spacingSm),
+              SizedBox(height: tokens.spacingXs),
               Text(
                 l10n.onboardingLookSubtitle,
                 style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
+              ),
+              SizedBox(height: tokens.spacingMd),
+              SegmentedButton<WetarThemeMode>(
+                segments: <ButtonSegment<WetarThemeMode>>[
+                  ButtonSegment<WetarThemeMode>(
+                    value: WetarThemeMode.light,
+                    icon: const Icon(Icons.light_mode_rounded),
+                    label: Text(l10n.personalizationThemeLight),
+                  ),
+                  ButtonSegment<WetarThemeMode>(
+                    value: WetarThemeMode.dark,
+                    icon: const Icon(Icons.dark_mode_rounded),
+                    label: Text(l10n.personalizationThemeDark),
+                  ),
+                ],
+                selected: <WetarThemeMode>{
+                  tokens.isDark ? WetarThemeMode.dark : WetarThemeMode.light,
+                },
+                onSelectionChanged: (set) => onThemeSelected(set.first),
               ),
               SizedBox(height: tokens.spacingMd),
               Expanded(
@@ -421,20 +588,29 @@ class _LookOnboardingStep extends StatelessWidget {
                     final selected =
                         pState.settings.accentArgb ==
                             look.settings.accentArgb &&
-                        pState.settings.themeMode == look.settings.themeMode;
+                        (preserveThemeMode ||
+                            pState.settings.themeMode ==
+                                look.settings.themeMode);
                     final lookColor = look.settings.accentColor;
-                    final isLookDark =
-                        look.settings.themeMode != WetarThemeMode.light;
+                    final effectiveDark = preserveThemeMode
+                        ? tokens.isDark
+                        : look.settings.themeMode != WetarThemeMode.light;
                     return InkWell(
                       borderRadius: BorderRadius.circular(tokens.radiusCard),
-                      onTap: () =>
-                          context.read<PersonalizationCubit>().applyLook(look),
+                      onTap: () {
+                        final nextSettings = preserveThemeMode
+                            ? look.settings.copyWith(themeMode: currentMode)
+                            : look.settings;
+                        context.read<PersonalizationCubit>().updateSettings(
+                          nextSettings,
+                        );
+                      },
                       child: Container(
                         padding: EdgeInsets.all(tokens.spacingMd),
                         decoration: BoxDecoration(
-                          color: isLookDark
-                              ? const Color(0xFF1A1512)
-                              : const Color(0xFFF6EFE4),
+                          color: effectiveDark
+                              ? tokens.surfaceElevated
+                              : tokens.surface,
                           borderRadius: BorderRadius.circular(
                             tokens.radiusCard,
                           ),
@@ -467,9 +643,7 @@ class _LookOnboardingStep extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.titleSmall?.copyWith(
-                                color: isLookDark
-                                    ? const Color(0xFFF6EFE6)
-                                    : const Color(0xFF1F1915),
+                                color: tokens.inkPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

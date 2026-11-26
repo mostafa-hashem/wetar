@@ -71,6 +71,8 @@
   "onboardingSelectAllMusicFolders": "تحديد كل المجلدات التي تحتوي على موسيقى",
   "onboardingLookTitle": "اختر المظهر المناسب لك",
   "onboardingLookSubtitle": "يمكنك تغيير الألوان والخطوط والخلفيات وشكل المشغل في أي وقت.",
+  "onboardingLanguageLabel": "لغة التطبيق",
+  "onboardingThemeLabel": "مظهر التطبيق",
   "foldersTitle": "مجلدات الموسيقى",
   "foldersPickerTitle": "اختيار مجلدات الموسيقى",
   "foldersEmptyTitle": "لم تختر أي مجلد موسيقى بعد",

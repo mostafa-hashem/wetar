@@ -229,6 +229,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'You can customize colors, fonts, backgrounds, and player layouts anytime.';
 
   @override
+  String get onboardingLanguageLabel => 'App language';
+
+  @override
+  String get onboardingThemeLabel => 'App theme';
+
+  @override
   String get foldersTitle => 'Music Folders';
 
   @override

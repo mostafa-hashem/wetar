@@ -524,6 +524,18 @@ abstract class AppLocalizations {
   /// **'You can customize colors, fonts, backgrounds, and player layouts anytime.'**
   String get onboardingLookSubtitle;
 
+  /// No description provided for @onboardingLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get onboardingLanguageLabel;
+
+  /// No description provided for @onboardingThemeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'App theme'**
+  String get onboardingThemeLabel;
+
   /// No description provided for @foldersTitle.
   ///
   /// In en, this message translates to:
