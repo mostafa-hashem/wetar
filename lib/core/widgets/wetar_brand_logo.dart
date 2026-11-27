@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
-/// Luxury Golden Soundhole & Harmonic Strings emblem representing Wetar.
+/// Sculpted diagonal Oud & resonant harmonic strings emblem for Wetar.
 class WetarBrandLogo extends StatelessWidget {
   const WetarBrandLogo({
     super.key,
@@ -33,13 +33,15 @@ class _WetarLogoPainter extends CustomPainter {
 
   final bool showTileBackground;
 
-  static const Color _bgTop = Color(0xFF1E1612);
-  static const Color _bgMid = Color(0xFF0E0B09);
-  static const Color _bgBottom = Color(0xFF060504);
-  static const Color _voidWell = Color(0xFF080605);
-  static const Color _goldLight = Color(0xFFFFF2C2);
-  static const Color _goldMid = Color(0xFFEAA038);
-  static const Color _goldDeep = Color(0xFF9E4B0D);
+  static const Color _bgTop = Color(0xFF1E140F);
+  static const Color _bgMid = Color(0xFF100B08);
+  static const Color _bgBottom = Color(0xFF060403);
+  static const Color _ebonyWell = Color(0xFF120C09);
+  static const Color _soundholeVoid = Color(0xFF090605);
+  static const Color _goldLight = Color(0xFFFFF0C4);
+  static const Color _goldMid = Color(0xFFEB9E38);
+  static const Color _goldDeep = Color(0xFFA84E10);
+  static const Color _stringIvory = Color(0xFFFFF5DC);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -64,25 +66,25 @@ class _WetarLogoPainter extends CustomPainter {
           ).createShader(tileRect),
       );
 
-      // Warm radial acoustic halo behind the soundhole.
+      // Warm studio radial spotlight behind the soundboard.
       canvas.drawCircle(
-        const Offset(512, 512),
-        430,
+        const Offset(490, 500),
+        450,
         Paint()
           ..shader =
               RadialGradient(
                 colors: <Color>[
-                  _goldMid.withValues(alpha: 0.20),
+                  _goldMid.withValues(alpha: 0.22),
                   _goldDeep.withValues(alpha: 0.06),
                   Colors.transparent,
                 ],
                 stops: const <double>[0.0, 0.52, 1.0],
               ).createShader(
-                Rect.fromCircle(center: const Offset(512, 512), radius: 430),
+                Rect.fromCircle(center: const Offset(490, 500), radius: 450),
               ),
       );
 
-      // Subtle inner champagne rim highlight.
+      // Subtle champagne specular bevel around tile edge.
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           const Rect.fromLTWH(4, 4, 1016, 1016),
@@ -103,136 +105,235 @@ class _WetarLogoPainter extends CustomPainter {
       );
     }
 
-    canvas.translate(512, 512);
-    canvas.rotate(-math.pi / 6);
+    canvas.translate(476, 514);
+    canvas.scale(1.13, 1.13);
+    canvas.rotate(42 * math.pi / 180.0);
 
-    const metallicShaderRect = Rect.fromLTWH(-300, -320, 600, 640);
-    final metallicGoldShader = const LinearGradient(
+    // Subtle acoustic resonance waves flanking the lower bout.
+    const boutCenter = Offset(0, 88);
+    void drawWaveArc(
+      double radius,
+      double width,
+      double alpha,
+      double sweepDeg,
+    ) {
+      final sweepRad = sweepDeg * math.pi / 180.0;
+      final rect = Rect.fromCircle(center: boutCenter, radius: radius);
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width
+        ..strokeCap = StrokeCap.round
+        ..color = _goldMid.withValues(alpha: alpha);
+      canvas.drawArc(rect, -sweepRad / 2, sweepRad, false, paint);
+      canvas.drawArc(rect, math.pi - sweepRad / 2, sweepRad, false, paint);
+    }
+
+    drawWaveArc(242, 9, 0.36, 38);
+    drawWaveArc(276, 5.5, 0.18, 28);
+
+    // C2-continuous pear soundboard + neck silhouette.
+    final pearBody = Path()
+      ..moveTo(38, -112)
+      ..cubicTo(96, -54, 206, -12, 206, 88)
+      ..cubicTo(206, 194, 118, 268, 0, 268)
+      ..cubicTo(-118, 268, -206, 194, -206, 88)
+      ..cubicTo(-206, -12, -96, -54, -38, -112)
+      ..close();
+
+    // Signature slanted Oud pegbox + tapered neck behind body join.
+    final neckAndPegbox = Path()
+      ..moveTo(-38, -106)
+      ..lineTo(-27, -268)
+      ..lineTo(20, -310)
+      ..lineTo(82, -342)
+      ..cubicTo(98, -350, 108, -338, 102, -324)
+      ..cubicTo(94, -304, 62, -282, 27, -268)
+      ..lineTo(38, -106)
+      ..close();
+
+    // Soft ambient studio shadow under the instrument.
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.45)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+    canvas.save();
+    canvas.translate(-10, 18);
+    canvas.drawPath(neckAndPegbox, shadowPaint);
+    canvas.drawPath(pearBody, shadowPaint);
+    canvas.restore();
+
+    const goldGradient = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: <Color>[_goldLight, _goldMid, _goldDeep],
-      stops: <double>[0.0, 0.52, 1.0],
-    ).createShader(metallicShaderRect);
-
-    // Sculpted crescent soundhole bezel (outer offset from inner aperture).
-    final outerCircle = Path()
-      ..addOval(Rect.fromCircle(center: Offset.zero, radius: 290));
-    final innerAperture = Path()
-      ..addOval(Rect.fromCircle(center: const Offset(12, -10), radius: 244));
-    final crescentRing = Path.combine(
-      PathOperation.difference,
-      outerCircle,
-      innerAperture,
+      stops: <double>[0.0, 0.50, 1.0],
     );
 
     canvas.drawPath(
-      crescentRing,
+      neckAndPegbox,
       Paint()
-        ..shader = metallicGoldShader
-        ..style = PaintingStyle.fill,
+        ..shader = goldGradient.createShader(
+          const Rect.fromLTWH(-40, -352, 150, 250),
+        ),
     );
 
-    // Deep velvet-obsidian soundhole interior & subtle concentric rosette line.
-    canvas.drawCircle(const Offset(12, -10), 242, Paint()..color = _voidWell);
+    // Subtle ebony pegbox slot channel echoing hand-carved tuning box.
+    canvas.drawLine(
+      const Offset(18, -286),
+      const Offset(74, -322),
+      Paint()
+        ..color = _ebonyWell
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 9
+        ..strokeCap = StrokeCap.round,
+    );
+
+    canvas.drawPath(
+      pearBody,
+      Paint()
+        ..shader = goldGradient.createShader(
+          const Rect.fromLTWH(-206, -112, 412, 380),
+        ),
+    );
+
+    // Bookmatched luthier right-half tone split on the soundboard.
+    canvas.save();
+    canvas.clipPath(pearBody);
+    canvas.drawRect(
+      const Rect.fromLTWH(0, -120, 220, 400),
+      Paint()..color = const Color(0xFF4A1E04).withValues(alpha: 0.13),
+    );
+    canvas.restore();
+
+    // Crisp rim highlight along the pear soundboard edge.
+    canvas.drawPath(
+      pearBody,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            _stringIvory.withValues(alpha: 0.55),
+            Colors.transparent,
+            _goldDeep.withValues(alpha: 0.45),
+          ],
+        ).createShader(const Rect.fromLTWH(-206, -112, 412, 380)),
+    );
+
+    // Dark ebony fingerboard inlay tapering into the upper bout.
+    final fingerboard = Path()
+      ..moveTo(-24, -266)
+      ..lineTo(24, -266)
+      ..lineTo(32, -62)
+      ..quadraticBezierTo(0, -48, -32, -62)
+      ..close();
+    canvas.drawPath(fingerboard, Paint()..color = _ebonyWell);
+
+    // Subtle champagne-gold nut bar at the top of the fingerboard.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: const Offset(0, -267), width: 58, height: 9),
+        const Radius.circular(4.5),
+      ),
+      Paint()..color = _goldLight,
+    );
+
+    // Shamsa soundhole well, beveled metallic bezel & delicate inner rosette.
+    const holeCenter = Offset(0, 36);
+    canvas.drawCircle(holeCenter, 76, Paint()..color = _soundholeVoid);
     canvas.drawCircle(
-      const Offset(12, -10),
-      204,
+      holeCenter,
+      76,
       Paint()
-        ..color = _goldMid.withValues(alpha: 0.30)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 5,
+        ..strokeWidth = 10
+        ..shader = goldGradient.createShader(
+          Rect.fromCircle(center: holeCenter, radius: 80),
+        ),
+    );
+    canvas.drawCircle(
+      holeCenter,
+      54,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.5
+        ..color = _goldMid.withValues(alpha: 0.42),
+    );
+    canvas.drawCircle(
+      holeCenter,
+      36,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..color = _goldLight.withValues(alpha: 0.20),
     );
 
-    // Top & bottom tapered metallic gold bridge capsules anchoring the strings.
+    // Sleek ebony bridge & ivory saddle anchoring the strings.
+    final bridgeRect = Rect.fromCenter(
+      center: const Offset(0, 174),
+      width: 162,
+      height: 24,
+    );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset.zero.translate(0, -304),
-          width: 236,
-          height: 22,
-        ),
-        const Radius.circular(11),
-      ),
-      Paint()..shader = metallicGoldShader,
+      RRect.fromRectAndRadius(bridgeRect, const Radius.circular(12)),
+      Paint()..color = _ebonyWell,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(bridgeRect, const Radius.circular(12)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..color = _goldLight.withValues(alpha: 0.35),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset.zero.translate(0, 304),
-          width: 236,
-          height: 22,
-        ),
-        const Radius.circular(11),
+        Rect.fromCenter(center: const Offset(0, 171), width: 108, height: 5.5),
+        const Radius.circular(2.75),
       ),
-      Paint()..shader = metallicGoldShader,
+      Paint()..color = _goldLight,
     );
 
-    // Secondary harmonic strings.
-    final secondaryPaint = Paint()
+    // Three converging silk-gold strings spanning nut -> soundhole -> bridge.
+    final outerStringPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 13
+      ..strokeWidth = 6.5
       ..strokeCap = StrokeCap.round
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[Color(0xFFF5DCAA), Color(0xFFD4882A)],
-      ).createShader(const Rect.fromLTWH(-120, -292, 240, 584));
-
+      ..color = _stringIvory.withValues(alpha: 0.90);
     canvas.drawLine(
-      const Offset(-90, -292),
-      const Offset(-90, 292),
-      secondaryPaint,
+      const Offset(-15, -266),
+      const Offset(-34, 171),
+      outerStringPaint,
+    );
+    canvas.drawLine(
+      const Offset(15, -266),
+      const Offset(34, 171),
+      outerStringPaint,
     );
 
-    final sympatheticString = Path()
-      ..moveTo(-32, -292)
-      ..lineTo(-32, -150)
-      ..cubicTo(-32, -70, -56, -20, -56, 30)
-      ..cubicTo(-56, 80, -32, 130, -32, 190)
-      ..lineTo(-32, 292);
-    canvas.drawPath(sympatheticString, secondaryPaint);
-
+    // Center hero string with warm amber aura.
     canvas.drawLine(
-      const Offset(90, -292),
-      const Offset(90, 292),
-      secondaryPaint,
-    );
-
-    // Hero plucked harmonic wave string with warm glow + champagne core.
-    final heroString = Path()
-      ..moveTo(32, -292)
-      ..lineTo(32, -155)
-      ..cubicTo(32, -88, 88, -66, 88, -20)
-      ..cubicTo(88, 26, -12, 46, -12, 92)
-      ..cubicTo(-12, 134, 32, 155, 32, 205)
-      ..lineTo(32, 292);
-
-    canvas.drawPath(
-      heroString,
+      const Offset(0, -266),
+      const Offset(0, 171),
       Paint()
-        ..color = _goldMid.withValues(alpha: 0.48)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 34
+        ..strokeWidth = 16
         ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+        ..color = _goldMid.withValues(alpha: 0.38)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
-
-    canvas.drawPath(
-      heroString,
+    canvas.drawLine(
+      const Offset(0, -266),
+      const Offset(0, 171),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 20
+        ..strokeWidth = 8.5
         ..strokeCap = StrokeCap.round
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[
-            Color(0xFFFFFFFF),
-            Color(0xFFFFEBB7),
-            Color(0xFFF0A83C),
-          ],
-          stops: <double>[0.0, 0.45, 1.0],
-        ).createShader(const Rect.fromLTWH(-40, -292, 140, 584)),
+          colors: <Color>[Colors.white, _goldLight],
+        ).createShader(const Rect.fromLTWH(-6, -266, 12, 438)),
     );
 
     canvas.restore();

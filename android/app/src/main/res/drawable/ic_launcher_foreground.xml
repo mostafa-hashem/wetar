@@ -6,76 +6,107 @@
     android:viewportWidth="1024"
     android:viewportHeight="1024">
     <group
-        android:translateX="512"
-        android:translateY="512"
-        android:scaleX="0.66"
-        android:scaleY="0.66"
-        android:rotation="-30">
-        <path
-            android:fillType="evenOdd"
-            android:pathData="M0,-290 A290,290 0 1,1 0,290 A290,290 0 1,1 0,-290 Z M12,-254 A244,244 0 1,0 12,234 A244,244 0 1,0 12,-254 Z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:type="linear"
-                    android:startX="-260"
-                    android:startY="-260"
-                    android:endX="260"
-                    android:endY="260">
-                    <item android:color="#FFFFF2C2" android:offset="0.0" />
-                    <item android:color="#FFEAA038" android:offset="0.52" />
-                    <item android:color="#FF9E4B0D" android:offset="1.0" />
-                </gradient>
-            </aapt:attr>
-        </path>
-        <path
-            android:fillColor="#FF080605"
-            android:pathData="M12,-252 A242,242 0 1,1 12,232 A242,242 0 1,1 12,-252 Z" />
+        android:translateX="488"
+        android:translateY="514"
+        android:scaleX="0.64"
+        android:scaleY="0.64"
+        android:rotation="42">
+        <!-- Acoustic resonance arcs -->
         <path
             android:fillColor="#00000000"
-            android:strokeColor="#4DEAA038"
-            android:strokeWidth="5"
-            android:pathData="M12,-214 A204,204 0 1,1 12,194 A204,204 0 1,1 12,-214 Z" />
-        <path
-            android:pathData="M-107,-315 L107,-315 A11,11 0 0,1 118,-304 A11,11 0 0,1 107,-293 L-107,-293 A11,11 0 0,1 -118,-304 A11,11 0 0,1 -107,-315 Z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:type="linear"
-                    android:startX="-118"
-                    android:startY="-315"
-                    android:endX="118"
-                    android:endY="-293">
-                    <item android:color="#FFFFF2C2" android:offset="0.0" />
-                    <item android:color="#FFEAA038" android:offset="0.52" />
-                    <item android:color="#FF9E4B0D" android:offset="1.0" />
-                </gradient>
-            </aapt:attr>
-        </path>
-        <path
-            android:pathData="M-107,293 L107,293 A11,11 0 0,1 118,304 A11,11 0 0,1 107,315 L-107,315 A11,11 0 0,1 -118,304 A11,11 0 0,1 -107,293 Z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:type="linear"
-                    android:startX="-118"
-                    android:startY="293"
-                    android:endX="118"
-                    android:endY="315">
-                    <item android:color="#FFFFF2C2" android:offset="0.0" />
-                    <item android:color="#FFEAA038" android:offset="0.52" />
-                    <item android:color="#FF9E4B0D" android:offset="1.0" />
-                </gradient>
-            </aapt:attr>
-        </path>
-        <path
-            android:fillColor="#00000000"
-            android:strokeColor="#FFEBC88A"
-            android:strokeWidth="13"
+            android:strokeColor="#5CEB9E38"
+            android:strokeWidth="9"
             android:strokeLineCap="round"
-            android:pathData="M-90,-292 L-90,292 M90,-292 L90,292 M-32,-292 L-32,-150 C-32,-70 -56,-20 -56,30 C-56,80 -32,130 -32,190 L-32,292" />
+            android:pathData="M228.8,9.0 A242,242 0 0,1 228.8,167.0 M-228.8,167.0 A242,242 0 0,1 -228.8,9.0" />
         <path
             android:fillColor="#00000000"
-            android:strokeColor="#FFFFF6D6"
-            android:strokeWidth="20"
+            android:strokeColor="#2EEB9E38"
+            android:strokeWidth="5.5"
             android:strokeLineCap="round"
-            android:pathData="M32,-292 L32,-155 C32,-88 88,-66 88,-20 C88,26 -12,46 -12,92 C-12,134 32,155 32,205 L32,292" />
+            android:pathData="M267.8,21.3 A276,276 0 0,1 267.8,154.7 M-267.8,154.7 A276,276 0 0,1 -267.8,21.3" />
+
+        <!-- Tapered neck & angled Oud pegbox -->
+        <path
+            android:pathData="M-38,-106 L-27,-268 L20,-310 L82,-342 C98,-350 108,-338 102,-324 C94,-304 62,-282 27,-268 L38,-106 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="-40"
+                    android:startY="-352"
+                    android:endX="110"
+                    android:endY="-100">
+                    <item android:color="#FFFFF0C4" android:offset="0.0" />
+                    <item android:color="#FFEB9E38" android:offset="0.50" />
+                    <item android:color="#FFA84E10" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FF120C09"
+            android:strokeWidth="9"
+            android:strokeLineCap="round"
+            android:pathData="M18,-286 L74,-322" />
+
+        <!-- Pear soundboard -->
+        <path
+            android:pathData="M38,-112 C96,-54 206,-12 206,88 C206,194 118,268 0,268 C-118,268 -206,194 -206,88 C-206,-12 -96,-54 -38,-112 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="-206"
+                    android:startY="-112"
+                    android:endX="206"
+                    android:endY="268">
+                    <item android:color="#FFFFF0C4" android:offset="0.0" />
+                    <item android:color="#FFEB9E38" android:offset="0.50" />
+                    <item android:color="#FFA84E10" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Ebony fingerboard & champagne nut -->
+        <path
+            android:fillColor="#FF120C09"
+            android:pathData="M-24,-266 L24,-266 L32,-62 Q0,-48 -32,-62 Z" />
+        <path
+            android:fillColor="#FFFFF0C4"
+            android:pathData="M-24.5,-271.5 L24.5,-271.5 A4.5,4.5 0 0,1 29,-267 A4.5,4.5 0 0,1 24.5,-262.5 L-24.5,-262.5 A4.5,4.5 0 0,1 -29,-267 A4.5,4.5 0 0,1 -24.5,-271.5 Z" />
+
+        <!-- Shamsa soundhole -->
+        <path
+            android:fillColor="#FF090605"
+            android:strokeColor="#FFFFF0C4"
+            android:strokeWidth="10"
+            android:pathData="M0,-40 A76,76 0 1,1 0,112 A76,76 0 1,1 0,-40 Z" />
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#6BEB9E38"
+            android:strokeWidth="3.5"
+            android:pathData="M0,-18 A54,54 0 1,1 0,90 A54,54 0 1,1 0,-18 Z" />
+
+        <!-- Ebony bridge & saddle -->
+        <path
+            android:fillColor="#FF120C09"
+            android:strokeColor="#59FFF0C4"
+            android:strokeWidth="2.5"
+            android:pathData="M-69,162 L69,162 A12,12 0 0,1 81,174 A12,12 0 0,1 69,186 L-69,186 A12,12 0 0,1 -81,174 A12,12 0 0,1 -69,162 Z" />
+        <path
+            android:fillColor="#FFFFF0C4"
+            android:pathData="M-51,168.25 L51,168.25 A2.75,2.75 0 0,1 54,171 A2.75,2.75 0 0,1 51,173.75 L-51,173.75 A2.75,2.75 0 0,1 -54,171 A2.75,2.75 0 0,1 -51,168.25 Z" />
+
+        <!-- Three converging strings -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#E6FFF5DC"
+            android:strokeWidth="6.5"
+            android:strokeLineCap="round"
+            android:pathData="M-15,-266 L-34,171 M15,-266 L34,171" />
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="8.5"
+            android:strokeLineCap="round"
+            android:pathData="M0,-266 L0,171" />
     </group>
 </vector>

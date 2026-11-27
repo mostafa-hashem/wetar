@@ -1,51 +1,81 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1E1612"/>
-      <stop offset="55%" stop-color="#0E0B09"/>
-      <stop offset="100%" stop-color="#060504"/>
+      <stop offset="0%" stop-color="#1E140F"/>
+      <stop offset="55%" stop-color="#100B08"/>
+      <stop offset="100%" stop-color="#060403"/>
     </linearGradient>
-    <radialGradient id="haloGrad" cx="50%" cy="50%" r="44%">
-      <stop offset="0%" stop-color="#EAA038" stop-opacity="0.22"/>
-      <stop offset="52%" stop-color="#9E4B0D" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#9E4B0D" stop-opacity="0"/>
+    <radialGradient id="haloGrad" cx="48%" cy="49%" r="44%">
+      <stop offset="0%" stop-color="#EB9E38" stop-opacity="0.22"/>
+      <stop offset="52%" stop-color="#A84E10" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#A84E10" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="goldMetallic" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFF2C2"/>
-      <stop offset="52%" stop-color="#EAA038"/>
-      <stop offset="100%" stop-color="#9E4B0D"/>
+      <stop offset="0%" stop-color="#FFF0C4"/>
+      <stop offset="50%" stop-color="#EB9E38"/>
+      <stop offset="100%" stop-color="#A84E10"/>
     </linearGradient>
-    <linearGradient id="stringSilk" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#F5DCAA"/>
-      <stop offset="100%" stop-color="#D4882A"/>
+    <linearGradient id="rimHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF5DC" stop-opacity="0.55"/>
+      <stop offset="50%" stop-color="#FFF5DC" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#A84E10" stop-opacity="0.45"/>
     </linearGradient>
-    <linearGradient id="stringHero" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="centerStringGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="45%" stop-color="#FFEBB7"/>
-      <stop offset="100%" stop-color="#F0A83C"/>
+      <stop offset="100%" stop-color="#FFF0C4"/>
     </linearGradient>
-    <mask id="crescentAperture">
-      <rect x="-320" y="-320" width="640" height="640" fill="white"/>
-      <circle cx="12" cy="-10" r="244" fill="black"/>
-    </mask>
+    <clipPath id="pearClip">
+      <path d="M38,-112 C96,-54 206,-12 206,88 C206,194 118,268 0,268 C-118,268 -206,194 -206,88 C-206,-12 -96,-54 -38,-112 Z"/>
+    </clipPath>
+    <filter id="dropShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
   </defs>
 
   <rect width="1024" height="1024" rx="228" fill="url(#bgGrad)"/>
-  <circle cx="512" cy="512" r="430" fill="url(#haloGrad)"/>
-  <rect x="4" y="4" width="1016" height="1016" rx="224" fill="none" stroke="#FFF2C2" stroke-opacity="0.18" stroke-width="3"/>
+  <circle cx="490" cy="500" r="450" fill="url(#haloGrad)"/>
+  <rect x="4" y="4" width="1016" height="1016" rx="224" fill="none" stroke="#FFF0C4" stroke-opacity="0.22" stroke-width="3"/>
 
-  <g transform="translate(512 512) rotate(-30)">
-    <circle cx="0" cy="0" r="290" fill="url(#goldMetallic)" mask="url(#crescentAperture)"/>
-    <circle cx="12" cy="-10" r="242" fill="#080605"/>
-    <circle cx="12" cy="-10" r="204" fill="none" stroke="#EAA038" stroke-opacity="0.30" stroke-width="5"/>
+  <g transform="translate(476 514) scale(1.13) rotate(42)">
+    <!-- Acoustic resonance waves -->
+    <path d="M 228.8 9.0 A 242 242 0 0 1 228.8 167.0" fill="none" stroke="#EB9E38" stroke-opacity="0.36" stroke-width="9" stroke-linecap="round"/>
+    <path d="M -228.8 167.0 A 242 242 0 0 1 -228.8 9.0" fill="none" stroke="#EB9E38" stroke-opacity="0.36" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 267.8 21.3 A 276 276 0 0 1 267.8 154.7" fill="none" stroke="#EB9E38" stroke-opacity="0.18" stroke-width="5.5" stroke-linecap="round"/>
+    <path d="M -267.8 154.7 A 276 276 0 0 1 -267.8 21.3" fill="none" stroke="#EB9E38" stroke-opacity="0.18" stroke-width="5.5" stroke-linecap="round"/>
 
-    <rect x="-118" y="-315" width="236" height="22" rx="11" fill="url(#goldMetallic)"/>
-    <rect x="-118" y="293" width="236" height="22" rx="11" fill="url(#goldMetallic)"/>
+    <!-- Soft ambient shadow -->
+    <g transform="translate(-10 18)" filter="url(#dropShadow)" opacity="0.45">
+      <path d="M-38,-106 L-27,-268 L20,-310 L82,-342 C98,-350 108,-338 102,-324 C94,-304 62,-282 27,-268 L38,-106 Z" fill="#000000"/>
+      <path d="M38,-112 C96,-54 206,-12 206,88 C206,194 118,268 0,268 C-118,268 -206,194 -206,88 C-206,-12 -96,-54 -38,-112 Z" fill="#000000"/>
+    </g>
 
-    <line x1="-90" y1="-292" x2="-90" y2="292" stroke="url(#stringSilk)" stroke-width="13" stroke-linecap="round"/>
-    <path d="M-32,-292 L-32,-150 C-32,-70 -56,-20 -56,30 C-56,80 -32,130 -32,190 L-32,292" fill="none" stroke="url(#stringSilk)" stroke-width="13" stroke-linecap="round"/>
-    <line x1="90" y1="-292" x2="90" y2="292" stroke="url(#stringSilk)" stroke-width="13" stroke-linecap="round"/>
+    <!-- Neck & angled pegbox -->
+    <path d="M-38,-106 L-27,-268 L20,-310 L82,-342 C98,-350 108,-338 102,-324 C94,-304 62,-282 27,-268 L38,-106 Z" fill="url(#goldMetallic)"/>
+    <line x1="18" y1="-286" x2="74" y2="-322" stroke="#120C09" stroke-width="9" stroke-linecap="round"/>
 
-    <path d="M32,-292 L32,-155 C32,-88 88,-66 88,-20 C88,26 -12,46 -12,92 C-12,134 32,155 32,205 L32,292" fill="none" stroke="url(#stringHero)" stroke-width="20" stroke-linecap="round"/>
+    <!-- Pear soundboard -->
+    <path d="M38,-112 C96,-54 206,-12 206,88 C206,194 118,268 0,268 C-118,268 -206,194 -206,88 C-206,-12 -96,-54 -38,-112 Z" fill="url(#goldMetallic)"/>
+    <g clip-path="url(#pearClip)">
+      <rect x="0" y="-120" width="220" height="400" fill="#4A1E04" fill-opacity="0.13"/>
+    </g>
+    <path d="M38,-112 C96,-54 206,-12 206,88 C206,194 118,268 0,268 C-118,268 -206,194 -206,88 C-206,-12 -96,-54 -38,-112 Z" fill="none" stroke="url(#rimHighlight)" stroke-width="5"/>
+
+    <!-- Ebony fingerboard & champagne nut -->
+    <path d="M-24,-266 L24,-266 L32,-62 Q0,-48 -32,-62 Z" fill="#120C09"/>
+    <rect x="-29" y="-271.5" width="58" height="9" rx="4.5" fill="#FFF0C4"/>
+
+    <!-- Shamsa soundhole & delicate rosette -->
+    <circle cx="0" cy="36" r="76" fill="#090605" stroke="url(#goldMetallic)" stroke-width="10"/>
+    <circle cx="0" cy="36" r="54" fill="none" stroke="#EB9E38" stroke-opacity="0.42" stroke-width="3.5"/>
+    <circle cx="0" cy="36" r="36" fill="none" stroke="#FFF0C4" stroke-opacity="0.20" stroke-width="2.5"/>
+
+    <!-- Ebony bridge & ivory saddle -->
+    <rect x="-81" y="162" width="162" height="24" rx="12" fill="#120C09" stroke="#FFF0C4" stroke-opacity="0.35" stroke-width="2.5"/>
+    <rect x="-54" y="168.25" width="108" height="5.5" rx="2.75" fill="#FFF0C4"/>
+
+    <!-- Three converging strings -->
+    <line x1="-15" y1="-266" x2="-34" y2="171" stroke="#FFF5DC" stroke-opacity="0.90" stroke-width="6.5" stroke-linecap="round"/>
+    <line x1="15" y1="-266" x2="34" y2="171" stroke="#FFF5DC" stroke-opacity="0.90" stroke-width="6.5" stroke-linecap="round"/>
+    <line x1="0" y1="-266" x2="0" y2="171" stroke="url(#centerStringGrad)" stroke-width="8.5" stroke-linecap="round"/>
   </g>
 </svg>
