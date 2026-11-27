@@ -280,4 +280,66 @@ void main() {
     expect(parsedDisk, isNotNull);
     expect(parsedDisk!.settings.customBackgroundImagePath, isNull);
   });
+
+  testWidgets(
+    'BackgroundScope.wholeApp makes Scaffold transparent and prevents nested duplicate background painting',
+    (tester) async {
+      final repo = SettingsRepository.inMemory();
+      final personalizationCubit = PersonalizationCubit(repo);
+      await personalizationCubit.updateSettings(
+        AppearanceSettings(
+          backgroundMode: BackgroundMode.customImage,
+          customBackgroundImagePath: BuiltInWallpapers.all.first.sourceRef,
+          backgroundScope: BackgroundScope.wholeApp,
+        ),
+      );
+      addTearDown(personalizationCubit.close);
+
+      final themeWholeApp = WetarTokenResolver.buildThemeData(
+        personalizationCubit.state.settings,
+        platformBrightness: Brightness.dark,
+        systemDisableAnimations: false,
+        isArabicLocale: false,
+      );
+      final themePlayerOnly = WetarTokenResolver.buildThemeData(
+        personalizationCubit.state.settings.copyWith(
+          backgroundScope: BackgroundScope.playerOnly,
+        ),
+        platformBrightness: Brightness.dark,
+        systemDisableAnimations: false,
+        isArabicLocale: false,
+      );
+      expect(themeWholeApp.scaffoldBackgroundColor, Colors.transparent);
+      expect(
+        themePlayerOnly.scaffoldBackgroundColor,
+        isNot(Colors.transparent),
+      );
+
+      await tester.pumpWidget(
+        BlocProvider<PersonalizationCubit>.value(
+          value: personalizationCubit,
+          child: MaterialApp(
+            theme: themeWholeApp,
+            builder: (ctx, child) => WetarBackgroundRenderer(
+              surfaceLocation: BackgroundScope.wholeApp,
+              isRootHost: true,
+              child: child ?? const SizedBox.shrink(),
+            ),
+            home: const WetarBackgroundRenderer(
+              surfaceLocation: BackgroundScope.homeAndPlayer,
+              child: Scaffold(body: SizedBox.expand()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Only the root host renders the global background layer.
+      expect(
+        find.byKey(const ValueKey<String>('wetar_bg_layer')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

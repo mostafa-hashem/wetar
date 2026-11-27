@@ -75,7 +75,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             : PlatformCapabilities.detect());
 
     return Scaffold(
-      backgroundColor: tokens.canvas,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

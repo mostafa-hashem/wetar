@@ -48,7 +48,6 @@ class _CarModeScreenState extends State<CarModeScreen> {
     final numerals = context.select((SettingsCubit c) => c.state.numeralStyle);
 
     return Scaffold(
-      backgroundColor: tokens.canvas,
       appBar: AppBar(
         title: Text(l10n.playerCarMode),
         leading: IconButton(

@@ -567,6 +567,8 @@ class _WetarAppShellState extends State<WetarAppShell> {
   }) {
     final track = playerState.currentTrack;
 
+    final wholeAppBg = appearance.backgroundScope == BackgroundScope.wholeApp;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -579,7 +581,9 @@ class _WetarAppShellState extends State<WetarAppShell> {
                   Container(
                     width: 214,
                     decoration: BoxDecoration(
-                      color: tokens.surface.withValues(alpha: 0.94),
+                      color: tokens.surface.withValues(
+                        alpha: wholeAppBg ? 0.68 : 0.94,
+                      ),
                       border: BorderDirectional(
                         end: BorderSide(color: tokens.borderSubtle),
                       ),
@@ -694,7 +698,9 @@ class _WetarAppShellState extends State<WetarAppShell> {
                     Container(
                       width: 336,
                       decoration: BoxDecoration(
-                        color: tokens.surface,
+                        color: wholeAppBg
+                            ? tokens.surface.withValues(alpha: 0.74)
+                            : tokens.surface,
                         border: BorderDirectional(
                           start: BorderSide(color: tokens.borderSubtle),
                         ),
@@ -711,7 +717,9 @@ class _WetarAppShellState extends State<WetarAppShell> {
                 height: 82,
                 padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
                 decoration: BoxDecoration(
-                  color: tokens.surfaceElevated,
+                  color: wholeAppBg
+                      ? tokens.surfaceElevated.withValues(alpha: 0.76)
+                      : tokens.surfaceElevated,
                   border: Border(top: BorderSide(color: tokens.borderSubtle)),
                 ),
                 child: Row(
@@ -972,7 +980,10 @@ class _WetarAppShellState extends State<WetarAppShell> {
               child: WetarMiniPlayer(onTap: _openNowPlaying),
             ),
             NavigationBar(
-              backgroundColor: tokens.surface,
+              backgroundColor:
+                  appearance.backgroundScope == BackgroundScope.wholeApp
+                  ? tokens.surface.withValues(alpha: 0.68)
+                  : tokens.surface,
               indicatorColor: tokens.accentPrimary.withValues(alpha: 0.2),
               selectedIndex: safeIndex,
               onDestinationSelected: (idx) => setState(() => _navIndex = idx),

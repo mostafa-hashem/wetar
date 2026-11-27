@@ -382,9 +382,9 @@ class AppearanceStudioScreen extends StatelessWidget {
                       unselectedLabelColor: tokens.inkMuted,
                       labelStyle: Theme.of(context).textTheme.labelLarge
                           ?.copyWith(fontWeight: FontWeight.w600),
-                      unselectedLabelStyle: Theme.of(
-                        context,
-                      ).textTheme.labelLarge,
+                      unselectedLabelStyle: Theme.of(context)
+                          .textTheme
+                          .labelLarge,
                       labelPadding: EdgeInsets.symmetric(
                         horizontal: tokens.spacingXs,
                       ),

@@ -12,8 +12,10 @@ import 'package:wetar/features/equalizer/presentation/bloc/equalizer_cubit.dart'
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
 import 'package:wetar/features/lyrics/presentation/bloc/lyrics_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
+import 'package:wetar/features/personalization/domain/appearance_settings.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
+import 'package:wetar/features/personalization/presentation/widgets/wetar_background_renderer.dart';
 import 'package:wetar/features/player/data/wetar_audio_handler.dart';
 import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
 import 'package:wetar/features/playlists/presentation/bloc/playlists_cubit.dart';
@@ -154,6 +156,18 @@ class _WetarMaterialApp extends StatelessWidget {
             ],
             onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appName,
             theme: theme,
+            builder: (ctx, child) {
+              final playerTuple = ctx.select(
+                (PlayerCubit c) => (c.state.currentTrack, c.state.isPlaying),
+              );
+              return WetarBackgroundRenderer(
+                surfaceLocation: BackgroundScope.wholeApp,
+                isRootHost: true,
+                activeTrack: playerTuple.$1,
+                isPlaying: playerTuple.$2,
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             home: const WetarAppShell(),
           ),
         ),

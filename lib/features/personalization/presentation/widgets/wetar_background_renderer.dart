@@ -21,16 +21,34 @@ class WetarBackgroundRenderer extends StatefulWidget {
     required this.surfaceLocation,
     this.activeTrack,
     this.isPlaying = false,
+    this.isRootHost = false,
   });
 
   final Widget child;
   final BackgroundScope surfaceLocation;
   final WetarTrack? activeTrack;
   final bool isPlaying;
+  final bool isRootHost;
 
   @override
   State<WetarBackgroundRenderer> createState() =>
       _WetarBackgroundRendererState();
+}
+
+class _WetarRootBackgroundScope extends InheritedWidget {
+  const _WetarRootBackgroundScope({required this.active, required super.child});
+
+  final bool active;
+
+  static bool isActive(BuildContext context) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<_WetarRootBackgroundScope>();
+    return scope?.active ?? false;
+  }
+
+  @override
+  bool updateShouldNotify(_WetarRootBackgroundScope oldWidget) =>
+      oldWidget.active != active;
 }
 
 class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
@@ -75,7 +93,12 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
     final tokens = context.wetarTokens;
     final pState = context.watch<PersonalizationCubit>().state;
     final settings = pState.settings;
-    final shouldRender = _shouldRenderHere(settings);
+    final hasRootScope =
+        !widget.isRootHost && _WetarRootBackgroundScope.isActive(context);
+    final shouldRender =
+        !(hasRootScope &&
+            settings.backgroundScope == BackgroundScope.wholeApp) &&
+        _shouldRenderHere(settings);
     final tickerEnabled = TickerMode.valuesOf(context).enabled;
 
     final shouldAnimate =
@@ -90,15 +113,20 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
       _controller.stop();
     }
 
+    if (hasRootScope && settings.backgroundScope == BackgroundScope.wholeApp) {
+      return widget.child;
+    }
+
     if (!shouldRender) {
       return Material(color: tokens.canvas, child: widget.child);
     }
 
-    return Stack(
+    Widget content = Stack(
       fit: StackFit.expand,
       children: <Widget>[
         Positioned.fill(
           child: RepaintBoundary(
+            key: const ValueKey<String>('wetar_bg_layer'),
             child: _buildBackgroundLayer(
               tokens: tokens,
               settings: settings,
@@ -118,6 +146,12 @@ class _WetarBackgroundRendererState extends State<WetarBackgroundRenderer>
         Material(type: MaterialType.transparency, child: widget.child),
       ],
     );
+
+    if (widget.isRootHost) {
+      content = _WetarRootBackgroundScope(active: true, child: content);
+    }
+
+    return content;
   }
 
   Widget _buildBackgroundLayer({

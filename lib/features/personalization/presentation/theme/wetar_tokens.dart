@@ -458,17 +458,23 @@ class WetarTokenResolver {
       labelSmall: applyFont(baseTextTheme.labelSmall),
     );
 
+    final isWholeAppBg = settings.backgroundScope == BackgroundScope.wholeApp;
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: tokens.canvas,
+      scaffoldBackgroundColor: isWholeAppBg
+          ? Colors.transparent
+          : tokens.canvas,
       fontFamily: tokens.primaryFontFamily,
       fontFamilyFallback: tokens.fontFallbacks,
       textTheme: textTheme,
       dividerColor: tokens.borderSubtle,
       cardTheme: CardThemeData(
-        color: tokens.surface,
+        color: isWholeAppBg
+            ? tokens.surface.withValues(alpha: 0.78)
+            : tokens.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(tokens.radiusCard),
@@ -485,7 +491,9 @@ class WetarTokenResolver {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: tokens.canvas,
+        backgroundColor: isWholeAppBg
+            ? tokens.canvas.withValues(alpha: 0.36)
+            : tokens.canvas,
         foregroundColor: tokens.inkPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,

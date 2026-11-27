@@ -246,7 +246,11 @@ class HomeScreen extends StatelessWidget {
             slivers: <Widget>[
               SliverAppBar(
                 pinned: true,
-                backgroundColor: tokens.canvas.withValues(alpha: 0.88),
+                backgroundColor: tokens.canvas.withValues(
+                  alpha: appearance.backgroundScope == BackgroundScope.wholeApp
+                      ? 0.36
+                      : 0.72,
+                ),
                 surfaceTintColor: Colors.transparent,
                 title: Row(
                   mainAxisSize: MainAxisSize.min,
