@@ -91,6 +91,8 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   int _lastHistoryCheckpointMs = 0;
   int _lastObservedPosMs = 0;
   int _lastManualSeekEpochMs = 0;
+  String? _activeTrackKey;
+  Duration? _pendingInitialPosition;
   final ListeningSessionTracker _listeningTracker = ListeningSessionTracker();
   final Map<int, int> _sessionHistoryRowIds = <int, int>{};
   Future<void> _listeningFlushTail = Future<void>.value();
@@ -122,7 +124,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   Stream<Duration> get positionStream => _player.positionStream;
-  Duration get position => _player.position;
+  Duration get position => _pendingInitialPosition ?? _player.position;
   Stream<bool> get playingStream => _player.playingStream;
   bool get isPlaying => _player.playing;
   Stream<double> get speedStream => _player.speedStream;
@@ -201,9 +203,15 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
       final list = _queueTracksSubject.value;
       if (idx < 0 || idx >= list.length) return;
       final previousIdx = _currentIndexSubject.value;
-      _currentIndexSubject.add(idx);
+      final indexChanged = previousIdx != idx;
+      if (indexChanged) {
+        _currentIndexSubject.add(idx);
+      }
       final track = list[idx];
-      unawaited(_onActiveTrackChanged(track, previousIdx != idx));
+      final trackChanged = _activeTrackKey != track.stableKey;
+      if (!indexChanged && !trackChanged) return;
+      _activeTrackKey = track.stableKey;
+      unawaited(_onActiveTrackChanged(track, indexChanged || trackChanged));
     });
 
     _durationSub = _player.durationStream.listen((dur) {
@@ -233,6 +241,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     });
 
     _playerStateSub = _player.playerStateStream.listen((state) {
+      _broadcastPlaybackState(_player.playbackEvent);
       unawaited(
         _enqueueListeningFlush(
           _listeningTracker.onAudibleStateChanged(_isActivelyAudible),
@@ -350,8 +359,12 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
             ? Duration(milliseconds: selectedTrack.rememberedPositionMs!)
             : Duration.zero);
 
+    _activeTrackKey = selectedTrack.stableKey;
+    _pendingInitialPosition = resumePos;
+    if (_currentIndexSubject.value != clampedIdx) {
+      _currentIndexSubject.add(clampedIdx);
+    }
     _queueTracksSubject.add(List<WetarTrack>.unmodifiable(tracks));
-    _currentIndexSubject.add(clampedIdx);
     _abLoopSubject.add(const AbLoopState());
     await _syncMediaQueue(tracks);
 
@@ -362,6 +375,12 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
         initialPosition: resumePos,
         preload: true,
       );
+      if (resumePos > Duration.zero &&
+          (_player.position - resumePos).abs() >
+              const Duration(milliseconds: 500)) {
+        await _player.seek(resumePos);
+      }
+      _pendingInitialPosition = null;
       await _onActiveTrackChanged(selectedTrack, true);
       if (autoPlay) {
         await play();
@@ -369,6 +388,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
         await _persistQueueSnapshot(force: true);
       }
     } catch (e, st) {
+      _pendingInitialPosition = null;
       AppLogger.error(
         'AudioHandler',
         'setQueueAndPlay failed',
@@ -503,6 +523,8 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     }
     await flushListeningSession(endSession: true);
     await _player.stop();
+    _activeTrackKey = null;
+    _pendingInitialPosition = null;
     _queueTracksSubject.add(const <WetarTrack>[]);
     _currentIndexSubject.add(0);
     _abLoopSubject.add(const AbLoopState());
@@ -818,6 +840,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> seek(Duration position) {
+    _pendingInitialPosition = null;
     _lastManualSeekEpochMs = DateTime.now().millisecondsSinceEpoch;
     _lastObservedPosMs = position.inMilliseconds;
     return _player.seek(position);

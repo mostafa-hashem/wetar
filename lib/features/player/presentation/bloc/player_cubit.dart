@@ -113,13 +113,42 @@ class PlayerCubit extends Cubit<PlayerStateSnapshot> {
 
   void _bindStreams() {
     _queueSub = _handler.queueTracksStream.listen((q) {
-      emit(state.copyWith(queue: q));
+      if (q.isEmpty) {
+        emit(
+          state.copyWith(queue: q, currentIndex: 0, position: Duration.zero),
+        );
+        return;
+      }
+      final safeIdx = _handler.currentIndex.clamp(0, q.length - 1);
+      final prevKey = state.currentTrack?.stableKey;
+      final sameTrack = prevKey != null && prevKey == q[safeIdx].stableKey;
+      emit(
+        state.copyWith(
+          queue: q,
+          currentIndex: safeIdx,
+          position: sameTrack ? state.position : _handler.position,
+        ),
+      );
     });
     _indexSub = _handler.currentIndexStream.listen((i) {
-      emit(state.copyWith(currentIndex: i, position: Duration.zero));
+      if (i == state.currentIndex) return;
+      final nextTrack = (i >= 0 && i < state.queue.length)
+          ? state.queue[i]
+          : null;
+      final sameTrack =
+          nextTrack != null &&
+          nextTrack.stableKey == state.currentTrack?.stableKey;
+      emit(
+        state.copyWith(
+          currentIndex: i,
+          position: sameTrack ? state.position : _handler.position,
+        ),
+      );
     });
     _playingSub = _handler.playingStream.listen((playing) {
-      emit(state.copyWith(isPlaying: playing));
+      final syncedPos = state.queue.isEmpty ? Duration.zero : _handler.position;
+      _lastPositionEmitMs = DateTime.now().millisecondsSinceEpoch;
+      emit(state.copyWith(isPlaying: playing, position: syncedPos));
     });
     _speedSub = _handler.speedStream.listen((speed) {
       emit(state.copyWith(speed: speed));
@@ -150,7 +179,9 @@ class PlayerCubit extends Cubit<PlayerStateSnapshot> {
     if (!_uiVisible) return;
     _posSub = _handler.positionStream.listen((pos) {
       final now = DateTime.now().millisecondsSinceEpoch;
-      if (now - _lastPositionEmitMs >= 200) {
+      final jumped =
+          (pos - state.position).abs() >= const Duration(milliseconds: 900);
+      if (!_handler.isPlaying || jumped || now - _lastPositionEmitMs >= 200) {
         _lastPositionEmitMs = now;
         emit(state.copyWith(position: pos));
       }
@@ -189,7 +220,12 @@ class PlayerCubit extends Cubit<PlayerStateSnapshot> {
   Future<void> togglePlayPause() =>
       _handler.isPlaying ? _handler.pause() : _handler.play();
 
-  Future<void> seek(Duration pos) => _handler.seek(pos);
+  Future<void> seek(Duration pos) {
+    _lastPositionEmitMs = DateTime.now().millisecondsSinceEpoch;
+    emit(state.copyWith(position: pos));
+    return _handler.seek(pos);
+  }
+
   Future<void> next() => _handler.skipToNext();
   Future<void> previous() => _handler.skipToPrevious();
   Future<void> skipToQueueIndex(int idx) => _handler.skipToQueueItem(idx);
