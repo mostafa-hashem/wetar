@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/platform/platform_interfaces.dart';
+import 'package:wetar/core/platform/wetar_platform_channel.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/core/widgets/wetar_brand_logo.dart';
@@ -18,6 +20,8 @@ import 'package:wetar/features/library/presentation/screens/home_screen.dart';
 import 'package:wetar/features/library/presentation/screens/library_screen.dart';
 import 'package:wetar/features/library/presentation/screens/search_screen.dart';
 import 'package:wetar/features/lyrics/presentation/widgets/lyrics_sheet.dart';
+import 'package:wetar/features/music_folders/data/file_system_library_source.dart';
+import 'package:wetar/features/music_folders/domain/audio_format_policy.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/music_folders_settings_screen.dart';
 import 'package:wetar/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -113,13 +117,25 @@ class _WetarAppShellState extends State<WetarAppShell> {
       if (event is OpenWithIncomingEvent) {
         final path = event.filePath ?? event.uri;
         if (path.isEmpty) return;
+        final nameOrPath = event.displayName ?? path;
+        if (!AudioFormatPolicy.isSupportedAudioFile(
+          pathOrName: nameOrPath,
+          mimeType: event.mimeType,
+        )) {
+          return;
+        }
+        final fallbackTitle = p.basenameWithoutExtension(
+          nameOrPath.split('/').last,
+        );
         final tempTrack = WetarTrack(
           stableKey: 'ext_${event.uri}',
           folderId: -1,
           uri: event.uri,
           filePath: path,
           folderPath: event.parentFolderPath ?? '',
-          title: event.displayName ?? path.split('/').last,
+          title: fallbackTitle.isEmpty
+              ? nameOrPath.split('/').last
+              : fallbackTitle,
           artist: '',
           album: '',
           albumArtist: '',
@@ -137,7 +153,7 @@ class _WetarAppShellState extends State<WetarAppShell> {
           dateAddedSec: 0,
           isTemporaryExternal: true,
         );
-        unawaited(context.read<PlayerCubit>().playExternal(tempTrack));
+        unawaited(_playEnrichedExternalTrack(tempTrack));
       } else if (event is ShortcutIncomingEvent) {
         if (event.target == 'shuffle_all') {
           final tracks = context.read<LibraryCubit>().state.allTracks;
@@ -193,6 +209,20 @@ class _WetarAppShellState extends State<WetarAppShell> {
     if (ctx == null) return false;
     return ctx.widget is EditableText ||
         ctx.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
+  Future<void> _playEnrichedExternalTrack(WetarTrack base) async {
+    final prober =
+        (Platform.isMacOS || Platform.isIOS) &&
+            sl.isRegistered<WetarPlatformChannel>()
+        ? sl<WetarPlatformChannel>()
+        : null;
+    final enriched = await FileSystemLibrarySource.enrichExternalTrack(
+      base,
+      prober: prober,
+    );
+    if (!mounted) return;
+    await context.read<PlayerCubit>().playExternal(enriched);
   }
 
   void _jumpToTab(WetarNavTab target) {

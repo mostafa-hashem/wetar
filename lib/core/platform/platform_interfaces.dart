@@ -220,6 +220,28 @@ abstract interface class LibrarySource {
   });
 }
 
+/// Native probe metadata for validating audio-only streams and reading duration.
+class AudioFileProbeResult {
+  const AudioFileProbeResult({
+    this.isVideo = false,
+    this.durationMs = 0,
+    this.title,
+    this.artist,
+    this.album,
+  });
+
+  final bool isVideo;
+  final int durationMs;
+  final String? title;
+  final String? artist;
+  final String? album;
+}
+
+/// Optional native metadata/container prober (AVFoundation on macOS/iOS).
+abstract interface class AudioMetadataProber {
+  Future<Map<String, AudioFileProbeResult>> probeAudioFiles(List<String> paths);
+}
+
 /// Abstract native folder & file picker / bookmark manager.
 abstract interface class FolderPickerService {
   Future<PickedFolderResult?> pickSystemFolder();

@@ -7,6 +7,7 @@ import '../../../core/database/wetar_database.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/platform/platform_interfaces.dart';
 import '../../../core/utils/arabic_normalizer.dart';
+import '../domain/audio_format_policy.dart';
 import '../domain/music_folder_models.dart';
 import '../domain/scan_diff_engine.dart';
 
@@ -220,8 +221,45 @@ class MusicFoldersRepository {
     await scanFoldersByIds(<int>[folderId]);
   }
 
+  /// Removes any previously indexed non-audio/video rows from the tracks table.
+  Future<void> purgeNonAudioTracks() async {
+    final rows = await _db
+        .customSelect('SELECT stable_key, file_path, mime_type FROM tracks')
+        .get();
+    final invalidKeys = <String>[];
+    for (final row in rows) {
+      final key = row.read<String>('stable_key');
+      final filePath = row.read<String>('file_path');
+      final mimeType = row.read<String>('mime_type');
+      final isVideo = AudioFormatPolicy.isVideoFile(
+        pathOrName: filePath,
+        mimeType: mimeType,
+      );
+      final isUnsupportedLocal =
+          !filePath.startsWith('content://') &&
+          !AudioFormatPolicy.isSupportedAudioFile(
+            pathOrName: filePath,
+            mimeType: mimeType,
+          );
+      if (isVideo || isUnsupportedLocal) {
+        invalidKeys.add(key);
+      }
+    }
+    if (invalidKeys.isEmpty) return;
+    for (var i = 0; i < invalidKeys.length; i += 400) {
+      final chunk = invalidKeys.sublist(
+        i,
+        (i + 400).clamp(0, invalidKeys.length),
+      );
+      await (_db.delete(
+        _db.tracks,
+      )..where((t) => t.stableKey.isIn(chunk))).go();
+    }
+  }
+
   /// Resolves bookmarks on Apple platforms and incrementally reconciles all selected folders.
   Future<void> reconcileAllSelectedFolders() async {
+    await purgeNonAudioTracks();
     final folders = await (_db.select(_db.selectedFolders)).get();
     if (folders.isEmpty) return;
     for (final folder in folders) {
@@ -237,6 +275,7 @@ class MusicFoldersRepository {
   Future<void> scanFoldersByIds(List<int> folderIds) async {
     if (folderIds.isEmpty) return;
     _cancelRequested = false;
+    await purgeNonAudioTracks();
     final targetRows = await (_db.select(
       _db.selectedFolders,
     )..where((t) => t.id.isIn(folderIds))).get();
@@ -256,7 +295,9 @@ class MusicFoldersRepository {
         _db.tracks,
       )..where((t) => t.folderId.isIn(folderIds))).get();
       final existingModifiedMap = <String, int>{
-        for (final t in existingTrackRows) t.stableKey: t.dateModifiedSec,
+        for (final t in existingTrackRows)
+          if (t.durationMs > 0 || t.isCloudPending)
+            t.stableKey: t.dateModifiedSec,
       };
       final existingSignatures = existingTrackRows
           .map(
@@ -265,6 +306,7 @@ class MusicFoldersRepository {
               folderId: t.folderId,
               dateModifiedSec: t.dateModifiedSec,
               sizeBytes: t.sizeBytes,
+              durationMs: t.durationMs,
             ),
           )
           .toList();

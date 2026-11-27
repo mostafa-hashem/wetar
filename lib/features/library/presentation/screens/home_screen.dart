@@ -664,18 +664,27 @@ class HomeScreen extends StatelessWidget {
               runSpacing: tokens.spacingSm,
               children: <Widget>[
                 for (final f in previewFolders)
-                  InputChip(
-                    avatar: const Icon(Icons.folder_rounded, size: 18),
-                    label: Text(
-                      '${f.displayName} (${NumeralFormatter.formatInt(f.trackCount, numerals)})',
-                    ),
-                    onPressed: () {
+                  Builder(
+                    builder: (context) {
                       final folderTracks = libState.allTracks
                           .where((t) => t.folderId == f.id)
                           .toList();
-                      if (folderTracks.isNotEmpty) {
-                        context.read<PlayerCubit>().playTracks(folderTracks);
-                      }
+                      final displayCount = f.isAvailable
+                          ? folderTracks.length
+                          : f.trackCount;
+                      return InputChip(
+                        avatar: const Icon(Icons.folder_rounded, size: 18),
+                        label: Text(
+                          '${f.displayName} (${NumeralFormatter.formatInt(displayCount, numerals)})',
+                        ),
+                        onPressed: () {
+                          if (folderTracks.isNotEmpty) {
+                            context.read<PlayerCubit>().playTracks(
+                              folderTracks,
+                            );
+                          }
+                        },
+                      );
                     },
                   ),
                 if (foldersState.selectedFolders.length > 6 &&

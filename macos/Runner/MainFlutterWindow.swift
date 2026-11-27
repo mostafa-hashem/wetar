@@ -1,3 +1,4 @@
+import AVFoundation
 import Cocoa
 import CoreServices
 import FlutterMacOS
@@ -57,8 +58,21 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
   private var savedMinSize: NSSize = NSSize(width: 840, height: 560)
 
   private let supportedAudioExts: Set<String> = [
-    "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus",
-    "aiff", "aif", "wv", "ape", "webm", "alac", "caf",
+    "mp3", "mp2", "mp1", "mpga", "mpa",
+    "m4a", "m4b", "m4r", "m4p", "aac", "alac", "3ga", "f4a",
+    "ogg", "oga", "opus", "spx", "flac", "mka",
+    "wav", "wave", "aiff", "aif", "aifc", "caf", "pcm", "au", "snd",
+    "wv", "ape", "tta", "tak", "shn", "dsf", "dff", "dsd", "mlp",
+    "wma", "amr", "awb", "ac3", "eac3", "ec3", "dts",
+    "mid", "midi", "kar", "imy", "ota", "rtttl", "rtx", "xmf", "mxmf",
+  ]
+
+  private let videoExts: Set<String> = [
+    "mp4", "m4v", "mkv", "webm", "mov", "qt", "avi", "wmv", "flv", "f4v",
+    "3gp", "3g2", "3gpp", "3gpp2", "ts", "mts", "m2ts", "vob",
+    "mpg", "mpeg", "mpe", "mpv", "m2v", "ogv", "ogm",
+    "divx", "xvid", "asf", "rm", "rmvb", "swf", "dv", "amv",
+    "h264", "h265", "hevc",
   ]
 
   func attach(window: NSWindow, controller: FlutterViewController) {
@@ -130,16 +144,19 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
           payload["bookmarkData"] = key
         }
         emitEvent(payload)
-      } else if supportedAudioExts.contains(url.pathExtension.lowercased()) {
-        _ = url.startAccessingSecurityScopedResource()
-        emitEvent([
-          "type": "open_with",
-          "uri": url.absoluteString,
-          "filePath": url.path,
-          "parentFolderPath": url.deletingLastPathComponent().path,
-          "displayName": url.lastPathComponent,
-          "mimeType": "audio/*",
-        ])
+      } else {
+        let ext = url.pathExtension.lowercased()
+        if !videoExts.contains(ext) && supportedAudioExts.contains(ext) {
+          _ = url.startAccessingSecurityScopedResource()
+          emitEvent([
+            "type": "open_with",
+            "uri": url.absoluteString,
+            "filePath": url.path,
+            "parentFolderPath": url.deletingLastPathComponent().path,
+            "displayName": url.lastPathComponent,
+            "mimeType": "audio/*",
+          ])
+        }
       }
     }
   }
@@ -177,6 +194,9 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
     case "shareFiles":
       let paths = args["paths"] as? [String] ?? []
       shareFiles(paths: paths, result: result)
+    case "probeAudioFiles":
+      let paths = args["paths"] as? [String] ?? []
+      probeAudioFiles(paths: paths, result: result)
     case "openAppSettings":
       if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
         NSWorkspace.shared.open(url)
@@ -460,6 +480,113 @@ final class WetarMacPlugin: NSObject, FlutterStreamHandler {
       let anchor = NSRect(x: view.bounds.midX - 1, y: view.bounds.midY - 1, width: 2, height: 2)
       picker.show(relativeTo: anchor, of: view, preferredEdge: .minY)
       result(true)
+    }
+  }
+
+  private func probeAudioFiles(paths: [String], result: @escaping FlutterResult) {
+    if paths.isEmpty {
+      result([String: [String: Any]]())
+      return
+    }
+    if #available(macOS 13.0, *) {
+      Task {
+        var out: [String: [String: Any]] = [:]
+        for path in paths {
+          guard FileManager.default.fileExists(atPath: path) else { continue }
+          let asset = AVURLAsset(
+            url: URL(fileURLWithPath: path),
+            options: [AVURLAssetPreferPreciseDurationAndTimingKey: false]
+          )
+          var isVideo = false
+          if let videoTracks = try? await asset.loadTracks(withMediaType: .video) {
+            for track in videoTracks {
+              let fps = (try? await track.load(.nominalFrameRate)) ?? 0
+              if fps > 1.0 {
+                isVideo = true
+                break
+              }
+            }
+          }
+          var durationMs = 0
+          if let cmDuration = try? await asset.load(.duration) {
+            let seconds = CMTimeGetSeconds(cmDuration)
+            if seconds.isFinite && seconds > 0 {
+              durationMs = Int((seconds * 1000.0).rounded())
+            }
+          }
+          var entry: [String: Any] = [
+            "isVideo": isVideo,
+            "durationMs": durationMs,
+          ]
+          if !isVideo, let meta = try? await asset.load(.commonMetadata) {
+            for item in meta {
+              guard let key = item.commonKey else { continue }
+              if let val = try? await item.load(.stringValue), !val.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                switch key {
+                case .commonKeyTitle:
+                  entry["title"] = val.trimmingCharacters(in: .whitespacesAndNewlines)
+                case .commonKeyArtist:
+                  entry["artist"] = val.trimmingCharacters(in: .whitespacesAndNewlines)
+                case .commonKeyAlbumName:
+                  entry["album"] = val.trimmingCharacters(in: .whitespacesAndNewlines)
+                default:
+                  break
+                }
+              }
+            }
+          }
+          out[path] = entry
+        }
+        let snapshot = out
+        await MainActor.run {
+          result(snapshot)
+        }
+      }
+    } else {
+      DispatchQueue.global(qos: .userInitiated).async {
+        var out: [String: [String: Any]] = [:]
+        for path in paths {
+          guard FileManager.default.fileExists(atPath: path) else { continue }
+          let asset = AVURLAsset(
+            url: URL(fileURLWithPath: path),
+            options: [AVURLAssetPreferPreciseDurationAndTimingKey: false]
+          )
+          let semaphore = DispatchSemaphore(value: 0)
+          asset.loadValuesAsynchronously(forKeys: ["tracks", "duration", "commonMetadata"]) {
+            semaphore.signal()
+          }
+          _ = semaphore.wait(timeout: .now() + 2.0)
+
+          let isVideo = asset.tracks(withMediaType: .video).contains { $0.nominalFrameRate > 1.0 }
+          let seconds = CMTimeGetSeconds(asset.duration)
+          let durationMs = (seconds.isFinite && seconds > 0) ? Int((seconds * 1000.0).rounded()) : 0
+          var entry: [String: Any] = [
+            "isVideo": isVideo,
+            "durationMs": durationMs,
+          ]
+          if !isVideo {
+            for item in asset.commonMetadata {
+              guard let key = item.commonKey,
+                    let val = item.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+                    !val.isEmpty else { continue }
+              switch key {
+              case .commonKeyTitle:
+                entry["title"] = val
+              case .commonKeyArtist:
+                entry["artist"] = val
+              case .commonKeyAlbumName:
+                entry["album"] = val
+              default:
+                break
+              }
+            }
+          }
+          out[path] = entry
+        }
+        DispatchQueue.main.async {
+          result(out)
+        }
+      }
     }
   }
 

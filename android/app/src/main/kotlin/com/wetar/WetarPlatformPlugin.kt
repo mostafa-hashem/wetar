@@ -90,6 +90,11 @@ class WetarPlatformPlugin(
         val payload: Map<String, Any?>? = when (action) {
             Intent.ACTION_VIEW -> {
                 val uri = intent.data ?: return
+                val mime = intent.type ?: activity.contentResolver.getType(uri)
+                val displayName = queryDisplayName(uri)
+                if (!isSupportedAudioFile(displayName ?: uri.toString(), mime)) {
+                    return
+                }
                 val pathOrTemp = resolveReadableUriToPathOrCopy(uri)
                 val parentDir = if (pathOrTemp != null && !pathOrTemp.startsWith(activity.cacheDir.absolutePath)) {
                     File(pathOrTemp).parent
@@ -101,8 +106,8 @@ class WetarPlatformPlugin(
                     "uri" to uri.toString(),
                     "filePath" to pathOrTemp,
                     "parentFolderPath" to parentDir,
-                    "displayName" to queryDisplayName(uri),
-                    "mimeType" to (intent.type ?: activity.contentResolver.getType(uri)),
+                    "displayName" to displayName,
+                    "mimeType" to mime,
                 )
             }
             "com.wetar.SHORTCUT_SHUFFLE" -> mapOf("type" to "shortcut", "target" to "shuffle_all")
@@ -320,36 +325,88 @@ class WetarPlatformPlugin(
 
     private fun queryAudioFolders(): List<Map<String, Any?>> {
         val folders = linkedMapOf<String, MutableFolderAgg>()
+        val seenPaths = HashSet<String>()
+
+        fun addCandidate(path: String, mime: String?) {
+            val normalized = normalizePath(path)
+            if (!seenPaths.add(normalized)) return
+            if (!isSupportedAudioFile(normalized, mime)) return
+            val file = File(normalized)
+            if (!file.isFile) return
+            val parent = file.parentFile ?: return
+            val parentPath = normalizePath(parent.absolutePath)
+            val agg = folders.getOrPut(parentPath) {
+                MutableFolderAgg(
+                    rootPath = parentPath,
+                    displayName = parent.name.ifBlank { parentPath },
+                    volumeLabel = inferVolumeLabel(parentPath),
+                )
+            }
+            agg.trackCount += 1
+        }
+
         val projection = arrayOf(
             MediaStore.Audio.Media.DATA,
-            MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.MIME_TYPE,
         )
-        val selection = "${MediaStore.Audio.Media.DURATION} > 0"
         activity.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
-            selection,
+            null,
             null,
             null,
         )?.use { cursor ->
             val dataCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
-            if (dataCol < 0) return emptyList()
-            while (cursor.moveToNext()) {
-                val path = cursor.getString(dataCol) ?: continue
-                val file = File(path)
-                val parent = file.parentFile ?: continue
-                val parentPath = parent.absolutePath
-                val agg = folders.getOrPut(parentPath) {
-                    MutableFolderAgg(
-                        rootPath = parentPath,
-                        displayName = parent.name.ifBlank { parentPath },
-                        volumeLabel = inferVolumeLabel(parentPath),
-                    )
+            val mimeCol = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
+            if (dataCol >= 0) {
+                while (cursor.moveToNext()) {
+                    val path = cursor.getString(dataCol) ?: continue
+                    val mime = if (mimeCol >= 0) cursor.getString(mimeCol) else null
+                    addCandidate(path, mime)
                 }
-                agg.trackCount += 1
             }
         }
+
+        // Also query MediaStore.Files for audio formats stored outside MediaStore.Audio
+        // (e.g. .opus, .ape, .wv, .mka, .dsf) while strictly excluding video files.
+        val filesProjection = arrayOf(
+            MediaStore.Files.FileColumns.DATA,
+            MediaStore.Files.FileColumns.MIME_TYPE,
+        )
+        val filesSelection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ${MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO} " +
+            "OR ${MediaStore.Files.FileColumns.MIME_TYPE} LIKE 'audio/%' " +
+            "OR ${MediaStore.Files.FileColumns.MIME_TYPE} IN ('application/ogg', 'application/flac', 'application/x-flac', 'application/opus')"
+        try {
+            activity.contentResolver.query(
+                MediaStore.Files.getContentUri("external"),
+                filesProjection,
+                filesSelection,
+                null,
+                null,
+            )?.use { cursor ->
+                val dataCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATA)
+                val mimeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.MIME_TYPE)
+                if (dataCol >= 0) {
+                    while (cursor.moveToNext()) {
+                        val path = cursor.getString(dataCol) ?: continue
+                        val mime = if (mimeCol >= 0) cursor.getString(mimeCol) else null
+                        addCandidate(path, mime)
+                    }
+                }
+            }
+        } catch (_: Exception) {
+        }
+
+        // Check direct children of discovered folders so unindexed audio extensions are counted too.
+        val discoveredFolderPaths = folders.keys.toList()
+        for (folderPath in discoveredFolderPaths) {
+            val children = File(folderPath).listFiles() ?: continue
+            for (child in children) {
+                if (!child.isFile || child.name.startsWith(".")) continue
+                addCandidate(child.absolutePath, null)
+            }
+        }
+
         return folders.values
             .sortedBy { it.displayName.lowercase() }
             .map {
@@ -404,6 +461,7 @@ class WetarPlatformPlugin(
 
         val discoveredTracks = mutableListOf<Map<String, Any?>>()
         val activeKeys = mutableListOf<String>()
+        val seenPaths = HashSet<String>()
 
         if (mediaStoreFolders.isNotEmpty()) {
             val projection = buildList {
@@ -431,7 +489,7 @@ class WetarPlatformPlugin(
             activity.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection,
-                "${MediaStore.Audio.Media.DURATION} > 0",
+                null,
                 null,
                 null,
             )?.use { cursor ->
@@ -461,14 +519,20 @@ class WetarPlatformPlugin(
                 while (cursor.moveToNext()) {
                     val filePath = cursor.getString(dataCol) ?: continue
                     val normalizedFile = normalizePath(filePath)
-                    val parentFolder = normalizePath(File(normalizedFile).parent ?: continue)
+                    val rawMime = if (mimeCol >= 0) cursor.getString(mimeCol) else null
+                    if (!isSupportedAudioFile(normalizedFile, rawMime)) continue
+                    val localFile = File(normalizedFile)
+                    if (!localFile.isFile) continue
+
+                    val parentFolder = normalizePath(localFile.parent ?: continue)
                     val matchedRule = matchBestFolderRule(parentFolder, mediaStoreFolders) ?: continue
                     availableFolderIds.add(matchedRule.id)
 
-                    activeKeys.add(normalizedFile)
+                    if (!seenPaths.add(normalizedFile)) continue
                     val modifiedSec = if (modifiedCol >= 0) cursor.getLong(modifiedCol) else 0L
                     val prevModified = existingByPath[normalizedFile]?.toLong()
                     if (prevModified != null && prevModified == modifiedSec) {
+                        activeKeys.add(normalizedFile)
                         continue
                     }
 
@@ -489,8 +553,38 @@ class WetarPlatformPlugin(
                     val discNumber = if (rawTrack >= 1000) rawTrack / 1000 else 1
                     val trackNumber = if (rawTrack >= 1000) rawTrack % 1000 else rawTrack
 
-                    val rawTitle = if (titleCol >= 0) cursor.getString(titleCol) else null
-                    val fallbackTitle = File(normalizedFile).nameWithoutExtension
+                    val fallbackTitle = localFile.nameWithoutExtension
+                    var title = (if (titleCol >= 0) cursor.getString(titleCol) else null)?.takeIf { it.isNotBlank() } ?: fallbackTitle
+                    var artist = if (artistCol >= 0) cursor.getString(artistCol) else null
+                    var album = if (albumCol >= 0) cursor.getString(albumCol) else null
+                    var albumArtist = if (albumArtistCol >= 0) cursor.getString(albumArtistCol) else null
+                    var genre = if (genreCol >= 0) cursor.getString(genreCol) else null
+                    var year = if (yearCol >= 0) cursor.getInt(yearCol) else 0
+                    var durationMs = if (durationCol >= 0) cursor.getLong(durationCol) else 0L
+                    var bitrateKbps = if (bitrateCol >= 0) cursor.getInt(bitrateCol) / 1000 else 0
+                    var sampleRateHz = 0
+                    var resolvedTrackNumber = trackNumber
+
+                    if (durationMs <= 0L) {
+                        val fallbackMeta = readLocalFileAudioMetadata(localFile, fallbackTitle)
+                        if (fallbackMeta.isDisguisedVideo) {
+                            continue
+                        }
+                        if (fallbackMeta.durationMs > 0L) durationMs = fallbackMeta.durationMs
+                        if (fallbackMeta.title?.isNotBlank() == true && title == fallbackTitle) {
+                            title = fallbackMeta.title
+                        }
+                        if (artist.isNullOrBlank()) artist = fallbackMeta.artist
+                        if (album.isNullOrBlank()) album = fallbackMeta.album
+                        if (albumArtist.isNullOrBlank()) albumArtist = fallbackMeta.albumArtist
+                        if (genre.isNullOrBlank()) genre = fallbackMeta.genre
+                        if (year <= 0) year = fallbackMeta.year
+                        if (resolvedTrackNumber <= 0) resolvedTrackNumber = fallbackMeta.trackNumber
+                        if (bitrateKbps <= 0) bitrateKbps = fallbackMeta.bitrateKbps
+                        sampleRateHz = fallbackMeta.sampleRateHz
+                    }
+
+                    activeKeys.add(normalizedFile)
                     discoveredTracks.add(
                         mapOf(
                             "stableKey" to normalizedFile,
@@ -498,26 +592,41 @@ class WetarPlatformPlugin(
                             "uri" to contentUri,
                             "filePath" to normalizedFile,
                             "folderPath" to parentFolder,
-                            "title" to (rawTitle?.takeIf { it.isNotBlank() } ?: fallbackTitle),
-                            "artist" to (if (artistCol >= 0) cursor.getString(artistCol) else null),
-                            "album" to (if (albumCol >= 0) cursor.getString(albumCol) else null),
-                            "albumArtist" to (if (albumArtistCol >= 0) cursor.getString(albumArtistCol) else null),
-                            "genre" to (if (genreCol >= 0) cursor.getString(genreCol) else null),
-                            "year" to (if (yearCol >= 0) cursor.getInt(yearCol) else 0),
-                            "trackNumber" to trackNumber,
+                            "title" to title,
+                            "artist" to artist,
+                            "album" to album,
+                            "albumArtist" to albumArtist,
+                            "genre" to genre,
+                            "year" to year,
+                            "trackNumber" to resolvedTrackNumber,
                             "discNumber" to discNumber,
-                            "durationMs" to (if (durationCol >= 0) cursor.getLong(durationCol) else 0L),
-                            "bitrateKbps" to (if (bitrateCol >= 0) cursor.getInt(bitrateCol) / 1000 else 0),
-                            "sampleRateHz" to 0,
+                            "durationMs" to durationMs,
+                            "bitrateKbps" to bitrateKbps,
+                            "sampleRateHz" to sampleRateHz,
                             "channels" to 2,
-                            "sizeBytes" to (if (sizeCol >= 0) cursor.getLong(sizeCol) else 0L),
-                            "mimeType" to (if (mimeCol >= 0) cursor.getString(mimeCol) else "audio/*"),
+                            "sizeBytes" to (if (sizeCol >= 0) cursor.getLong(sizeCol) else localFile.length()),
+                            "mimeType" to (rawMime ?: inferAudioMimeFromName(localFile.name)),
                             "dateModifiedSec" to modifiedSec,
                             "dateAddedSec" to (if (addedCol >= 0) cursor.getLong(addedCol) else modifiedSec),
                             "artworkUri" to (artworkUri ?: contentUri),
                         ),
                     )
                 }
+            }
+
+            // Supplement MediaStore with direct folder traversal so audio formats skipped by
+            // MediaStore (e.g., .opus, .ape, .wv, .mka, .dsf, .caf, .3ga) are still indexed.
+            for (rule in mediaStoreFolders) {
+                val rootDir = File(rule.rootPath)
+                if (!rootDir.exists() || !rootDir.isDirectory) continue
+                walkLocalFolder(
+                    dir = rootDir,
+                    rule = rule,
+                    seenPaths = seenPaths,
+                    existingByPath = existingByPath,
+                    activeKeys = activeKeys,
+                    outTracks = discoveredTracks,
+                )
             }
         }
 
@@ -545,6 +654,74 @@ class WetarPlatformPlugin(
         )
     }
 
+    private fun walkLocalFolder(
+        dir: File,
+        rule: FolderRule,
+        seenPaths: MutableSet<String>,
+        existingByPath: Map<String, Number>,
+        activeKeys: MutableList<String>,
+        outTracks: MutableList<Map<String, Any?>>,
+    ) {
+        val children = dir.listFiles() ?: return
+        val parentFolder = normalizePath(dir.absolutePath)
+        for (child in children) {
+            val name = child.name
+            if (name.startsWith(".")) continue
+            if (child.isDirectory) {
+                if (!rule.includeSubfolders) continue
+                val childPath = normalizePath(child.absolutePath)
+                val isExcluded = rule.excludedSubfolders.any { ex ->
+                    childPath == ex || childPath.startsWith("$ex/")
+                }
+                if (isExcluded) continue
+                walkLocalFolder(child, rule, seenPaths, existingByPath, activeKeys, outTracks)
+            } else if (child.isFile) {
+                val normalizedFile = normalizePath(child.absolutePath)
+                if (!isSupportedAudioFile(name, null)) continue
+                if (!seenPaths.add(normalizedFile)) continue
+
+                val modifiedSec = child.lastModified() / 1000L
+                val prevMod = existingByPath[normalizedFile]?.toLong()
+                if (prevMod != null && prevMod == modifiedSec) {
+                    activeKeys.add(normalizedFile)
+                    continue
+                }
+
+                val meta = readLocalFileAudioMetadata(child, child.nameWithoutExtension)
+                if (meta.isDisguisedVideo) continue
+
+                activeKeys.add(normalizedFile)
+                val fileUri = Uri.fromFile(child).toString()
+                outTracks.add(
+                    mapOf(
+                        "stableKey" to normalizedFile,
+                        "folderId" to rule.id,
+                        "uri" to fileUri,
+                        "filePath" to normalizedFile,
+                        "folderPath" to parentFolder,
+                        "title" to (meta.title ?: child.nameWithoutExtension),
+                        "artist" to meta.artist,
+                        "album" to meta.album,
+                        "albumArtist" to meta.albumArtist,
+                        "genre" to meta.genre,
+                        "year" to meta.year,
+                        "trackNumber" to meta.trackNumber,
+                        "discNumber" to 1,
+                        "durationMs" to meta.durationMs,
+                        "bitrateKbps" to meta.bitrateKbps,
+                        "sampleRateHz" to meta.sampleRateHz,
+                        "channels" to 2,
+                        "sizeBytes" to child.length(),
+                        "mimeType" to inferAudioMimeFromName(name),
+                        "dateModifiedSec" to modifiedSec,
+                        "dateAddedSec" to modifiedSec,
+                        "artworkUri" to normalizedFile,
+                    ),
+                )
+            }
+        }
+    }
+
     private fun walkSafTree(
         doc: DocumentFile,
         rule: FolderRule,
@@ -566,16 +743,20 @@ class WetarPlatformPlugin(
                 walkSafTree(child, rule, childRel, existingByPath, activeKeys, outTracks)
             } else if (child.isFile) {
                 val mime = child.type ?: ""
-                val ext = childName.substringAfterLast('.', "").lowercase()
-                if (!mime.startsWith("audio/") && ext !in AUDIO_EXTENSIONS) continue
+                if (!isSupportedAudioFile(childName, mime)) continue
 
                 val docUri = child.uri.toString()
-                activeKeys.add(docUri)
                 val modifiedSec = child.lastModified() / 1000L
                 val prevMod = existingByPath[docUri]?.toLong()
-                if (prevMod != null && prevMod == modifiedSec) continue
+                if (prevMod != null && prevMod == modifiedSec) {
+                    activeKeys.add(docUri)
+                    continue
+                }
 
                 val meta = readSafMetadata(child.uri, childName)
+                if (meta.isDisguisedVideo) continue
+
+                activeKeys.add(docUri)
                 outTracks.add(
                     mapOf(
                         "stableKey" to docUri,
@@ -596,7 +777,7 @@ class WetarPlatformPlugin(
                         "sampleRateHz" to meta.sampleRateHz,
                         "channels" to 2,
                         "sizeBytes" to child.length(),
-                        "mimeType" to (mime.ifEmpty { "audio/$ext" }),
+                        "mimeType" to (mime.ifEmpty { inferAudioMimeFromName(childName) }),
                         "dateModifiedSec" to modifiedSec,
                         "dateAddedSec" to modifiedSec,
                         "artworkUri" to docUri,
@@ -606,30 +787,29 @@ class WetarPlatformPlugin(
         }
     }
 
+    private fun readLocalFileAudioMetadata(file: File, fallbackTitle: String): SafAudioMeta {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(file.absolutePath)
+            extractMetadataFromRetriever(retriever, file.name, fallbackTitle)
+        } catch (_: Exception) {
+            SafAudioMeta(title = fallbackTitle)
+        } finally {
+            try {
+                retriever.release()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     private fun readSafMetadata(uri: Uri, fallbackName: String): SafAudioMeta {
         val retriever = MediaMetadataRetriever()
         return try {
             retriever.setDataSource(activity, uri)
-            val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
-            val bitrate = (retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toIntOrNull() ?: 0) / 1000
-            val year = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)?.take(4)?.toIntOrNull() ?: 0
-            val trackNo = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)
-                ?.substringBefore('/')?.toIntOrNull() ?: 0
-            val sampleRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE)?.toIntOrNull() ?: 0
-            } else 0
-            SafAudioMeta(
-                title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                    ?.takeIf { it.isNotBlank() } ?: fallbackName.substringBeforeLast('.'),
-                artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST),
-                album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM),
-                albumArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST),
-                genre = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE),
-                year = year,
-                trackNumber = trackNo,
-                durationMs = durationMs,
-                bitrateKbps = bitrate,
-                sampleRateHz = sampleRate,
+            extractMetadataFromRetriever(
+                retriever,
+                fallbackName,
+                fallbackName.substringBeforeLast('.'),
             )
         } catch (_: Exception) {
             SafAudioMeta(title = fallbackName.substringBeforeLast('.'))
@@ -639,6 +819,42 @@ class WetarPlatformPlugin(
             } catch (_: Exception) {
             }
         }
+    }
+
+    private fun extractMetadataFromRetriever(
+        retriever: MediaMetadataRetriever,
+        fileName: String,
+        fallbackTitle: String,
+    ): SafAudioMeta {
+        val hasVideo = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO)
+        val hasAudio = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
+        val ext = fileName.substringAfterLast('.', "").lowercase()
+        val disguisedVideo = hasVideo.equals("yes", ignoreCase = true) &&
+            (hasAudio != "yes" || (ext != "mp3" && ext != "flac"))
+        if (disguisedVideo) {
+            return SafAudioMeta(title = fallbackTitle, isDisguisedVideo = true)
+        }
+        val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+        val bitrate = (retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toIntOrNull() ?: 0) / 1000
+        val year = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)?.take(4)?.toIntOrNull() ?: 0
+        val trackNo = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)
+            ?.substringBefore('/')?.toIntOrNull() ?: 0
+        val sampleRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE)?.toIntOrNull() ?: 0
+        } else 0
+        return SafAudioMeta(
+            title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                ?.takeIf { it.isNotBlank() } ?: fallbackTitle,
+            artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST),
+            album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM),
+            albumArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST),
+            genre = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE),
+            year = year,
+            trackNumber = trackNo,
+            durationMs = durationMs,
+            bitrateKbps = bitrate,
+            sampleRateHz = sampleRate,
+        )
     }
 
     private fun extractThumbnailBytes(uriStr: String?, filePath: String?, sizePx: Int): ByteArray? {
@@ -996,6 +1212,48 @@ class WetarPlatformPlugin(
         return best
     }
 
+    private fun isSupportedAudioFile(pathOrName: String, mimeType: String?): Boolean {
+        val cleanMime = mimeType?.trim()?.lowercase() ?: ""
+        if (cleanMime.startsWith("video/") ||
+            cleanMime.startsWith("image/") ||
+            cleanMime.startsWith("text/")
+        ) {
+            return false
+        }
+        val slash = pathOrName.lastIndexOf('/')
+        val base = if (slash >= 0) pathOrName.substring(slash + 1) else pathOrName
+        val dot = base.lastIndexOf('.')
+        val ext = if (dot > 0 && dot < base.length - 1) base.substring(dot + 1).lowercase() else ""
+        if (ext.isNotEmpty()) {
+            if (ext in VIDEO_EXTENSIONS) return false
+            return ext in AUDIO_EXTENSIONS
+        }
+        return cleanMime.startsWith("audio/") || cleanMime in AUDIO_APPLICATION_MIMES
+    }
+
+    private fun inferAudioMimeFromName(name: String): String {
+        val ext = name.substringAfterLast('.', "").lowercase()
+        return when (ext) {
+            "mp3", "mp2", "mp1", "mpga", "mpa" -> "audio/mpeg"
+            "m4a", "m4b", "m4r", "m4p", "alac", "f4a" -> "audio/mp4"
+            "aac" -> "audio/aac"
+            "3ga" -> "audio/3gpp"
+            "flac" -> "audio/flac"
+            "ogg", "oga", "spx" -> "audio/ogg"
+            "opus" -> "audio/opus"
+            "mka" -> "audio/x-matroska"
+            "wav", "wave" -> "audio/wav"
+            "aiff", "aif", "aifc" -> "audio/aiff"
+            "caf" -> "audio/x-caf"
+            "wv" -> "audio/x-wavpack"
+            "ape" -> "audio/x-ape"
+            "wma" -> "audio/x-ms-wma"
+            "amr" -> "audio/amr"
+            "awb" -> "audio/amr-wb"
+            else -> "audio/*"
+        }
+    }
+
     private fun normalizePath(path: String): String =
         if (path.length > 1 && path.endsWith("/")) path.dropLast(1) else path
 
@@ -1037,6 +1295,7 @@ class WetarPlatformPlugin(
         val durationMs: Long = 0L,
         val bitrateKbps: Int = 0,
         val sampleRateHz: Int = 0,
+        val isDisguisedVideo: Boolean = false,
     )
 
     private companion object {
@@ -1044,6 +1303,27 @@ class WetarPlatformPlugin(
         const val REQ_PICK_SAF_FOLDER = 4102
         const val REQ_PICK_FILE = 4103
         const val REQ_SAVE_FILE = 4104
-        val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "alac", "aiff", "wma")
+        val AUDIO_EXTENSIONS = setOf(
+            "mp3", "mp2", "mp1", "mpga", "mpa",
+            "m4a", "m4b", "m4r", "m4p", "aac", "alac", "3ga", "f4a",
+            "ogg", "oga", "opus", "spx", "flac", "mka",
+            "wav", "wave", "aiff", "aif", "aifc", "caf", "pcm", "au", "snd",
+            "wv", "ape", "tta", "tak", "shn", "dsf", "dff", "dsd", "mlp",
+            "wma", "amr", "awb", "ac3", "eac3", "ec3", "dts",
+            "mid", "midi", "kar", "imy", "ota", "rtttl", "rtx", "xmf", "mxmf",
+        )
+        val VIDEO_EXTENSIONS = setOf(
+            "mp4", "m4v", "mkv", "webm", "mov", "qt", "avi", "wmv", "flv", "f4v",
+            "3gp", "3g2", "3gpp", "3gpp2", "ts", "mts", "m2ts", "vob",
+            "mpg", "mpeg", "mpe", "mpv", "m2v", "ogv", "ogm",
+            "divx", "xvid", "asf", "rm", "rmvb", "swf", "dv", "amv",
+            "h264", "h265", "hevc",
+        )
+        val AUDIO_APPLICATION_MIMES = setOf(
+            "application/ogg",
+            "application/flac",
+            "application/x-flac",
+            "application/opus",
+        )
     }
 }

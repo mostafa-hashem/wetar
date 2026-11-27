@@ -8,12 +8,14 @@ class ExistingTrackSignature {
     required this.folderId,
     required this.dateModifiedSec,
     required this.sizeBytes,
+    this.durationMs = -1,
   });
 
   final String stableKey;
   final int folderId;
   final int dateModifiedSec;
   final int sizeBytes;
+  final int durationMs;
 }
 
 class ScanDiffPlan {
@@ -45,7 +47,8 @@ class ScanDiffEngine {
       if (prev == null ||
           prev.folderId != dto.folderId ||
           prev.dateModifiedSec != dto.dateModifiedSec ||
-          prev.sizeBytes != dto.sizeBytes) {
+          prev.sizeBytes != dto.sizeBytes ||
+          (prev.durationMs == 0 && dto.durationMs > 0)) {
         toUpsert.add(dto);
       }
     }

@@ -181,4 +181,59 @@ void main() {
     expect(plan.tracksToUpsert.map((e) => e.stableKey), <String>['new.mp3']);
     expect(plan.staleStableKeysToDelete, <String>['deleted.mp3']);
   });
+
+  test('purgeNonAudioTracks removes stale video rows and updates folder track count', () async {
+    fakeSource.availableIds = <int>{1};
+    fakeSource.nextTracks = <ScannedTrackDto>[
+      const ScannedTrackDto(
+        stableKey: '/music/song.opus',
+        folderId: 1,
+        uri: 'file:///music/song.opus',
+        filePath: '/music/song.opus',
+        folderPath: '/music',
+        title: 'Opus Song',
+        durationMs: 0,
+        mimeType: 'audio/opus',
+        dateModifiedSec: 100,
+      ),
+      const ScannedTrackDto(
+        stableKey: '/music/short_notif.mp3',
+        folderId: 1,
+        uri: 'file:///music/short_notif.mp3',
+        filePath: '/music/short_notif.mp3',
+        folderPath: '/music',
+        title: 'Short Notification',
+        durationMs: 10000,
+        mimeType: 'audio/mpeg',
+        dateModifiedSec: 100,
+      ),
+      const ScannedTrackDto(
+        stableKey: '/music/video.mp4',
+        folderId: 1,
+        uri: 'file:///music/video.mp4',
+        filePath: '/music/video.mp4',
+        folderPath: '/music',
+        title: 'Music Video',
+        durationMs: 180000,
+        mimeType: 'video/mp4',
+        dateModifiedSec: 100,
+      ),
+    ];
+
+    await foldersRepo.addOrReactivateFolder(
+      rootPath: '/music',
+      displayName: 'Music',
+    );
+
+    // Purge removes the video row and keeps both audio rows in the folder count.
+    await foldersRepo.purgeNonAudioTracks();
+    final folders = await foldersRepo.getSelectedFolders();
+    expect(folders.single.trackCount, 2);
+
+    // LibraryRepository includes durationMs == 0 audio tracks while filtering out 10s clips.
+    final visibleTracks = await libraryRepo.fetchLibraryTracks(
+      minDurationSec: 30,
+    );
+    expect(visibleTracks.map((t) => t.stableKey), <String>['/music/song.opus']);
+  });
 }

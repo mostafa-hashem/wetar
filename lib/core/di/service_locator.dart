@@ -45,7 +45,7 @@ Future<void> initServiceLocator() async {
   final db = WetarDatabase();
   final channel = WetarPlatformChannel();
   final LibrarySource librarySource = (Platform.isMacOS || Platform.isIOS)
-      ? FileSystemLibrarySource()
+      ? FileSystemLibrarySource(channel)
       : channel;
   final capabilities = PlatformCapabilities.detect();
 

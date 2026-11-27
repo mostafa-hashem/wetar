@@ -30,7 +30,7 @@ class LibraryRepository {
       INNER JOIN selected_folders sf ON sf.id = t.folder_id
       LEFT JOIN track_user_meta m ON m.stable_key = t.stable_key
       WHERE sf.is_available = 1
-        AND t.duration_ms >= ?
+        AND (t.duration_ms = 0 OR t.duration_ms >= ?)
       ORDER BY t.title COLLATE NOCASE ASC
     ''';
 
@@ -147,7 +147,7 @@ class LibraryRepository {
       INNER JOIN selected_folders sf ON sf.id = t.folder_id
       LEFT JOIN track_user_meta m ON m.stable_key = t.stable_key
       WHERE sf.is_available = 1
-        AND t.duration_ms >= ?
+        AND (t.duration_ms = 0 OR t.duration_ms >= ?)
         AND (
           t.title_normalized LIKE ?
           OR t.artist_normalized LIKE ?
@@ -322,6 +322,13 @@ class LibraryRepository {
           ),
           mode: InsertMode.insertOrReplace,
         );
+  }
+
+  /// Backfills a track's resolved duration once playback or probing reports it.
+  Future<void> updateTrackDurationMs(String stableKey, int durationMs) async {
+    if (durationMs <= 0) return;
+    await (_db.update(_db.tracks)..where((t) => t.stableKey.equals(stableKey)))
+        .write(TracksCompanion(durationMs: Value(durationMs)));
   }
 
   Future<void> setAttachedLrc(String stableKey, String? lrcPath) async {

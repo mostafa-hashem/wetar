@@ -10,6 +10,7 @@ import 'platform_interfaces.dart';
 class WetarPlatformChannel
     implements
         LibrarySource,
+        AudioMetadataProber,
         FolderPickerService,
         NativeAudioEffectsService,
         SystemIntegrationService {
@@ -256,6 +257,41 @@ class WetarPlatformChannel
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  @override
+  Future<Map<String, AudioFileProbeResult>> probeAudioFiles(
+    List<String> paths,
+  ) async {
+    if (paths.isEmpty || Platform.isAndroid) {
+      return const <String, AudioFileProbeResult>{};
+    }
+    try {
+      final raw = await _method.invokeMapMethod<String, dynamic>(
+        'probeAudioFiles',
+        <String, Object?>{'paths': paths},
+      );
+      if (raw == null || raw.isEmpty) {
+        return const <String, AudioFileProbeResult>{};
+      }
+      final out = <String, AudioFileProbeResult>{};
+      for (final entry in raw.entries) {
+        final val = entry.value;
+        if (val is! Map) continue;
+        final map = Map<Object?, Object?>.from(val);
+        out[entry.key] = AudioFileProbeResult(
+          isVideo: map['isVideo'] as bool? ?? false,
+          durationMs: (map['durationMs'] as num?)?.toInt() ?? 0,
+          title: (map['title'] as String?)?.trim(),
+          artist: (map['artist'] as String?)?.trim(),
+          album: (map['album'] as String?)?.trim(),
+        );
+      }
+      return out;
+    } catch (e) {
+      AppLogger.warn('PlatformChannel', 'probeAudioFiles failed: $e');
+      return const <String, AudioFileProbeResult>{};
     }
   }
 

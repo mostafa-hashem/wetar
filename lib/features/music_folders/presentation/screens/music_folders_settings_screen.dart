@@ -549,7 +549,11 @@ class _FolderCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     NumeralFormatter.formatString(
-                      l10n.foldersTrackCount(folder.trackCount),
+                      l10n.foldersTrackCount(
+                        hasLibrary && folder.isAvailable
+                            ? folderTracks.length
+                            : folder.trackCount,
+                      ),
                       numerals,
                     ),
                     style: Theme.of(context).textTheme.labelMedium

@@ -9,28 +9,18 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:wetar/core/logging/app_logger.dart';
 import 'package:wetar/core/platform/platform_interfaces.dart';
+import 'package:wetar/features/library/domain/library_models.dart';
+import 'package:wetar/features/music_folders/domain/audio_format_policy.dart';
 
 /// Shared filesystem + background-isolate metadata scanner for macOS and iOS.
 /// Only traverses folders inside [FolderScanRequest] and never alters user files.
 class FileSystemLibrarySource implements LibrarySource {
-  FileSystemLibrarySource();
+  FileSystemLibrarySource([this._prober]);
 
-  static const Set<String> supportedAudioExtensions = <String>{
-    '.mp3',
-    '.m4a',
-    '.aac',
-    '.flac',
-    '.wav',
-    '.ogg',
-    '.opus',
-    '.aiff',
-    '.aif',
-    '.wv',
-    '.ape',
-    '.webm',
-    '.alac',
-    '.caf',
-  };
+  final AudioMetadataProber? _prober;
+
+  static Set<String> get supportedAudioExtensions =>
+      AudioFormatPolicy.supportedAudioExtensions;
 
   static const List<String> _siblingArtNames = <String>[
     'cover.jpg',
@@ -41,22 +31,120 @@ class FileSystemLibrarySource implements LibrarySource {
     'album.jpg',
   ];
 
-  static String mimeTypeForExtension(String ext) {
-    return switch (ext.toLowerCase()) {
-      '.mp3' => 'audio/mpeg',
-      '.m4a' || '.alac' => 'audio/mp4',
-      '.aac' => 'audio/aac',
-      '.flac' => 'audio/flac',
-      '.wav' => 'audio/wav',
-      '.ogg' => 'audio/ogg',
-      '.opus' => 'audio/opus',
-      '.aiff' || '.aif' => 'audio/aiff',
-      '.wv' => 'audio/x-wavpack',
-      '.ape' => 'audio/x-ape',
-      '.webm' => 'audio/webm',
-      '.caf' => 'audio/x-caf',
-      _ => 'audio/*',
-    };
+  static String mimeTypeForExtension(String ext) =>
+      AudioFormatPolicy.mimeTypeForExtension(ext);
+
+  /// Enriches an external Open-With / drag-and-drop track with tags and duration.
+  static Future<WetarTrack> enrichExternalTrack(
+    WetarTrack base, {
+    AudioMetadataProber? prober,
+  }) async {
+    final path = base.filePath;
+    if (path.isEmpty) return base;
+    final file = File(path);
+    if (!file.existsSync()) return base;
+
+    final ext = AudioFormatPolicy.normalizedExtension(path);
+    var sizeBytes = base.sizeBytes;
+    var modifiedSec = base.dateModifiedSec;
+    try {
+      final stat = file.statSync();
+      sizeBytes = stat.size;
+      modifiedSec = stat.modified.millisecondsSinceEpoch ~/ 1000;
+    } catch (_) {}
+
+    final candidate = _DiscoveredAudioFile(
+      stableKey: base.stableKey,
+      folderId: base.folderId,
+      path: path,
+      folderPath: base.folderPath,
+      fallbackTitle: p.basenameWithoutExtension(path),
+      extension: ext,
+      modifiedSec: modifiedSec,
+      sizeBytes: sizeBytes,
+      isCloudPending: false,
+    );
+
+    final parsed = await Isolate.run(
+      () => _parseBatchInIsolate(<_DiscoveredAudioFile>[candidate]),
+    );
+    final dto = parsed.isNotEmpty ? parsed.first : null;
+
+    if (prober != null &&
+        (dto == null ||
+            dto.durationMs <= 0 ||
+            AudioFormatPolicy.probeCandidateExtensions.contains(ext))) {
+      final probes = await prober.probeAudioFiles(<String>[path]);
+      final probe = probes[path];
+      if (probe != null && !probe.isVideo) {
+        final nextDuration = (dto?.durationMs ?? 0) > 0
+            ? dto!.durationMs
+            : probe.durationMs;
+        final nextTitle = (dto?.title.trim().isNotEmpty ?? false)
+            ? dto!.title
+            : (probe.title?.isNotEmpty == true ? probe.title! : base.title);
+        final nextArtist = (dto?.artist?.trim().isNotEmpty ?? false)
+            ? dto!.artist!
+            : (probe.artist ?? base.artist);
+        final nextAlbum = (dto?.album?.trim().isNotEmpty ?? false)
+            ? dto!.album!
+            : (probe.album ?? base.album);
+        return WetarTrack(
+          stableKey: base.stableKey,
+          folderId: base.folderId,
+          uri: base.uri,
+          filePath: path,
+          folderPath: base.folderPath,
+          title: nextTitle,
+          artist: nextArtist,
+          album: nextAlbum,
+          albumArtist: dto?.albumArtist ?? base.albumArtist,
+          genre: dto?.genre ?? base.genre,
+          year: dto?.year ?? base.year,
+          trackNumber: dto?.trackNumber ?? base.trackNumber,
+          discNumber: dto?.discNumber ?? base.discNumber,
+          durationMs: nextDuration,
+          bitrateKbps: dto?.bitrateKbps ?? base.bitrateKbps,
+          sampleRateHz: dto?.sampleRateHz ?? base.sampleRateHz,
+          channels: base.channels,
+          sizeBytes: sizeBytes,
+          mimeType: ext.isNotEmpty ? mimeTypeForExtension(ext) : base.mimeType,
+          dateModifiedSec: modifiedSec,
+          dateAddedSec: modifiedSec,
+          artworkUri: path,
+          embeddedLyrics: dto?.embeddedLyrics,
+          isTemporaryExternal: base.isTemporaryExternal,
+        );
+      }
+    }
+
+    if (dto == null) return base;
+    return WetarTrack(
+      stableKey: base.stableKey,
+      folderId: base.folderId,
+      uri: base.uri,
+      filePath: path,
+      folderPath: base.folderPath,
+      title: dto.title.isNotEmpty ? dto.title : base.title,
+      artist: dto.artist ?? base.artist,
+      album: dto.album ?? base.album,
+      albumArtist: dto.albumArtist ?? base.albumArtist,
+      genre: dto.genre ?? base.genre,
+      year: dto.year,
+      trackNumber: dto.trackNumber,
+      discNumber: dto.discNumber,
+      durationMs: dto.durationMs > 0 ? dto.durationMs : base.durationMs,
+      bitrateKbps: dto.bitrateKbps,
+      sampleRateHz: dto.sampleRateHz,
+      channels: base.channels,
+      sizeBytes: sizeBytes,
+      mimeType: dto.mimeType,
+      dateModifiedSec: modifiedSec,
+      dateAddedSec: modifiedSec,
+      artworkUri: path,
+      embeddedLyrics: dto.embeddedLyrics,
+      isTemporaryExternal: base.isTemporaryExternal,
+    );
   }
 
   @override
@@ -166,6 +254,92 @@ class FileSystemLibrarySource implements LibrarySource {
       changedTracks.addAll(parsedBatch);
     }
 
+    if (_prober != null && changedTracks.isNotEmpty) {
+      final pathsToProbe = <String>[
+        for (final dto in changedTracks)
+          if (!dto.isCloudPending &&
+              (dto.durationMs <= 0 ||
+                  AudioFormatPolicy.probeCandidateExtensions.contains(
+                    AudioFormatPolicy.normalizedExtension(dto.filePath),
+                  )))
+            dto.filePath,
+      ];
+
+      if (pathsToProbe.isNotEmpty) {
+        final probesByPath = <String, AudioFileProbeResult>{};
+        const probeChunk = 50;
+        for (var i = 0; i < pathsToProbe.length; i += probeChunk) {
+          final slice = pathsToProbe.sublist(
+            i,
+            (i + probeChunk).clamp(0, pathsToProbe.length),
+          );
+          final chunkResult = await _prober.probeAudioFiles(slice);
+          probesByPath.addAll(chunkResult);
+        }
+
+        final verified = <ScannedTrackDto>[];
+        for (final dto in changedTracks) {
+          final probe = probesByPath[dto.filePath];
+          if (probe == null) {
+            verified.add(dto);
+            continue;
+          }
+          if (probe.isVideo) {
+            activeKeys.remove(dto.stableKey);
+            continue;
+          }
+          final mergedDuration = dto.durationMs > 0
+              ? dto.durationMs
+              : probe.durationMs;
+          final mergedArtist = (dto.artist?.trim().isNotEmpty ?? false)
+              ? dto.artist
+              : probe.artist;
+          final mergedAlbum = (dto.album?.trim().isNotEmpty ?? false)
+              ? dto.album
+              : probe.album;
+          final mergedTitle =
+              dto.title == p.basenameWithoutExtension(dto.filePath) &&
+                  (probe.title?.isNotEmpty ?? false)
+              ? probe.title!
+              : dto.title;
+
+          verified.add(
+            ScannedTrackDto(
+              stableKey: dto.stableKey,
+              folderId: dto.folderId,
+              uri: dto.uri,
+              filePath: dto.filePath,
+              folderPath: dto.folderPath,
+              title: mergedTitle,
+              artist: mergedArtist,
+              album: mergedAlbum,
+              albumArtist: dto.albumArtist,
+              genre: dto.genre,
+              year: dto.year,
+              trackNumber: dto.trackNumber,
+              discNumber: dto.discNumber,
+              durationMs: mergedDuration,
+              bitrateKbps: dto.bitrateKbps,
+              sampleRateHz: dto.sampleRateHz,
+              channels: dto.channels,
+              sizeBytes: dto.sizeBytes,
+              mimeType: dto.mimeType,
+              dateModifiedSec: dto.dateModifiedSec,
+              dateAddedSec: dto.dateAddedSec,
+              artworkUri: dto.artworkUri,
+              embeddedLyrics: dto.embeddedLyrics,
+              replayGainTrackDb: dto.replayGainTrackDb,
+              replayGainAlbumDb: dto.replayGainAlbumDb,
+              isCloudPending: dto.isCloudPending,
+            ),
+          );
+        }
+        changedTracks
+          ..clear()
+          ..addAll(verified);
+      }
+    }
+
     return FolderScanResult(
       availableFolderIds: availableIds,
       activeStableKeys: activeKeys,
@@ -252,8 +426,10 @@ class FileSystemLibrarySource implements LibrarySource {
       } else if (entity is File) {
         if (name.startsWith('.') && name.endsWith('.icloud')) {
           final realName = name.substring(1, name.length - '.icloud'.length);
-          final ext = p.extension(realName).toLowerCase();
-          if (!supportedAudioExtensions.contains(ext)) continue;
+          if (!AudioFormatPolicy.isSupportedAudioFile(pathOrName: realName)) {
+            continue;
+          }
+          final ext = AudioFormatPolicy.normalizedExtension(realName);
           final virtualPath = p.join(dir.path, realName);
           var modifiedSec = 0;
           try {
@@ -277,8 +453,10 @@ class FileSystemLibrarySource implements LibrarySource {
         }
 
         if (name.startsWith('.')) continue;
-        final ext = p.extension(name).toLowerCase();
-        if (!supportedAudioExtensions.contains(ext)) continue;
+        if (!AudioFormatPolicy.isSupportedAudioFile(pathOrName: name)) {
+          continue;
+        }
+        final ext = AudioFormatPolicy.normalizedExtension(name);
         try {
           final stat = entity.statSync();
           outFiles.add(
@@ -374,6 +552,17 @@ List<ScannedTrackDto> _parseBatchInIsolate(List<_DiscoveredAudioFile> files) {
       // Fall back cleanly to filename metadata when a file uses an untagged format.
     }
 
+    if (durationMs <= 0 &&
+        const <String>{
+          '.mp3',
+          '.mp2',
+          '.mp1',
+          '.mpga',
+          '.mpa',
+        }.contains(item.extension)) {
+      durationMs = _estimateMp3DurationMs(File(item.path), item.sizeBytes);
+    }
+
     results.add(
       ScannedTrackDto(
         stableKey: item.stableKey,
@@ -404,6 +593,129 @@ List<ScannedTrackDto> _parseBatchInIsolate(List<_DiscoveredAudioFile> files) {
     );
   }
   return results;
+}
+
+int _estimateMp3DurationMs(File file, int sizeBytes) {
+  RandomAccessFile? raf;
+  try {
+    if (sizeBytes <= 0) return 0;
+    raf = file.openSync(mode: FileMode.read);
+    final headerProbe = raf.readSync(16384);
+    if (headerProbe.length < 4) return 0;
+
+    var audioStart = 0;
+    var buf = headerProbe;
+    var offset = 0;
+
+    if (buf.length >= 10 &&
+        buf[0] == 0x49 &&
+        buf[1] == 0x44 &&
+        buf[2] == 0x33) {
+      final id3Size =
+          ((buf[6] & 0x7F) << 21) |
+          ((buf[7] & 0x7F) << 14) |
+          ((buf[8] & 0x7F) << 7) |
+          (buf[9] & 0x7F);
+      audioStart = 10 + id3Size;
+      if (audioStart >= buf.length) {
+        if (audioStart >= sizeBytes - 4) return 0;
+        raf.setPositionSync(audioStart);
+        buf = raf.readSync(4096);
+        offset = 0;
+      } else {
+        offset = audioStart;
+      }
+    }
+
+    const mpeg1L3Bitrates = <int>[
+      0,
+      32,
+      40,
+      48,
+      56,
+      64,
+      80,
+      96,
+      112,
+      128,
+      160,
+      192,
+      224,
+      256,
+      320,
+      0,
+    ];
+    const mpeg2L3Bitrates = <int>[
+      0,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      80,
+      96,
+      112,
+      128,
+      144,
+      160,
+      0,
+    ];
+    const mpeg1L2Bitrates = <int>[
+      0,
+      32,
+      48,
+      56,
+      64,
+      80,
+      96,
+      112,
+      128,
+      160,
+      192,
+      224,
+      256,
+      320,
+      384,
+      0,
+    ];
+
+    for (var i = offset; i <= buf.length - 4; i++) {
+      final b0 = buf[i];
+      final b1 = buf[i + 1];
+      if (b0 != 0xFF || (b1 & 0xE0) != 0xE0) continue;
+      final b2 = buf[i + 2];
+      final versionBits = (b1 >> 3) & 0x03;
+      final layerBits = (b1 >> 1) & 0x03;
+      final bitrateIdx = (b2 >> 4) & 0x0F;
+      final sampleRateIdx = (b2 >> 2) & 0x03;
+      if (versionBits == 1 ||
+          layerBits == 0 ||
+          bitrateIdx == 0 ||
+          bitrateIdx == 15 ||
+          sampleRateIdx == 3) {
+        continue;
+      }
+      final bitrateKbps = switch ((versionBits, layerBits)) {
+        (3, 1) => mpeg1L3Bitrates[bitrateIdx],
+        (3, 2) => mpeg1L2Bitrates[bitrateIdx],
+        (_, 1) => mpeg2L3Bitrates[bitrateIdx],
+        _ => 0,
+      };
+      if (bitrateKbps > 0 && sizeBytes > audioStart) {
+        return (((sizeBytes - audioStart) * 8) / bitrateKbps).round();
+      }
+    }
+    return 0;
+  } catch (_) {
+    return 0;
+  } finally {
+    try {
+      raf?.closeSync();
+    } catch (_) {}
+  }
 }
 
 Uint8List? _extractArtworkBytesInIsolate(String audioPath) {

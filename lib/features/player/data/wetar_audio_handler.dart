@@ -97,6 +97,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   Timer? _sleepTimerTicker;
   StreamSubscription<PlaybackEvent>? _eventSub;
   StreamSubscription<int?>? _indexSub;
+  StreamSubscription<Duration?>? _durationSub;
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<int?>? _sessionIdSub;
   StreamSubscription<PlayerState>? _playerStateSub;
@@ -203,6 +204,28 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
       _currentIndexSubject.add(idx);
       final track = list[idx];
       unawaited(_onActiveTrackChanged(track, previousIdx != idx));
+    });
+
+    _durationSub = _player.durationStream.listen((dur) {
+      if (dur == null || dur.inMilliseconds <= 0) return;
+      final idx = _currentIndexSubject.value;
+      final list = _queueTracksSubject.value;
+      if (idx < 0 || idx >= list.length) return;
+      final current = list[idx];
+      if (current.durationMs > 0) return;
+      final updated = current.copyWith(durationMs: dur.inMilliseconds);
+      final nextList = List<WetarTrack>.from(list);
+      nextList[idx] = updated;
+      _queueTracksSubject.add(List<WetarTrack>.unmodifiable(nextList));
+      mediaItem.add(_toMediaItem(updated, artUri: mediaItem.value?.artUri));
+      if (!updated.isTemporaryExternal) {
+        unawaited(
+          _libraryRepo.updateTrackDurationMs(
+            updated.stableKey,
+            dur.inMilliseconds,
+          ),
+        );
+      }
     });
 
     _posSub = _player.positionStream.listen((pos) {
@@ -987,6 +1010,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     _sleepTimerTicker?.cancel();
     await _eventSub?.cancel();
     await _indexSub?.cancel();
+    await _durationSub?.cancel();
     await _posSub?.cancel();
     await _sessionIdSub?.cancel();
     await _playerStateSub?.cancel();

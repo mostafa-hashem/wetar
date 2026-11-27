@@ -75,4 +75,69 @@ void main() {
     expect(track1.existsSync(), isTrue);
     expect(track2.existsSync(), isTrue);
   });
+
+  test('FileSystemLibrarySource includes wide audio formats and strictly excludes video files', () async {
+    final tempRoot = Directory.systemTemp.createTempSync('wetar_formats_test_');
+    addTearDown(() {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    });
+
+    final expectedAudioNames = <String>[
+      'track.opus',
+      'audiobook.m4b',
+      'windows.wma',
+      'voice.amr',
+      'matroska.mka',
+      'core.caf',
+      'sacd.dsf',
+      'pcm.wav',
+      'vorbis.ogg',
+      'stream.aac',
+    ];
+    for (final name in expectedAudioNames) {
+      File(p.join(tempRoot.path, name)).writeAsBytesSync(<int>[1, 2, 3, 4]);
+    }
+
+    const ignoredVideoNames = <String>[
+      'clip.mp4',
+      'movie.mkv',
+      'video.webm',
+      'iphone.mov',
+      'legacy.avi',
+      'cam.3gp',
+      'apple.m4v',
+      '.CloudClip.mp4.icloud',
+    ];
+    for (final name in ignoredVideoNames) {
+      File(p.join(tempRoot.path, name)).writeAsBytesSync(<int>[5, 6, 7, 8]);
+    }
+
+    final source = FileSystemLibrarySource();
+    final result = await source.scanSelectedFolders(
+      folders: <FolderScanRequest>[
+        FolderScanRequest(
+          id: 1,
+          rootPath: tempRoot.path,
+          sourceKind: 'bookmark',
+          includeSubfolders: true,
+          excludedSubfolders: const <String>[],
+        ),
+      ],
+      existingModifiedByStableKey: const <String, int>{},
+    );
+
+    expect(result.activeStableKeys, hasLength(expectedAudioNames.length));
+    expect(result.changedTracks, hasLength(expectedAudioNames.length));
+    final scannedNames = result.changedTracks
+        .map((t) => p.basename(t.filePath))
+        .toSet();
+    for (final audio in expectedAudioNames) {
+      expect(scannedNames, contains(audio));
+    }
+    for (final video in ignoredVideoNames) {
+      expect(scannedNames, isNot(contains(video)));
+    }
+  });
 }

@@ -119,7 +119,7 @@ class _CarModeScreenState extends State<CarModeScreen> {
                           ),
                           SizedBox(height: tokens.spacingSm),
                           Text(
-                            track.displayArtist,
+                            track.resolvedArtist(l10n.libraryUnknownArtist),
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
