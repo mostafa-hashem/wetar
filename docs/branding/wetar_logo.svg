@@ -1,50 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1A1822"/>
-      <stop offset="55%" stop-color="#100E15"/>
-      <stop offset="100%" stop-color="#08070B"/>
-    </linearGradient>
-    <radialGradient id="haloGrad" cx="50%" cy="50%" r="43%">
-      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.20"/>
-      <stop offset="55%" stop-color="#EA580C" stop-opacity="0.05"/>
-      <stop offset="100%" stop-color="#EA580C" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="rimBevel" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.16"/>
-      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.12"/>
-    </linearGradient>
-    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFE8A3"/>
-      <stop offset="50%" stop-color="#F59E0B"/>
-      <stop offset="100%" stop-color="#EA580C"/>
-    </linearGradient>
-    <linearGradient id="innerArcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FCD34D" stop-opacity="0.90"/>
-      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.86"/>
-    </linearGradient>
-    <linearGradient id="playGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="60%" stop-color="#FFF7E6"/>
-      <stop offset="100%" stop-color="#FDE2A3"/>
-    </linearGradient>
-    <filter id="softShadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feGaussianBlur stdDeviation="16"/>
-    </filter>
-  </defs>
-
-  <rect width="1024" height="1024" rx="228" fill="url(#bgGrad)"/>
-  <circle cx="512" cy="512" r="440" fill="url(#haloGrad)"/>
-  <rect x="4" y="4" width="1016" height="1016" rx="224" fill="none" stroke="url(#rimBevel)" stroke-width="3"/>
-
-  <g transform="translate(0 18)" filter="url(#softShadow)" opacity="0.44">
-    <path d="M 699.16 751.56 A 304 304 0 1 1 699.16 272.44" fill="none" stroke="#000000" stroke-width="48" stroke-linecap="round"/>
-    <path d="M 393.45 687.76 A 212 212 0 0 1 393.45 336.24" fill="none" stroke="#000000" stroke-width="28" stroke-linecap="round"/>
-    <path d="M 400 624 L 400 400 A 52 52 0 0 1 478 354.97 L 672 466.97 A 52 52 0 0 1 672 557.03 L 478 669.03 A 52 52 0 0 1 400 624 Z" fill="#000000"/>
-  </g>
-
-  <path d="M 699.16 751.56 A 304 304 0 1 1 699.16 272.44" fill="none" stroke="url(#ringGrad)" stroke-width="48" stroke-linecap="round"/>
-  <path d="M 393.45 687.76 A 212 212 0 0 1 393.45 336.24" fill="none" stroke="url(#innerArcGrad)" stroke-width="28" stroke-linecap="round"/>
-  <path d="M 400 624 L 400 400 A 52 52 0 0 1 478 354.97 L 672 466.97 A 52 52 0 0 1 672 557.03 L 478 669.03 A 52 52 0 0 1 400 624 Z" fill="url(#playGrad)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="1024" height="1024">
+  <title>Wetar (وتر)</title>
+  <rect width="100" height="100" rx="23" fill="#123A36"/>
+  <path fill="#FFF1D9"
+        d="M47 30 C47 24 53 21 58 25 L84 43 C89.5 46.8 89.5 53.2 84 57
+           L58 75 C53 79 47 76 47 70 Z"/>
+  <path fill="#FFAE64"
+        d="M17 54 H21 C25 54 27 52 29 48 L35 36 C37 32 43 32 45 37
+           L51 51 C52.5 54.5 55 55 58 53 L64 50 Q67 48.5 65 51.5
+           L57 62 C53 68 46 66 43 59 L39 50 C34 60 30 65 21 65 H17
+           C14 65 11.5 62.5 11.5 59.5 C11.5 56.5 14 54 17 54 Z"/>
 </svg>

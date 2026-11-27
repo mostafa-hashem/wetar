@@ -1,8 +1,6 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
-/// Minimalist geometric Harmonic Ring & Ivory Play Plectrum emblem for Wetar.
+/// Wetar's emblem combines a play symbol with an audio waveform.
 class WetarBrandLogo extends StatelessWidget {
   const WetarBrandLogo({
     super.key,
@@ -15,13 +13,19 @@ class WetarBrandLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useLightMark =
+        showTileBackground || Theme.of(context).brightness == Brightness.dark;
+
     return Semantics(
       label: 'Wetar logo',
       image: true,
       child: SizedBox.square(
         dimension: size,
         child: CustomPaint(
-          painter: _WetarLogoPainter(showTileBackground: showTileBackground),
+          painter: _WetarLogoPainter(
+            showTileBackground: showTileBackground,
+            useLightMark: useLightMark,
+          ),
         ),
       ),
     );
@@ -29,201 +33,72 @@ class WetarBrandLogo extends StatelessWidget {
 }
 
 class _WetarLogoPainter extends CustomPainter {
-  const _WetarLogoPainter({required this.showTileBackground});
+  const _WetarLogoPainter({
+    required this.showTileBackground,
+    required this.useLightMark,
+  });
 
   final bool showTileBackground;
+  final bool useLightMark;
 
-  static const Color _bgTop = Color(0xFF1A1822);
-  static const Color _bgMid = Color(0xFF100E15);
-  static const Color _bgBottom = Color(0xFF08070B);
+  static const _ink = Color(0xFF123A36);
+  static const _ivory = Color(0xFFFFF1D9);
+  static const _apricot = Color(0xFFFFAE64);
+  static const _burntOrange = Color(0xFFA64C12);
 
-  static const Color _ringLight = Color(0xFFFFE8A3);
-  static const Color _ringMid = Color(0xFFF59E0B);
-  static const Color _ringDeep = Color(0xFFEA580C);
-  static const Color _innerArcLight = Color(0xFFFCD34D);
+  // Match the paths in docs/branding/wetar_logo.svg.
+  static final _play = Path()
+    ..moveTo(47, 30)
+    ..cubicTo(47, 24, 53, 21, 58, 25)
+    ..lineTo(84, 43)
+    ..cubicTo(89.5, 46.8, 89.5, 53.2, 84, 57)
+    ..lineTo(58, 75)
+    ..cubicTo(53, 79, 47, 76, 47, 70)
+    ..close();
 
-  static const Color _ivoryTop = Color(0xFFFFFFFF);
-  static const Color _ivoryMid = Color(0xFFFFF7E6);
-  static const Color _ivoryBottom = Color(0xFFFDE2A3);
+  static final _wave = Path()
+    ..moveTo(17, 54)
+    ..lineTo(21, 54)
+    ..cubicTo(25, 54, 27, 52, 29, 48)
+    ..lineTo(35, 36)
+    ..cubicTo(37, 32, 43, 32, 45, 37)
+    ..lineTo(51, 51)
+    ..cubicTo(52.5, 54.5, 55, 55, 58, 53)
+    ..lineTo(64, 50)
+    ..quadraticBezierTo(67, 48.5, 65, 51.5)
+    ..lineTo(57, 62)
+    ..cubicTo(53, 68, 46, 66, 43, 59)
+    ..lineTo(39, 50)
+    ..cubicTo(34, 60, 30, 65, 21, 65)
+    ..lineTo(17, 65)
+    ..cubicTo(14, 65, 11.5, 62.5, 11.5, 59.5)
+    ..cubicTo(11.5, 56.5, 14, 54, 17, 54)
+    ..close();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final s = size.shortestSide / 1024.0;
+    final side = size.shortestSide;
     canvas.save();
-    canvas.scale(s, s);
+    canvas.translate((size.width - side) / 2, (size.height - side) / 2);
+    canvas.scale(side / 100);
 
-    const tileRect = Rect.fromLTWH(0, 0, 1024, 1024);
     if (showTileBackground) {
       canvas.drawRRect(
-        RRect.fromRectAndRadius(tileRect, const Radius.circular(228)),
-        Paint()
-          ..shader = const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[_bgTop, _bgMid, _bgBottom],
-            stops: <double>[0.0, 0.55, 1.0],
-          ).createShader(tileRect),
-      );
-
-      // Warm ambient amber glow behind the concentric harmonic mark.
-      canvas.drawCircle(
-        const Offset(512, 512),
-        440,
-        Paint()
-          ..shader =
-              RadialGradient(
-                colors: <Color>[
-                  _ringMid.withValues(alpha: 0.20),
-                  _ringDeep.withValues(alpha: 0.05),
-                  Colors.transparent,
-                ],
-                stops: const <double>[0.0, 0.55, 1.0],
-              ).createShader(
-                Rect.fromCircle(center: const Offset(512, 512), radius: 440),
-              ),
-      );
-
-      // Crisp inner glass rim bevel around tile edge.
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          const Rect.fromLTWH(4, 4, 1016, 1016),
-          const Radius.circular(224),
-        ),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3
-          ..shader = LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[
-              Colors.white.withValues(alpha: 0.16),
-              Colors.transparent,
-              _ringMid.withValues(alpha: 0.12),
-            ],
-          ).createShader(tileRect),
+        RRect.fromLTRBR(0, 0, 100, 100, const Radius.circular(23)),
+        Paint()..color = _ink,
       );
     }
 
-    const center = Offset(512, 512);
-    final outerRect = Rect.fromCircle(center: center, radius: 304);
-    final innerRect = Rect.fromCircle(center: center, radius: 212);
-
-    const outerStartRad = 52 * math.pi / 180.0;
-    const outerSweepRad = 256 * math.pi / 180.0;
-    const innerStartRad = 124 * math.pi / 180.0;
-    const innerSweepRad = 112 * math.pi / 180.0;
-
-    // Exact tangent-smooth Minkowski-rounded equilateral Play plectrum.
-    const rPlay = 52.0;
-    final playPath = Path()
-      ..moveTo(400.0, 624.0)
-      ..lineTo(400.0, 400.0)
-      ..arcTo(
-        Rect.fromCircle(center: const Offset(452, 400), radius: rPlay),
-        math.pi,
-        2 * math.pi / 3,
-        false,
-      )
-      ..lineTo(672.0, 466.97)
-      ..arcTo(
-        Rect.fromCircle(center: const Offset(646, 512), radius: rPlay),
-        -math.pi / 3,
-        2 * math.pi / 3,
-        false,
-      )
-      ..lineTo(478.0, 669.03)
-      ..arcTo(
-        Rect.fromCircle(center: const Offset(452, 624), radius: rPlay),
-        math.pi / 3,
-        2 * math.pi / 3,
-        false,
-      )
-      ..close();
-
-    // Soft elevation shadow under all 3 foreground geometric shapes.
-    canvas.save();
-    canvas.translate(0, 18);
-    final strokeShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.42)
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
-    canvas.drawArc(
-      outerRect,
-      outerStartRad,
-      outerSweepRad,
-      false,
-      strokeShadow..strokeWidth = 48,
-    );
-    canvas.drawArc(
-      innerRect,
-      innerStartRad,
-      innerSweepRad,
-      false,
-      strokeShadow..strokeWidth = 28,
-    );
+    canvas.drawPath(_play, Paint()..color = useLightMark ? _ivory : _ink);
     canvas.drawPath(
-      playPath,
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.44)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+      _wave,
+      Paint()..color = useLightMark ? _apricot : _burntOrange,
     );
-    canvas.restore();
-
-    // 1. Bold outer 256-degree harmonic golden C-ring.
-    canvas.drawArc(
-      outerRect,
-      outerStartRad,
-      outerSweepRad,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 48
-        ..strokeCap = StrokeCap.round
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[_ringLight, _ringMid, _ringDeep],
-          stops: <double>[0.0, 0.50, 1.0],
-        ).createShader(const Rect.fromLTWH(208, 208, 608, 608)),
-    );
-
-    // 2. Inner 112-degree sympathetic string wave arc.
-    canvas.drawArc(
-      innerRect,
-      innerStartRad,
-      innerSweepRad,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 28
-        ..strokeCap = StrokeCap.round
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[
-            _innerArcLight.withValues(alpha: 0.90),
-            _ringMid.withValues(alpha: 0.86),
-          ],
-        ).createShader(const Rect.fromLTWH(300, 336, 120, 352)),
-    );
-
-    // 3. Crisp ivory-champagne rounded Play plectrum.
-    canvas.drawPath(
-      playPath,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[_ivoryTop, _ivoryMid, _ivoryBottom],
-          stops: <double>[0.0, 0.60, 1.0],
-        ).createShader(const Rect.fromLTWH(400, 348, 298, 328)),
-    );
-
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _WetarLogoPainter oldDelegate) =>
-      oldDelegate.showTileBackground != showTileBackground;
+      oldDelegate.showTileBackground != showTileBackground ||
+      oldDelegate.useLightMark != useLightMark;
 }
