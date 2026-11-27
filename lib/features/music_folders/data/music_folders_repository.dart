@@ -84,50 +84,96 @@ class MusicFoldersRepository {
   }
 
   /// Applies a chosen batch from the in-app picker incrementally:
-  /// newly checked folders are added & scanned; unchecked folders are removed immediately.
+  /// newly checked folders are persisted right away in one transaction while
+  /// scanning runs in the background (unless [waitForScan] is true).
   Future<void> applyFolderSelection(
-    List<DiscoveredAudioFolder> desiredFolders,
-  ) async {
+    List<DiscoveredAudioFolder> desiredFolders, {
+    bool waitForScan = false,
+  }) async {
     final existing = await (_db.select(_db.selectedFolders)).get();
     final existingByPath = <String, SelectedFolder>{
       for (final f in existing) f.rootPath: f,
     };
     final desiredPaths = desiredFolders.map((d) => d.rootPath).toSet();
-
-    // Remove unselected MediaStore/filesystem folders (preserving SAF/bookmark folders unless removed explicitly).
-    for (final folder in existing) {
-      if (folder.sourceKind == 'mediastore' &&
-          !desiredPaths.contains(folder.rootPath)) {
-        await (_db.delete(
-          _db.selectedFolders,
-        )..where((t) => t.id.equals(folder.id))).go();
-      }
-    }
+    final idsToRemove = <int>[
+      for (final folder in existing)
+        if (folder.sourceKind == 'mediastore' &&
+            !desiredPaths.contains(folder.rootPath))
+          folder.id,
+    ];
+    final toInsert = <DiscoveredAudioFolder>[
+      for (final candidate in desiredFolders)
+        if (!existingByPath.containsKey(candidate.rootPath)) candidate,
+    ];
 
     final newlyAddedIds = <int>[];
-    final now = DateTime.now().millisecondsSinceEpoch;
-    for (final candidate in desiredFolders) {
-      if (existingByPath.containsKey(candidate.rootPath)) continue;
-      final id = await _db
-          .into(_db.selectedFolders)
-          .insert(
-            SelectedFoldersCompanion.insert(
-              rootPath: candidate.rootPath,
-              sourceKind: Value(candidate.sourceKind),
-              bookmarkData: Value(candidate.bookmarkData),
-              displayName: candidate.displayName,
-              volumeLabel: Value(candidate.volumeLabel),
-              addedAt: now,
-            ),
-            mode: InsertMode.insertOrIgnore,
-          );
-      if (id > 0) newlyAddedIds.add(id);
+    if (idsToRemove.isNotEmpty || toInsert.isNotEmpty) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await _db.transaction(() async {
+        if (idsToRemove.isNotEmpty) {
+          for (var i = 0; i < idsToRemove.length; i += 400) {
+            final chunk = idsToRemove.sublist(
+              i,
+              (i + 400).clamp(0, idsToRemove.length),
+            );
+            await (_db.delete(
+              _db.selectedFolders,
+            )..where((t) => t.id.isIn(chunk))).go();
+          }
+        }
+        if (toInsert.isNotEmpty) {
+          await _db.batch((Batch batch) {
+            for (final candidate in toInsert) {
+              batch.insert(
+                _db.selectedFolders,
+                SelectedFoldersCompanion.insert(
+                  rootPath: candidate.rootPath,
+                  sourceKind: Value(candidate.sourceKind),
+                  bookmarkData: Value(candidate.bookmarkData),
+                  displayName: candidate.displayName,
+                  volumeLabel: Value(candidate.volumeLabel),
+                  addedAt: now,
+                ),
+                mode: InsertMode.insertOrIgnore,
+              );
+            }
+          });
+          final insertedPaths = toInsert.map((e) => e.rootPath).toList();
+          for (var i = 0; i < insertedPaths.length; i += 400) {
+            final chunk = insertedPaths.sublist(
+              i,
+              (i + 400).clamp(0, insertedPaths.length),
+            );
+            final rows = await (_db.select(
+              _db.selectedFolders,
+            )..where((t) => t.rootPath.isIn(chunk))).get();
+            newlyAddedIds.addAll(rows.map((r) => r.id));
+          }
+        }
+      });
     }
 
     if (newlyAddedIds.isNotEmpty) {
-      await scanFoldersByIds(newlyAddedIds);
+      if (waitForScan) {
+        await scanFoldersByIds(newlyAddedIds);
+        await _refreshPlatformWatchers();
+      } else {
+        unawaited(
+          scanFoldersByIds(newlyAddedIds)
+              .then((_) => _refreshPlatformWatchers())
+              .catchError((Object e, StackTrace st) {
+                AppLogger.error(
+                  'MusicFolders',
+                  'Background folder scan failed',
+                  errorObj: e,
+                  stackTrace: st,
+                );
+              }),
+        );
+      }
+    } else {
+      await _refreshPlatformWatchers();
     }
-    await _refreshPlatformWatchers();
   }
 
   Future<SelectedFolderEntity?> addSystemPickedFolder() async {

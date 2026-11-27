@@ -130,10 +130,158 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'Selecting Warm Parchment look in Onboarding or Cubit preserves Dark mode',
+    (tester) async {
+      final repo = SettingsRepository.inMemory();
+      final settingsCubit = SettingsCubit(repo);
+      await settingsCubit.setLocaleCode('en');
+      final personalizationCubit = PersonalizationCubit(repo);
+      final db = WetarDatabase(NativeDatabase.memory());
+      final fake = _FakePlatform();
+      final foldersRepo = MusicFoldersRepository(db, fake, fake);
+      const caps = PlatformCapabilities(
+        supportsNativeEqualizer: false,
+        supportsBassBoost: false,
+        supportsVirtualizer: false,
+        supportsLoudnessEnhancer: false,
+        supportsSkipSilence: false,
+        supportsPitchControl: false,
+        supportsInAppFolderPicker: false,
+        supportsSafFolderPicker: false,
+        supportsSystemFolderBookmarks: true,
+        supportsSystemDynamicColor: false,
+        supportsHomeWidgets: false,
+        supportsDesktopShell: false,
+        supportsBatteryOptimizationGuide: false,
+        supportsICloudStatus: false,
+      );
+      final foldersCubit = MusicFoldersCubit(foldersRepo, fake, caps);
+
+      addTearDown(() async {
+        await foldersCubit.close();
+        await personalizationCubit.close();
+        await settingsCubit.close();
+        await db.close();
+      });
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: <BlocProvider<dynamic>>[
+            BlocProvider<SettingsCubit>.value(value: settingsCubit),
+            BlocProvider<PersonalizationCubit>.value(
+              value: personalizationCubit,
+            ),
+            BlocProvider<MusicFoldersCubit>.value(value: foldersCubit),
+          ],
+          child: Builder(
+            builder: (context) {
+              final localeCode = context.select(
+                (SettingsCubit c) => c.state.localeCode,
+              );
+              final appearance = context.select(
+                (PersonalizationCubit c) => c.state.settings,
+              );
+              return MaterialApp(
+                locale: Locale(localeCode),
+                supportedLocales: AppLocalizations.supportedLocales,
+                localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ],
+                theme: WetarTokenResolver.buildThemeData(
+                  appearance,
+                  platformBrightness: Brightness.dark,
+                  systemDisableAnimations: false,
+                  isArabicLocale: localeCode == 'ar',
+                ),
+                home: OnboardingScreen(capabilities: caps, onFinished: () {}),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Advance from Step 1 -> Step 2 -> Step 3 without re-tapping Dark mode.
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Warm Parchment'));
+      await tester.pumpAndSettle();
+
+      expect(
+        personalizationCubit.state.settings.accentArgb,
+        BuiltInLooks.all[1].settings.accentArgb,
+      );
+      expect(
+        personalizationCubit.state.settings.themeMode,
+        WetarThemeMode.dark,
+      );
+
+      await personalizationCubit.applyLook(BuiltInLooks.all[1]);
+      expect(
+        personalizationCubit.state.settings.themeMode,
+        WetarThemeMode.dark,
+      );
+    },
+  );
+
+  test('applyFolderSelection persists folders immediately while scan completes asynchronously', () async {
+    final db = WetarDatabase(NativeDatabase.memory());
+    final fake = _FakePlatform()..scanCompleter = Completer<FolderScanResult>();
+    final repo = MusicFoldersRepository(db, fake, fake);
+    addTearDown(() async {
+      if (fake.scanCompleter != null && !fake.scanCompleter!.isCompleted) {
+        fake.scanCompleter!.complete(
+          const FolderScanResult(
+            availableFolderIds: <int>{},
+            activeStableKeys: <String>{},
+            changedTracks: <ScannedTrackDto>[],
+          ),
+        );
+      }
+      await repo.dispose();
+      await db.close();
+    });
+
+    await repo.applyFolderSelection(const <DiscoveredAudioFolder>[
+      DiscoveredAudioFolder(
+        rootPath: '/storage/emulated/0/Music',
+        displayName: 'Music',
+        volumeLabel: 'Internal Storage',
+        sourceKind: 'mediastore',
+        trackCount: 12,
+      ),
+      DiscoveredAudioFolder(
+        rootPath: '/storage/emulated/0/Download',
+        displayName: 'Download',
+        volumeLabel: 'Internal Storage',
+        sourceKind: 'mediastore',
+        trackCount: 8,
+      ),
+    ]);
+
+    final persisted = await repo.getSelectedFolders();
+    expect(persisted, hasLength(2));
+    fake.scanCompleter!.complete(
+      const FolderScanResult(
+        availableFolderIds: <int>{1, 2},
+        activeStableKeys: <String>{},
+        changedTracks: <ScannedTrackDto>[],
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+  });
 }
 
 class _FakePlatform
     implements LibrarySource, FolderPickerService, SystemIntegrationService {
+  Completer<FolderScanResult>? scanCompleter;
+
   @override
   Stream<PlatformIncomingEvent> get incomingEvents => const Stream.empty();
 
@@ -151,11 +299,16 @@ class _FakePlatform
   Future<FolderScanResult> scanSelectedFolders({
     required List<FolderScanRequest> folders,
     required Map<String, int> existingModifiedByStableKey,
-  }) async => const FolderScanResult(
-    availableFolderIds: <int>{},
-    activeStableKeys: <String>{},
-    changedTracks: <ScannedTrackDto>[],
-  );
+  }) async {
+    if (scanCompleter != null) {
+      return scanCompleter!.future;
+    }
+    return const FolderScanResult(
+      availableFolderIds: <int>{},
+      activeStableKeys: <String>{},
+      changedTracks: <ScannedTrackDto>[],
+    );
+  }
 
   @override
   Future<String?> loadAlbumArtThumbnail({

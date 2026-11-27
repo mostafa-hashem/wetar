@@ -31,7 +31,6 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _page = 0;
-  bool _userPickedThemeMode = false;
 
   @override
   void dispose() {
@@ -49,7 +48,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _setThemeMode(WetarThemeMode mode) async {
-    _userPickedThemeMode = true;
     final cubit = context.read<PersonalizationCubit>();
     await cubit.updateSettings(
       cubit.state.settings.copyWith(
@@ -138,7 +136,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         onContinue: () => _goToPage(2),
                       ),
                       _LookOnboardingStep(
-                        preserveThemeMode: _userPickedThemeMode,
                         onThemeSelected: _setThemeMode,
                         onFinish: _finish,
                       ),
@@ -582,12 +579,10 @@ class _PermissionAndFoldersStep extends StatelessWidget {
 
 class _LookOnboardingStep extends StatelessWidget {
   const _LookOnboardingStep({
-    required this.preserveThemeMode,
     required this.onThemeSelected,
     required this.onFinish,
   });
 
-  final bool preserveThemeMode;
   final ValueChanged<WetarThemeMode> onThemeSelected;
   final VoidCallback onFinish;
 
@@ -600,7 +595,6 @@ class _LookOnboardingStep extends StatelessWidget {
 
     return BlocBuilder<PersonalizationCubit, PersonalizationState>(
       builder: (context, pState) {
-        final currentMode = pState.settings.themeMode;
         return LayoutBuilder(
           builder: (context, constraints) => Padding(
             padding: WetarResponsive.listPadding(
@@ -658,28 +652,17 @@ class _LookOnboardingStep extends StatelessWidget {
                       final look = BuiltInLooks.all[idx];
                       final selected =
                           pState.settings.accentArgb ==
-                              look.settings.accentArgb &&
-                          (preserveThemeMode ||
-                              pState.settings.themeMode ==
-                                  look.settings.themeMode);
+                          look.settings.accentArgb;
                       final lookColor = look.settings.accentColor;
-                      final effectiveDark = preserveThemeMode
-                          ? tokens.isDark
-                          : look.settings.themeMode != WetarThemeMode.light;
                       return InkWell(
                         borderRadius: BorderRadius.circular(tokens.radiusCard),
-                        onTap: () {
-                          final nextSettings = preserveThemeMode
-                              ? look.settings.copyWith(themeMode: currentMode)
-                              : look.settings;
-                          context.read<PersonalizationCubit>().updateSettings(
-                            nextSettings,
-                          );
-                        },
+                        onTap: () => context
+                            .read<PersonalizationCubit>()
+                            .applyLook(look),
                         child: Container(
                           padding: EdgeInsets.all(tokens.spacingMd),
                           decoration: BoxDecoration(
-                            color: effectiveDark
+                            color: tokens.isDark
                                 ? tokens.surfaceElevated
                                 : tokens.surface,
                             borderRadius: BorderRadius.circular(

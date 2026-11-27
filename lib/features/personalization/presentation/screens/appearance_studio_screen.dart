@@ -408,9 +408,11 @@ class AppearanceStudioScreen extends StatelessWidget {
                                 ...BuiltInLooks.all,
                               ];
                               final look = all[idx];
-                              final dark =
-                                  look.settings.themeMode !=
-                                  WetarThemeMode.light;
+                              final selected =
+                                  s.accentArgb == look.settings.accentArgb;
+                              final cardColor = tokens.isDark
+                                  ? tokens.surfaceElevated
+                                  : tokens.surface;
                               return InkWell(
                                 borderRadius: BorderRadius.circular(
                                   tokens.radiusCard,
@@ -422,15 +424,13 @@ class AppearanceStudioScreen extends StatelessWidget {
                                 child: Container(
                                   padding: EdgeInsets.all(tokens.spacingMd),
                                   decoration: BoxDecoration(
-                                    color: dark
-                                        ? const Color(0xFF1A1512)
-                                        : const Color(0xFFF6EFE4),
+                                    color: cardColor,
                                     borderRadius: BorderRadius.circular(
                                       tokens.radiusCard,
                                     ),
                                     border: Border.all(
                                       color: look.settings.accentColor,
-                                      width: 1.4,
+                                      width: selected ? 2.2 : 1.2,
                                     ),
                                   ),
                                   child: Column(
@@ -439,10 +439,22 @@ class AppearanceStudioScreen extends StatelessWidget {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
-                                      CircleAvatar(
-                                        radius: 10,
-                                        backgroundColor:
-                                            look.settings.accentColor,
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: <Widget>[
+                                          CircleAvatar(
+                                            radius: 10,
+                                            backgroundColor:
+                                                look.settings.accentColor,
+                                          ),
+                                          if (selected)
+                                            Icon(
+                                              Icons.check_circle,
+                                              size: 18,
+                                              color: look.settings.accentColor,
+                                            ),
+                                        ],
                                       ),
                                       Text(
                                         isArabic ? look.nameAr : look.nameEn,
@@ -452,9 +464,7 @@ class AppearanceStudioScreen extends StatelessWidget {
                                             .textTheme
                                             .titleSmall
                                             ?.copyWith(
-                                              color: dark
-                                                  ? Colors.white
-                                                  : Colors.black87,
+                                              color: tokens.inkPrimary,
                                             ),
                                       ),
                                     ],

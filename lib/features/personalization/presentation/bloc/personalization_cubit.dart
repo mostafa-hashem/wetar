@@ -58,8 +58,21 @@ class PersonalizationCubit extends Cubit<PersonalizationState> {
     await _settingsRepo.saveAppearance(next);
   }
 
-  Future<void> applyLook(WetarLookPreset look) async {
-    await updateSettings(look.settings);
+  /// Applies [look] while preserving the user's current Light/Dark/AMOLED/System
+  /// theme mode unless [preserveThemeMode] is explicitly false.
+  Future<void> applyLook(
+    WetarLookPreset look, {
+    bool preserveThemeMode = true,
+  }) async {
+    final next = preserveThemeMode
+        ? look.settings.copyWith(
+            themeMode: state.settings.themeMode,
+            scheduledDarkEnabled: state.settings.scheduledDarkEnabled,
+            scheduledDarkStartHour: state.settings.scheduledDarkStartHour,
+            scheduledDarkEndHour: state.settings.scheduledDarkEndHour,
+          )
+        : look.settings;
+    await updateSettings(next);
   }
 
   Future<void> saveCurrentAsLook({

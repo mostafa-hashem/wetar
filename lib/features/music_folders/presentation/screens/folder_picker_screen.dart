@@ -296,16 +296,27 @@ class _FolderPickerScreenState extends State<FolderPickerScreen> {
                       FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: tokens.accentPrimary,
+                          disabledBackgroundColor: tokens.accentPrimary,
+                          foregroundColor:
+                              tokens.isDark &&
+                                  tokens.accentPrimary.computeLuminance() > 0.45
+                              ? Colors.black
+                              : Colors.white,
                         ),
                         onPressed: _applying
                             ? null
                             : () => _apply(state.discoveredFolders),
                         child: _applying
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
+                                  color:
+                                      tokens.accentPrimary.computeLuminance() >
+                                          0.45
+                                      ? Colors.black
+                                      : Colors.white,
                                 ),
                               )
                             : Text(l10n.actionApply),
