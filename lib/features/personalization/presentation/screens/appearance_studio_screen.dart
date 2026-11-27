@@ -313,6 +313,23 @@ class AppearanceStudioScreen extends StatelessWidget {
     };
   }
 
+  Widget _buildStudioTab({required IconData icon, required String label}) {
+    return Tab(
+      height: 44,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(icon, size: 17),
+            const SizedBox(width: 6),
+            Text(label),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -339,18 +356,83 @@ class AppearanceStudioScreen extends StatelessWidget {
                   onPressed: () => _confirmGlobalReset(context),
                 ),
               ],
-              bottom: TabBar(
-                isScrollable: true,
-                indicatorColor: tokens.accentPrimary,
-                tabs: <Widget>[
-                  Tab(text: l10n.personalizationLooks),
-                  Tab(text: l10n.personalizationColors),
-                  Tab(text: l10n.personalizationFonts),
-                  Tab(text: l10n.personalizationPlayer),
-                  Tab(text: l10n.personalizationBackgrounds),
-                  Tab(text: l10n.personalizationLayout),
-                  Tab(text: l10n.personalizationMotion),
-                ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(54),
+                child: LayoutBuilder(
+                  builder: (context, constraints) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: tokens.spacingXs,
+                      left: WetarResponsive.horizontalInset(
+                        constraints.maxWidth,
+                        tokens.spacingSm,
+                      ),
+                      right: WetarResponsive.horizontalInset(
+                        constraints.maxWidth,
+                        tokens.spacingSm,
+                      ),
+                    ),
+                    child: TabBar(
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
+                      dividerColor: Colors.transparent,
+                      splashBorderRadius: BorderRadius.circular(
+                        tokens.radiusPill,
+                      ),
+                      labelColor: tokens.accentPrimary,
+                      unselectedLabelColor: tokens.inkMuted,
+                      labelStyle: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                      unselectedLabelStyle: Theme.of(
+                        context,
+                      ).textTheme.labelLarge,
+                      labelPadding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacingXs,
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicatorPadding: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 2,
+                      ),
+                      indicator: BoxDecoration(
+                        color: tokens.accentPrimary.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(tokens.radiusPill),
+                        border: Border.all(
+                          color: tokens.accentPrimary.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      tabs: <Widget>[
+                        _buildStudioTab(
+                          icon: Icons.auto_awesome_outlined,
+                          label: l10n.personalizationLooks,
+                        ),
+                        _buildStudioTab(
+                          icon: Icons.palette_outlined,
+                          label: l10n.personalizationColors,
+                        ),
+                        _buildStudioTab(
+                          icon: Icons.text_fields_rounded,
+                          label: l10n.personalizationFonts,
+                        ),
+                        _buildStudioTab(
+                          icon: Icons.play_circle_outline_rounded,
+                          label: l10n.personalizationPlayer,
+                        ),
+                        _buildStudioTab(
+                          icon: Icons.wallpaper_outlined,
+                          label: l10n.personalizationBackgrounds,
+                        ),
+                        _buildStudioTab(
+                          icon: Icons.dashboard_customize_outlined,
+                          label: l10n.personalizationLayout,
+                        ),
+                        _buildStudioTab(
+                          icon: Icons.animation_rounded,
+                          label: l10n.personalizationMotion,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
             body: SafeArea(
@@ -363,33 +445,70 @@ class AppearanceStudioScreen extends StatelessWidget {
                     top: tokens.spacingMd,
                     bottom: tokens.spacingLg,
                   );
+                  final compactBtnStyle = OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.spacingMd,
+                      vertical: tokens.spacingSm + 2,
+                    ),
+                  );
                   return TabBarView(
                     children: <Widget>[
                       // 1. Looks
                       ListView(
                         padding: tabPadding,
                         children: <Widget>[
-                          Wrap(
-                            spacing: tokens.spacingSm,
-                            runSpacing: tokens.spacingSm,
-                            children: <Widget>[
-                              FilledButton.tonalIcon(
-                                onPressed: () =>
-                                    _saveCurrentLookDialog(context),
-                                icon: const Icon(Icons.bookmark_add_outlined),
-                                label: Text(l10n.personalizationSaveLook),
+                          Container(
+                            padding: EdgeInsets.all(tokens.spacingSm + 2),
+                            decoration: BoxDecoration(
+                              color: tokens.surfaceElevated.withValues(
+                                alpha: 0.55,
                               ),
-                              OutlinedButton.icon(
-                                onPressed: () => _exportLook(context, s),
-                                icon: const Icon(Icons.ios_share_rounded),
-                                label: Text(l10n.personalizationExportLook),
+                              borderRadius: BorderRadius.circular(
+                                tokens.radiusCard,
                               ),
-                              OutlinedButton.icon(
-                                onPressed: () => _importLook(context),
-                                icon: const Icon(Icons.file_open_outlined),
-                                label: Text(l10n.personalizationImportLook),
-                              ),
-                            ],
+                              border: Border.all(color: tokens.borderSubtle),
+                            ),
+                            child: Wrap(
+                              spacing: tokens.spacingSm,
+                              runSpacing: tokens.spacingSm,
+                              children: <Widget>[
+                                FilledButton.tonalIcon(
+                                  style: FilledButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: tokens.spacingMd,
+                                      vertical: tokens.spacingSm + 2,
+                                    ),
+                                  ),
+                                  onPressed: () =>
+                                      _saveCurrentLookDialog(context),
+                                  icon: const Icon(
+                                    Icons.bookmark_add_outlined,
+                                    size: 18,
+                                  ),
+                                  label: Text(l10n.personalizationSaveLook),
+                                ),
+                                OutlinedButton.icon(
+                                  style: compactBtnStyle,
+                                  onPressed: () => _exportLook(context, s),
+                                  icon: const Icon(
+                                    Icons.ios_share_rounded,
+                                    size: 18,
+                                  ),
+                                  label: Text(l10n.personalizationExportLook),
+                                ),
+                                OutlinedButton.icon(
+                                  style: compactBtnStyle,
+                                  onPressed: () => _importLook(context),
+                                  icon: const Icon(
+                                    Icons.file_open_outlined,
+                                    size: 18,
+                                  ),
+                                  label: Text(l10n.personalizationImportLook),
+                                ),
+                              ],
+                            ),
                           ),
                           SizedBox(height: tokens.spacingMd),
                           GridView.builder(
