@@ -549,11 +549,7 @@ class _FolderCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     NumeralFormatter.formatString(
-                      l10n.foldersTrackCount(
-                        hasLibrary && folder.isAvailable
-                            ? folderTracks.length
-                            : folder.trackCount,
-                      ),
+                      l10n.foldersTrackCount(folder.trackCount),
                       numerals,
                     ),
                     style: Theme.of(context).textTheme.labelMedium
@@ -700,6 +696,9 @@ class _FolderTracksScreen extends StatelessWidget {
       (PersonalizationCubit c) => c.state.settings.showArtworkInLists,
     );
     final numerals = context.select((SettingsCubit c) => c.state.numeralStyle);
+    final minDurationSec = context.select(
+      (SettingsCubit c) => c.state.minTrackDurationSec,
+    );
     final currentTrackKey = context.select(
       (PlayerCubit c) => c.state.currentTrack?.stableKey,
     );
@@ -729,7 +728,40 @@ class _FolderTracksScreen extends StatelessWidget {
       body: SafeArea(
         top: false,
         child: tracks.isEmpty
-            ? Center(child: Text(l10n.libraryFilteredEmpty))
+            ? Center(
+                child: Padding(
+                  padding: EdgeInsets.all(tokens.spacingLg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        l10n.libraryFilteredEmpty,
+                        textAlign: TextAlign.center,
+                      ),
+                      if (folder.trackCount > 0 &&
+                          minDurationSec > 0) ...<Widget>[
+                        SizedBox(height: tokens.spacingSm),
+                        Text(
+                          l10n.playbackMinDuration(minDurationSec),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: tokens.inkMuted),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: tokens.spacingMd),
+                        FilledButton.tonal(
+                          onPressed: () {
+                            final settings = context.read<SettingsCubit>();
+                            settings.update(
+                              settings.state.copyWith(minTrackDurationSec: 0),
+                            );
+                          },
+                          child: Text(l10n.playbackMinDuration(0)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              )
             : ListView.builder(
                 padding: EdgeInsets.only(bottom: tokens.spacingLg),
                 itemExtent: effectiveExtent,

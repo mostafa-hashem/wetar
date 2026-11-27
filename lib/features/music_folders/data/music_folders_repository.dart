@@ -27,6 +27,7 @@ class MusicFoldersRepository {
   final StreamController<ScanProgress> _scanController =
       StreamController<ScanProgress>.broadcast();
   bool _cancelRequested = false;
+  Future<void> _scanChainTail = Future<void>.value();
 
   Stream<ScanProgress> get scanProgressStream => _scanController.stream;
 
@@ -272,7 +273,16 @@ class MusicFoldersRepository {
   }
 
   /// Scans ONLY the specified folder IDs, comparing modification times to minimize I/O.
-  Future<void> scanFoldersByIds(List<int> folderIds) async {
+  Future<void> scanFoldersByIds(List<int> folderIds) {
+    if (folderIds.isEmpty) return Future<void>.value();
+    final next = _scanChainTail
+        .catchError((_) {})
+        .then((_) => _runScanFoldersByIds(folderIds));
+    _scanChainTail = next;
+    return next;
+  }
+
+  Future<void> _runScanFoldersByIds(List<int> folderIds) async {
     if (folderIds.isEmpty) return;
     _cancelRequested = false;
     await purgeNonAudioTracks();

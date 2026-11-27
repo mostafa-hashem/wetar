@@ -52,7 +52,7 @@ class WetarPlatformPlugin(
         "com.wetar/events",
     )
 
-    private val executor = Executors.newFixedThreadPool(2)
+    private val executor = Executors.newCachedThreadPool()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var eventSink: EventChannel.EventSink? = null
     private var pendingInitialEvent: Map<String, Any?>? = null
@@ -148,8 +148,8 @@ class WetarPlatformPlugin(
                     try {
                         val folders = queryAudioFolders()
                         mainHandler.post { result.success(folders) }
-                    } catch (e: Exception) {
-                        mainHandler.post { result.error("FOLDER_QUERY_FAILED", e.message, null) }
+                    } catch (t: Throwable) {
+                        mainHandler.post { result.error("FOLDER_QUERY_FAILED", t.message ?: t.javaClass.simpleName, null) }
                     }
                 }
             }
@@ -160,8 +160,8 @@ class WetarPlatformPlugin(
                     try {
                         val scanned = scanFolders(args)
                         mainHandler.post { result.success(scanned) }
-                    } catch (e: Exception) {
-                        mainHandler.post { result.error("SCAN_FAILED", e.message, null) }
+                    } catch (t: Throwable) {
+                        mainHandler.post { result.error("SCAN_FAILED", t.message ?: t.javaClass.simpleName, null) }
                     }
                 }
             }
@@ -462,170 +462,44 @@ class WetarPlatformPlugin(
         val discoveredTracks = mutableListOf<Map<String, Any?>>()
         val activeKeys = mutableListOf<String>()
         val seenPaths = HashSet<String>()
+        val probeBudget = ProbeBudget(deadlineNs = System.nanoTime() + 2_500_000_000L)
 
         if (mediaStoreFolders.isNotEmpty()) {
-            val projection = buildList {
-                add(MediaStore.Audio.Media._ID)
-                add(MediaStore.Audio.Media.DATA)
-                add(MediaStore.Audio.Media.TITLE)
-                add(MediaStore.Audio.Media.ARTIST)
-                add(MediaStore.Audio.Media.ALBUM)
-                add(MediaStore.Audio.Media.ALBUM_ID)
-                add(MediaStore.Audio.Media.DURATION)
-                add(MediaStore.Audio.Media.TRACK)
-                add(MediaStore.Audio.Media.YEAR)
-                add(MediaStore.Audio.Media.SIZE)
-                add(MediaStore.Audio.Media.DATE_MODIFIED)
-                add(MediaStore.Audio.Media.DATE_ADDED)
-                add(MediaStore.Audio.Media.MIME_TYPE)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    add(MediaStore.Audio.Media.ALBUM_ARTIST)
-                    add(MediaStore.Audio.Media.GENRE)
-                    add(MediaStore.Audio.Media.BITRATE)
-                    add(MediaStore.Audio.Media.CD_TRACK_NUMBER)
-                }
-            }.toTypedArray()
+            queryMediaStoreAudioInto(
+                mediaStoreFolders = mediaStoreFolders,
+                existingByPath = existingByPath,
+                availableFolderIds = availableFolderIds,
+                seenPaths = seenPaths,
+                activeKeys = activeKeys,
+                outTracks = discoveredTracks,
+                probeBudget = probeBudget,
+            )
+            queryMediaStoreFilesInto(
+                mediaStoreFolders = mediaStoreFolders,
+                existingByPath = existingByPath,
+                availableFolderIds = availableFolderIds,
+                seenPaths = seenPaths,
+                activeKeys = activeKeys,
+                outTracks = discoveredTracks,
+                probeBudget = probeBudget,
+            )
 
-            activity.contentResolver.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                null,
-                null,
-                null,
-            )?.use { cursor ->
-                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-                val titleCol = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
-                val artistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
-                val albumCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
-                val albumIdCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
-                val durationCol = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
-                val trackCol = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK)
-                val yearCol = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR)
-                val sizeCol = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
-                val modifiedCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED)
-                val addedCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED)
-                val mimeCol = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
-                val albumArtistCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
-                } else -1
-                val genreCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    cursor.getColumnIndex(MediaStore.Audio.Media.GENRE)
-                } else -1
-                val bitrateCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    cursor.getColumnIndex(MediaStore.Audio.Media.BITRATE)
-                } else -1
-
-                while (cursor.moveToNext()) {
-                    val filePath = cursor.getString(dataCol) ?: continue
-                    val normalizedFile = normalizePath(filePath)
-                    val rawMime = if (mimeCol >= 0) cursor.getString(mimeCol) else null
-                    if (!isSupportedAudioFile(normalizedFile, rawMime)) continue
-                    val localFile = File(normalizedFile)
-                    if (!localFile.isFile) continue
-
-                    val parentFolder = normalizePath(localFile.parent ?: continue)
-                    val matchedRule = matchBestFolderRule(parentFolder, mediaStoreFolders) ?: continue
-                    availableFolderIds.add(matchedRule.id)
-
-                    if (!seenPaths.add(normalizedFile)) continue
-                    val modifiedSec = if (modifiedCol >= 0) cursor.getLong(modifiedCol) else 0L
-                    val prevModified = existingByPath[normalizedFile]?.toLong()
-                    if (prevModified != null && prevModified == modifiedSec) {
-                        activeKeys.add(normalizedFile)
-                        continue
-                    }
-
-                    val mediaId = cursor.getLong(idCol)
-                    val contentUri = ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        mediaId,
-                    ).toString()
-                    val albumId = if (albumIdCol >= 0) cursor.getLong(albumIdCol) else 0L
-                    val artworkUri = if (albumId > 0L) {
-                        ContentUris.withAppendedId(
-                            Uri.parse("content://media/external/audio/albumart"),
-                            albumId,
-                        ).toString()
-                    } else null
-
-                    val rawTrack = if (trackCol >= 0) cursor.getInt(trackCol) else 0
-                    val discNumber = if (rawTrack >= 1000) rawTrack / 1000 else 1
-                    val trackNumber = if (rawTrack >= 1000) rawTrack % 1000 else rawTrack
-
-                    val fallbackTitle = localFile.nameWithoutExtension
-                    var title = (if (titleCol >= 0) cursor.getString(titleCol) else null)?.takeIf { it.isNotBlank() } ?: fallbackTitle
-                    var artist = if (artistCol >= 0) cursor.getString(artistCol) else null
-                    var album = if (albumCol >= 0) cursor.getString(albumCol) else null
-                    var albumArtist = if (albumArtistCol >= 0) cursor.getString(albumArtistCol) else null
-                    var genre = if (genreCol >= 0) cursor.getString(genreCol) else null
-                    var year = if (yearCol >= 0) cursor.getInt(yearCol) else 0
-                    var durationMs = if (durationCol >= 0) cursor.getLong(durationCol) else 0L
-                    var bitrateKbps = if (bitrateCol >= 0) cursor.getInt(bitrateCol) / 1000 else 0
-                    var sampleRateHz = 0
-                    var resolvedTrackNumber = trackNumber
-
-                    if (durationMs <= 0L) {
-                        val fallbackMeta = readLocalFileAudioMetadata(localFile, fallbackTitle)
-                        if (fallbackMeta.isDisguisedVideo) {
-                            continue
-                        }
-                        if (fallbackMeta.durationMs > 0L) durationMs = fallbackMeta.durationMs
-                        if (fallbackMeta.title?.isNotBlank() == true && title == fallbackTitle) {
-                            title = fallbackMeta.title
-                        }
-                        if (artist.isNullOrBlank()) artist = fallbackMeta.artist
-                        if (album.isNullOrBlank()) album = fallbackMeta.album
-                        if (albumArtist.isNullOrBlank()) albumArtist = fallbackMeta.albumArtist
-                        if (genre.isNullOrBlank()) genre = fallbackMeta.genre
-                        if (year <= 0) year = fallbackMeta.year
-                        if (resolvedTrackNumber <= 0) resolvedTrackNumber = fallbackMeta.trackNumber
-                        if (bitrateKbps <= 0) bitrateKbps = fallbackMeta.bitrateKbps
-                        sampleRateHz = fallbackMeta.sampleRateHz
-                    }
-
-                    activeKeys.add(normalizedFile)
-                    discoveredTracks.add(
-                        mapOf(
-                            "stableKey" to normalizedFile,
-                            "folderId" to matchedRule.id,
-                            "uri" to contentUri,
-                            "filePath" to normalizedFile,
-                            "folderPath" to parentFolder,
-                            "title" to title,
-                            "artist" to artist,
-                            "album" to album,
-                            "albumArtist" to albumArtist,
-                            "genre" to genre,
-                            "year" to year,
-                            "trackNumber" to resolvedTrackNumber,
-                            "discNumber" to discNumber,
-                            "durationMs" to durationMs,
-                            "bitrateKbps" to bitrateKbps,
-                            "sampleRateHz" to sampleRateHz,
-                            "channels" to 2,
-                            "sizeBytes" to (if (sizeCol >= 0) cursor.getLong(sizeCol) else localFile.length()),
-                            "mimeType" to (rawMime ?: inferAudioMimeFromName(localFile.name)),
-                            "dateModifiedSec" to modifiedSec,
-                            "dateAddedSec" to (if (addedCol >= 0) cursor.getLong(addedCol) else modifiedSec),
-                            "artworkUri" to (artworkUri ?: contentUri),
-                        ),
-                    )
-                }
-            }
-
-            // Supplement MediaStore with direct folder traversal so audio formats skipped by
-            // MediaStore (e.g., .opus, .ape, .wv, .mka, .dsf, .caf, .3ga) are still indexed.
+            // Safely supplement MediaStore with bounded iterative local traversal
+            // so formats skipped by MediaStore still appear without hanging on large/cyclic trees.
+            val visitedCanonicalDirs = HashSet<String>()
             for (rule in mediaStoreFolders) {
                 val rootDir = File(rule.rootPath)
                 if (!rootDir.exists() || !rootDir.isDirectory) continue
                 walkLocalFolder(
-                    dir = rootDir,
+                    rootDir = rootDir,
                     rule = rule,
+                    allRules = mediaStoreFolders,
+                    visitedCanonicalDirs = visitedCanonicalDirs,
                     seenPaths = seenPaths,
                     existingByPath = existingByPath,
                     activeKeys = activeKeys,
                     outTracks = discoveredTracks,
+                    probeBudget = probeBudget,
                 )
             }
         }
@@ -654,70 +528,382 @@ class WetarPlatformPlugin(
         )
     }
 
-    private fun walkLocalFolder(
-        dir: File,
-        rule: FolderRule,
-        seenPaths: MutableSet<String>,
+    private fun queryMediaStoreAudioInto(
+        mediaStoreFolders: List<FolderRule>,
         existingByPath: Map<String, Number>,
+        availableFolderIds: MutableSet<Int>,
+        seenPaths: MutableSet<String>,
         activeKeys: MutableList<String>,
         outTracks: MutableList<Map<String, Any?>>,
+        probeBudget: ProbeBudget,
     ) {
-        val children = dir.listFiles() ?: return
-        val parentFolder = normalizePath(dir.absolutePath)
-        for (child in children) {
-            val name = child.name
-            if (name.startsWith(".")) continue
-            if (child.isDirectory) {
-                if (!rule.includeSubfolders) continue
-                val childPath = normalizePath(child.absolutePath)
-                val isExcluded = rule.excludedSubfolders.any { ex ->
-                    childPath == ex || childPath.startsWith("$ex/")
-                }
-                if (isExcluded) continue
-                walkLocalFolder(child, rule, seenPaths, existingByPath, activeKeys, outTracks)
-            } else if (child.isFile) {
-                val normalizedFile = normalizePath(child.absolutePath)
-                if (!isSupportedAudioFile(name, null)) continue
-                if (!seenPaths.add(normalizedFile)) continue
+        val projection = buildList {
+            add(MediaStore.Audio.Media._ID)
+            add(MediaStore.Audio.Media.DATA)
+            add(MediaStore.Audio.Media.TITLE)
+            add(MediaStore.Audio.Media.ARTIST)
+            add(MediaStore.Audio.Media.ALBUM)
+            add(MediaStore.Audio.Media.ALBUM_ID)
+            add(MediaStore.Audio.Media.DURATION)
+            add(MediaStore.Audio.Media.TRACK)
+            add(MediaStore.Audio.Media.YEAR)
+            add(MediaStore.Audio.Media.SIZE)
+            add(MediaStore.Audio.Media.DATE_MODIFIED)
+            add(MediaStore.Audio.Media.DATE_ADDED)
+            add(MediaStore.Audio.Media.MIME_TYPE)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                add(MediaStore.Audio.Media.ALBUM_ARTIST)
+                add(MediaStore.Audio.Media.GENRE)
+                add(MediaStore.Audio.Media.BITRATE)
+                add(MediaStore.Audio.Media.CD_TRACK_NUMBER)
+            }
+        }.toTypedArray()
 
-                val modifiedSec = child.lastModified() / 1000L
-                val prevMod = existingByPath[normalizedFile]?.toLong()
-                if (prevMod != null && prevMod == modifiedSec) {
+        activity.contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            val idCol = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
+            val dataCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+            if (idCol < 0 || dataCol < 0) return
+            val titleCol = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
+            val artistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+            val albumCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
+            val albumIdCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
+            val durationCol = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+            val trackCol = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK)
+            val yearCol = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR)
+            val sizeCol = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
+            val modifiedCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED)
+            val addedCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED)
+            val mimeCol = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
+            val albumArtistCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
+            } else -1
+            val genreCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                cursor.getColumnIndex(MediaStore.Audio.Media.GENRE)
+            } else -1
+            val bitrateCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                cursor.getColumnIndex(MediaStore.Audio.Media.BITRATE)
+            } else -1
+
+            while (cursor.moveToNext()) {
+                val filePath = cursor.getString(dataCol) ?: continue
+                val normalizedFile = normalizePath(filePath)
+                val rawMime = if (mimeCol >= 0) cursor.getString(mimeCol) else null
+                if (!isSupportedAudioFile(normalizedFile, rawMime)) continue
+                val localFile = File(normalizedFile)
+                if (!localFile.isFile) continue
+
+                val parentFolder = normalizePath(localFile.parent ?: continue)
+                val matchedRule = matchBestFolderRule(parentFolder, mediaStoreFolders) ?: continue
+                availableFolderIds.add(matchedRule.id)
+
+                if (!seenPaths.add(normalizedFile)) continue
+                val modifiedSec = if (modifiedCol >= 0) cursor.getLong(modifiedCol) else 0L
+                val prevModified = existingByPath[normalizedFile]?.toLong()
+                if (prevModified != null && prevModified == modifiedSec) {
                     activeKeys.add(normalizedFile)
                     continue
                 }
 
-                val meta = readLocalFileAudioMetadata(child, child.nameWithoutExtension)
-                if (meta.isDisguisedVideo) continue
+                val mediaId = cursor.getLong(idCol)
+                val contentUri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    mediaId,
+                ).toString()
+                val albumId = if (albumIdCol >= 0) cursor.getLong(albumIdCol) else 0L
+                val artworkUri = if (albumId > 0L) {
+                    ContentUris.withAppendedId(
+                        Uri.parse("content://media/external/audio/albumart"),
+                        albumId,
+                    ).toString()
+                } else null
+
+                val rawTrack = if (trackCol >= 0) cursor.getInt(trackCol) else 0
+                val discNumber = if (rawTrack >= 1000) rawTrack / 1000 else 1
+                val trackNumber = if (rawTrack >= 1000) rawTrack % 1000 else rawTrack
+
+                val fallbackTitle = localFile.nameWithoutExtension
+                var title = (if (titleCol >= 0) cursor.getString(titleCol) else null)?.takeIf { it.isNotBlank() } ?: fallbackTitle
+                var artist = if (artistCol >= 0) cursor.getString(artistCol) else null
+                var album = if (albumCol >= 0) cursor.getString(albumCol) else null
+                var albumArtist = if (albumArtistCol >= 0) cursor.getString(albumArtistCol) else null
+                var genre = if (genreCol >= 0) cursor.getString(genreCol) else null
+                var year = if (yearCol >= 0) cursor.getInt(yearCol) else 0
+                var durationMs = if (durationCol >= 0) cursor.getLong(durationCol) else 0L
+                var bitrateKbps = if (bitrateCol >= 0) cursor.getInt(bitrateCol) / 1000 else 0
+                var sampleRateHz = 0
+                var resolvedTrackNumber = trackNumber
+
+                if (durationMs <= 0L && probeBudget.consume()) {
+                    val fallbackMeta = readLocalFileAudioMetadata(localFile, fallbackTitle)
+                    if (fallbackMeta.isDisguisedVideo) {
+                        continue
+                    }
+                    if (fallbackMeta.durationMs > 0L) durationMs = fallbackMeta.durationMs
+                    if (fallbackMeta.title?.isNotBlank() == true && title == fallbackTitle) {
+                        title = fallbackMeta.title
+                    }
+                    if (artist.isNullOrBlank()) artist = fallbackMeta.artist
+                    if (album.isNullOrBlank()) album = fallbackMeta.album
+                    if (albumArtist.isNullOrBlank()) albumArtist = fallbackMeta.albumArtist
+                    if (genre.isNullOrBlank()) genre = fallbackMeta.genre
+                    if (year <= 0) year = fallbackMeta.year
+                    if (resolvedTrackNumber <= 0) resolvedTrackNumber = fallbackMeta.trackNumber
+                    if (bitrateKbps <= 0) bitrateKbps = fallbackMeta.bitrateKbps
+                    sampleRateHz = fallbackMeta.sampleRateHz
+                }
 
                 activeKeys.add(normalizedFile)
-                val fileUri = Uri.fromFile(child).toString()
                 outTracks.add(
                     mapOf(
                         "stableKey" to normalizedFile,
-                        "folderId" to rule.id,
-                        "uri" to fileUri,
+                        "folderId" to matchedRule.id,
+                        "uri" to contentUri,
                         "filePath" to normalizedFile,
                         "folderPath" to parentFolder,
-                        "title" to (meta.title ?: child.nameWithoutExtension),
-                        "artist" to meta.artist,
-                        "album" to meta.album,
-                        "albumArtist" to meta.albumArtist,
-                        "genre" to meta.genre,
-                        "year" to meta.year,
-                        "trackNumber" to meta.trackNumber,
-                        "discNumber" to 1,
-                        "durationMs" to meta.durationMs,
-                        "bitrateKbps" to meta.bitrateKbps,
-                        "sampleRateHz" to meta.sampleRateHz,
+                        "title" to title,
+                        "artist" to artist,
+                        "album" to album,
+                        "albumArtist" to albumArtist,
+                        "genre" to genre,
+                        "year" to year,
+                        "trackNumber" to resolvedTrackNumber,
+                        "discNumber" to discNumber,
+                        "durationMs" to durationMs,
+                        "bitrateKbps" to bitrateKbps,
+                        "sampleRateHz" to sampleRateHz,
                         "channels" to 2,
-                        "sizeBytes" to child.length(),
-                        "mimeType" to inferAudioMimeFromName(name),
+                        "sizeBytes" to (if (sizeCol >= 0) cursor.getLong(sizeCol) else localFile.length()),
+                        "mimeType" to (rawMime ?: inferAudioMimeFromName(localFile.name)),
                         "dateModifiedSec" to modifiedSec,
-                        "dateAddedSec" to modifiedSec,
-                        "artworkUri" to normalizedFile,
+                        "dateAddedSec" to (if (addedCol >= 0) cursor.getLong(addedCol) else modifiedSec),
+                        "artworkUri" to (artworkUri ?: contentUri),
                     ),
                 )
+            }
+        }
+    }
+
+    private fun queryMediaStoreFilesInto(
+        mediaStoreFolders: List<FolderRule>,
+        existingByPath: Map<String, Number>,
+        availableFolderIds: MutableSet<Int>,
+        seenPaths: MutableSet<String>,
+        activeKeys: MutableList<String>,
+        outTracks: MutableList<Map<String, Any?>>,
+        probeBudget: ProbeBudget,
+    ) {
+        val projection = buildList {
+            add(MediaStore.Files.FileColumns._ID)
+            add(MediaStore.Files.FileColumns.DATA)
+            add(MediaStore.Files.FileColumns.TITLE)
+            add(MediaStore.Files.FileColumns.MIME_TYPE)
+            add(MediaStore.Files.FileColumns.SIZE)
+            add(MediaStore.Files.FileColumns.DATE_MODIFIED)
+            add(MediaStore.Files.FileColumns.DATE_ADDED)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                add(MediaStore.MediaColumns.DURATION)
+            }
+        }.toTypedArray()
+        val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ${MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO} " +
+            "OR ${MediaStore.Files.FileColumns.MIME_TYPE} LIKE 'audio/%' " +
+            "OR ${MediaStore.Files.FileColumns.MIME_TYPE} IN ('application/ogg', 'application/flac', 'application/x-flac', 'application/opus')"
+        try {
+            activity.contentResolver.query(
+                MediaStore.Files.getContentUri("external"),
+                projection,
+                selection,
+                null,
+                null,
+            )?.use { cursor ->
+                val dataCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATA)
+                if (dataCol < 0) return
+                val idCol = cursor.getColumnIndex(MediaStore.Files.FileColumns._ID)
+                val titleCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.TITLE)
+                val mimeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.MIME_TYPE)
+                val sizeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.SIZE)
+                val modifiedCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED)
+                val addedCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_ADDED)
+                val durationCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    cursor.getColumnIndex(MediaStore.MediaColumns.DURATION)
+                } else -1
+
+                while (cursor.moveToNext()) {
+                    val filePath = cursor.getString(dataCol) ?: continue
+                    val normalizedFile = normalizePath(filePath)
+                    val rawMime = if (mimeCol >= 0) cursor.getString(mimeCol) else null
+                    if (!isSupportedAudioFile(normalizedFile, rawMime)) continue
+                    val localFile = File(normalizedFile)
+                    if (!localFile.isFile) continue
+
+                    val parentFolder = normalizePath(localFile.parent ?: continue)
+                    val matchedRule = matchBestFolderRule(parentFolder, mediaStoreFolders) ?: continue
+                    availableFolderIds.add(matchedRule.id)
+
+                    if (!seenPaths.add(normalizedFile)) continue
+                    val modifiedSec = if (modifiedCol >= 0) cursor.getLong(modifiedCol) else (localFile.lastModified() / 1000L)
+                    val prevModified = existingByPath[normalizedFile]?.toLong()
+                    if (prevModified != null && prevModified == modifiedSec) {
+                        activeKeys.add(normalizedFile)
+                        continue
+                    }
+
+                    val fallbackTitle = localFile.nameWithoutExtension
+                    val storeDurationMs = if (durationCol >= 0) cursor.getLong(durationCol) else 0L
+                    val probed = if (storeDurationMs <= 0L && probeBudget.consume()) {
+                        readLocalFileAudioMetadata(localFile, fallbackTitle)
+                    } else {
+                        SafAudioMeta(title = fallbackTitle, durationMs = storeDurationMs)
+                    }
+                    if (probed.isDisguisedVideo) continue
+
+                    val mediaId = if (idCol >= 0) cursor.getLong(idCol) else 0L
+                    val contentUri = if (mediaId > 0L) {
+                        ContentUris.withAppendedId(
+                            MediaStore.Files.getContentUri("external"),
+                            mediaId,
+                        ).toString()
+                    } else {
+                        Uri.fromFile(localFile).toString()
+                    }
+                    val title = probed.title?.takeIf { it.isNotBlank() }
+                        ?: (if (titleCol >= 0) cursor.getString(titleCol) else null)?.takeIf { it.isNotBlank() }
+                        ?: fallbackTitle
+
+                    activeKeys.add(normalizedFile)
+                    outTracks.add(
+                        mapOf(
+                            "stableKey" to normalizedFile,
+                            "folderId" to matchedRule.id,
+                            "uri" to contentUri,
+                            "filePath" to normalizedFile,
+                            "folderPath" to parentFolder,
+                            "title" to title,
+                            "artist" to probed.artist,
+                            "album" to probed.album,
+                            "albumArtist" to probed.albumArtist,
+                            "genre" to probed.genre,
+                            "year" to probed.year,
+                            "trackNumber" to probed.trackNumber,
+                            "discNumber" to 1,
+                            "durationMs" to probed.durationMs,
+                            "bitrateKbps" to probed.bitrateKbps,
+                            "sampleRateHz" to probed.sampleRateHz,
+                            "channels" to 2,
+                            "sizeBytes" to (if (sizeCol >= 0) cursor.getLong(sizeCol) else localFile.length()),
+                            "mimeType" to (rawMime ?: inferAudioMimeFromName(localFile.name)),
+                            "dateModifiedSec" to modifiedSec,
+                            "dateAddedSec" to (if (addedCol >= 0) cursor.getLong(addedCol) else modifiedSec),
+                            "artworkUri" to normalizedFile,
+                        ),
+                    )
+                }
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun walkLocalFolder(
+        rootDir: File,
+        rule: FolderRule,
+        allRules: List<FolderRule>,
+        visitedCanonicalDirs: MutableSet<String>,
+        seenPaths: MutableSet<String>,
+        existingByPath: Map<String, Number>,
+        activeKeys: MutableList<String>,
+        outTracks: MutableList<Map<String, Any?>>,
+        probeBudget: ProbeBudget,
+    ) {
+        val stack = ArrayDeque<Pair<File, Int>>()
+        stack.addLast(rootDir to 0)
+        var visitedCount = 0
+
+        while (stack.isNotEmpty() && visitedCount < MAX_WALK_DIRS_PER_FOLDER) {
+            val (dir, depth) = stack.removeLast()
+            val canonical = try {
+                dir.canonicalPath
+            } catch (_: Exception) {
+                dir.absolutePath
+            }
+            if (!visitedCanonicalDirs.add(canonical)) continue
+            visitedCount += 1
+
+            val parentFolder = normalizePath(dir.absolutePath)
+            if (depth > 0 && File(dir, ".nomedia").exists()) {
+                continue
+            }
+
+            val children = dir.listFiles() ?: continue
+            for (child in children) {
+                val name = child.name
+                if (name.startsWith(".")) continue
+                if (child.isDirectory) {
+                    if (!rule.includeSubfolders || depth >= MAX_WALK_DEPTH) continue
+                    val childPath = normalizePath(child.absolutePath)
+                    if (childPath.contains("/Android/data/") || childPath.endsWith("/Android/data") ||
+                        childPath.contains("/Android/obb/") || childPath.endsWith("/Android/obb")
+                    ) {
+                        continue
+                    }
+                    val isExcluded = rule.excludedSubfolders.any { ex ->
+                        childPath == ex || childPath.startsWith("$ex/")
+                    }
+                    if (isExcluded) continue
+                    stack.addLast(child to (depth + 1))
+                } else if (child.isFile) {
+                    val normalizedFile = normalizePath(child.absolutePath)
+                    if (!isSupportedAudioFile(name, null)) continue
+                    val bestRule = matchBestFolderRule(parentFolder, allRules) ?: continue
+                    if (!seenPaths.add(normalizedFile)) continue
+
+                    val modifiedSec = child.lastModified() / 1000L
+                    val prevMod = existingByPath[normalizedFile]?.toLong()
+                    if (prevMod != null && prevMod == modifiedSec) {
+                        activeKeys.add(normalizedFile)
+                        continue
+                    }
+
+                    val meta = if (probeBudget.consume()) {
+                        readLocalFileAudioMetadata(child, child.nameWithoutExtension)
+                    } else {
+                        SafAudioMeta(title = child.nameWithoutExtension)
+                    }
+                    if (meta.isDisguisedVideo) continue
+
+                    activeKeys.add(normalizedFile)
+                    val fileUri = Uri.fromFile(child).toString()
+                    outTracks.add(
+                        mapOf(
+                            "stableKey" to normalizedFile,
+                            "folderId" to bestRule.id,
+                            "uri" to fileUri,
+                            "filePath" to normalizedFile,
+                            "folderPath" to parentFolder,
+                            "title" to (meta.title ?: child.nameWithoutExtension),
+                            "artist" to meta.artist,
+                            "album" to meta.album,
+                            "albumArtist" to meta.albumArtist,
+                            "genre" to meta.genre,
+                            "year" to meta.year,
+                            "trackNumber" to meta.trackNumber,
+                            "discNumber" to 1,
+                            "durationMs" to meta.durationMs,
+                            "bitrateKbps" to meta.bitrateKbps,
+                            "sampleRateHz" to meta.sampleRateHz,
+                            "channels" to 2,
+                            "sizeBytes" to child.length(),
+                            "mimeType" to inferAudioMimeFromName(name),
+                            "dateModifiedSec" to modifiedSec,
+                            "dateAddedSec" to modifiedSec,
+                            "artworkUri" to normalizedFile,
+                        ),
+                    )
+                }
             }
         }
     }
@@ -830,7 +1016,7 @@ class WetarPlatformPlugin(
         val hasAudio = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
         val ext = fileName.substringAfterLast('.', "").lowercase()
         val disguisedVideo = hasVideo.equals("yes", ignoreCase = true) &&
-            (hasAudio != "yes" || (ext != "mp3" && ext != "flac"))
+            (hasAudio != "yes" || ext in AMBIGUOUS_CONTAINER_EXTENSIONS)
         if (disguisedVideo) {
             return SafAudioMeta(title = fallbackTitle, isDisguisedVideo = true)
         }
@@ -1298,11 +1484,30 @@ class WetarPlatformPlugin(
         val isDisguisedVideo: Boolean = false,
     )
 
+    private class ProbeBudget(
+        private val deadlineNs: Long,
+        private val maxCalls: Int = MAX_METADATA_PROBES_PER_SCAN,
+    ) {
+        private var count = 0
+
+        fun consume(): Boolean {
+            if (count >= maxCalls || System.nanoTime() > deadlineNs) return false
+            count += 1
+            return true
+        }
+    }
+
     private companion object {
         const val REQ_PERMISSIONS = 4101
         const val REQ_PICK_SAF_FOLDER = 4102
         const val REQ_PICK_FILE = 4103
         const val REQ_SAVE_FILE = 4104
+        const val MAX_WALK_DEPTH = 10
+        const val MAX_WALK_DIRS_PER_FOLDER = 800
+        const val MAX_METADATA_PROBES_PER_SCAN = 40
+        val AMBIGUOUS_CONTAINER_EXTENSIONS = setOf(
+            "m4a", "m4b", "m4r", "m4p", "3ga", "f4a", "ogg", "oga", "opus", "mka", "wma", "asf",
+        )
         val AUDIO_EXTENSIONS = setOf(
             "mp3", "mp2", "mp1", "mpga", "mpa",
             "m4a", "m4b", "m4r", "m4p", "aac", "alac", "3ga", "f4a",

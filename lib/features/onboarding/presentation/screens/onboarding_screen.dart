@@ -434,9 +434,12 @@ class _PermissionAndFoldersStep extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  onPressed: () => context
-                      .read<MusicFoldersCubit>()
-                      .selectAllDiscoveredMusicFolders(),
+                  onPressed:
+                      state.isLoadingDiscovery || state.scanProgress.isScanning
+                      ? null
+                      : () => context
+                            .read<MusicFoldersCubit>()
+                            .selectAllDiscoveredMusicFolders(),
                   icon: const Icon(Icons.library_music_outlined),
                   label: Text(l10n.onboardingSelectAllMusicFolders),
                 ),
@@ -445,13 +448,16 @@ class _PermissionAndFoldersStep extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const FolderPickerScreen(),
-                      ),
-                    );
-                  },
+                  onPressed:
+                      state.isLoadingDiscovery || state.scanProgress.isScanning
+                      ? null
+                      : () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const FolderPickerScreen(),
+                            ),
+                          );
+                        },
                   icon: const Icon(Icons.checklist_rounded),
                   label: Text(l10n.foldersChooseCta),
                 ),
@@ -460,13 +466,46 @@ class _PermissionAndFoldersStep extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  onPressed: () =>
-                      context.read<MusicFoldersCubit>().pickSystemFolder(),
+                  onPressed: state.scanProgress.isScanning
+                      ? null
+                      : () => context
+                            .read<MusicFoldersCubit>()
+                            .pickSystemFolder(),
                   icon: const Icon(Icons.create_new_folder_outlined),
                   label: Text(l10n.foldersChooseCta),
                 ),
               SizedBox(height: tokens.spacingLg),
-              if (state.selectedFolders.isNotEmpty)
+              if (state.isLoadingDiscovery || state.scanProgress.isScanning)
+                Container(
+                  padding: EdgeInsets.all(tokens.spacingMd),
+                  decoration: BoxDecoration(
+                    color: tokens.surfaceElevated,
+                    borderRadius: BorderRadius.circular(tokens.radiusCard),
+                    border: Border.all(color: tokens.borderSubtle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (state.scanProgress.isScanning)
+                        Text(
+                          l10n.foldersScanProgress(
+                            state.scanProgress.currentFolderName,
+                            state.scanProgress.processedCount,
+                            state.scanProgress.totalCount,
+                          ),
+                          style: textTheme.bodySmall,
+                        ),
+                      if (state.scanProgress.isScanning)
+                        SizedBox(height: tokens.spacingXs),
+                      LinearProgressIndicator(
+                        value: state.scanProgress.isScanning
+                            ? state.scanProgress.fraction
+                            : null,
+                      ),
+                    ],
+                  ),
+                )
+              else if (state.selectedFolders.isNotEmpty)
                 Container(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   decoration: BoxDecoration(

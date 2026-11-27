@@ -210,6 +210,9 @@ class HomeScreen extends StatelessWidget {
       (PersonalizationCubit c) => c.state.settings,
     );
     final numerals = context.select((SettingsCubit c) => c.state.numeralStyle);
+    final minDurationSec = context.select(
+      (SettingsCubit c) => c.state.minTrackDurationSec,
+    );
     final libState = context.watch<LibraryCubit>().state;
     final foldersState = context.watch<MusicFoldersCubit>().state;
     final playerState = context.watch<PlayerCubit>().state;
@@ -341,6 +344,16 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ),
+                )
+              else if (visibleBlocks.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _HomeFallbackState(
+                    foldersState: foldersState,
+                    libState: libState,
+                    minDurationSec: minDurationSec,
+                    onCustomizeHome: () => _showCustomizeHomeSheet(context),
                   ),
                 )
               else
@@ -669,19 +682,18 @@ class HomeScreen extends StatelessWidget {
                       final folderTracks = libState.allTracks
                           .where((t) => t.folderId == f.id)
                           .toList();
-                      final displayCount = f.isAvailable
-                          ? folderTracks.length
-                          : f.trackCount;
                       return InputChip(
                         avatar: const Icon(Icons.folder_rounded, size: 18),
                         label: Text(
-                          '${f.displayName} (${NumeralFormatter.formatInt(displayCount, numerals)})',
+                          '${f.displayName} (${NumeralFormatter.formatInt(f.trackCount, numerals)})',
                         ),
                         onPressed: () {
                           if (folderTracks.isNotEmpty) {
                             context.read<PlayerCubit>().playTracks(
                               folderTracks,
                             );
+                          } else {
+                            onOpenFolders?.call();
                           }
                         },
                       );
@@ -713,5 +725,150 @@ class HomeScreen extends StatelessWidget {
           ),
         );
     }
+  }
+}
+
+class _HomeFallbackState extends StatelessWidget {
+  const _HomeFallbackState({
+    required this.foldersState,
+    required this.libState,
+    required this.minDurationSec,
+    required this.onCustomizeHome,
+  });
+
+  final MusicFoldersState foldersState;
+  final LibraryState libState;
+  final int minDurationSec;
+  final VoidCallback onCustomizeHome;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tokens = context.wetarTokens;
+
+    if (foldersState.scanProgress.isScanning || libState.isLoading) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(tokens.spacingLg),
+          child: Card(
+            color: tokens.surface.withValues(alpha: 0.9),
+            child: Padding(
+              padding: EdgeInsets.all(tokens.spacingLg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const CircularProgressIndicator(),
+                  SizedBox(height: tokens.spacingMd),
+                  if (foldersState.scanProgress.isScanning) ...<Widget>[
+                    Text(
+                      l10n.foldersScanProgress(
+                        foldersState.scanProgress.currentFolderName,
+                        foldersState.scanProgress.processedCount,
+                        foldersState.scanProgress.totalCount,
+                      ),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    SizedBox(height: tokens.spacingSm),
+                    LinearProgressIndicator(
+                      value: foldersState.scanProgress.fraction,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (libState.allTracks.isEmpty) {
+      final hasFilteredShortTracks =
+          foldersState.totalLibraryTracks > 0 && minDurationSec > 0;
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(tokens.spacingLg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.library_music_outlined,
+                size: 56,
+                color: tokens.accentPrimary,
+              ),
+              SizedBox(height: tokens.spacingMd),
+              Text(
+                l10n.libraryFilteredEmpty,
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: tokens.spacingSm),
+              Text(
+                hasFilteredShortTracks
+                    ? l10n.playbackMinDuration(minDurationSec)
+                    : l10n.foldersSelectedSummary(
+                        foldersState.selectedFolders.length,
+                        foldersState.totalLibraryTracks,
+                      ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: tokens.inkMuted),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: tokens.spacingLg),
+              Wrap(
+                spacing: tokens.spacingSm,
+                runSpacing: tokens.spacingSm,
+                alignment: WrapAlignment.center,
+                children: <Widget>[
+                  if (hasFilteredShortTracks)
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: tokens.accentPrimary,
+                      ),
+                      onPressed: () {
+                        final settings = context.read<SettingsCubit>();
+                        settings.update(
+                          settings.state.copyWith(minTrackDurationSec: 0),
+                        );
+                      },
+                      icon: const Icon(Icons.timer_off_outlined),
+                      label: Text(l10n.playbackMinDuration(0)),
+                    ),
+                  FilledButton.tonalIcon(
+                    onPressed: () =>
+                        context.read<MusicFoldersCubit>().rescanAll(),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(l10n.actionRescan),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(tokens.spacingLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.tune_rounded, size: 48, color: tokens.accentPrimary),
+            SizedBox(height: tokens.spacingMd),
+            Text(
+              l10n.homeCustomizeBlocks,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: tokens.spacingMd),
+            FilledButton.tonalIcon(
+              onPressed: onCustomizeHome,
+              icon: const Icon(Icons.tune_rounded),
+              label: Text(l10n.homeCustomizeBlocks),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

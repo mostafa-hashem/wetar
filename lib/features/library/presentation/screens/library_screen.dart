@@ -367,8 +367,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 Expanded(
                   child: foldersState.selectedFolders.isEmpty
                       ? _EmptyNoFoldersView()
-                      : libState.isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      : (libState.isLoading ||
+                            (foldersState.scanProgress.isScanning &&
+                                libState.allTracks.isEmpty))
+                      ? Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(tokens.spacingLg),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                const CircularProgressIndicator(),
+                                if (foldersState
+                                    .scanProgress
+                                    .isScanning) ...<Widget>[
+                                  SizedBox(height: tokens.spacingMd),
+                                  Text(
+                                    l10n.foldersScanProgress(
+                                      foldersState
+                                          .scanProgress
+                                          .currentFolderName,
+                                      foldersState.scanProgress.processedCount,
+                                      foldersState.scanProgress.totalCount,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        )
                       : _buildCategoryBody(
                           context,
                           libState,
@@ -613,7 +640,52 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final l10n = AppLocalizations.of(context);
     final tokens = context.wetarTokens;
     if (tracks.isEmpty) {
-      return Center(child: Text(l10n.libraryFilteredEmpty));
+      final foldersState = context.watch<MusicFoldersCubit>().state;
+      final minDurationSec = context.select(
+        (SettingsCubit c) => c.state.minTrackDurationSec,
+      );
+      final showDurationHint =
+          libState.allTracks.isEmpty &&
+          foldersState.totalLibraryTracks > 0 &&
+          minDurationSec > 0;
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(tokens.spacingLg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(l10n.libraryFilteredEmpty, textAlign: TextAlign.center),
+              if (showDurationHint) ...<Widget>[
+                SizedBox(height: tokens.spacingSm),
+                Text(
+                  l10n.playbackMinDuration(minDurationSec),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: tokens.inkMuted),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: tokens.spacingMd),
+                FilledButton.tonal(
+                  onPressed: () {
+                    final settings = context.read<SettingsCubit>();
+                    settings.update(
+                      settings.state.copyWith(minTrackDurationSec: 0),
+                    );
+                  },
+                  child: Text(l10n.playbackMinDuration(0)),
+                ),
+              ] else if (libState.allTracks.isEmpty) ...<Widget>[
+                SizedBox(height: tokens.spacingMd),
+                FilledButton.tonalIcon(
+                  onPressed: () =>
+                      context.read<MusicFoldersCubit>().rescanAll(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(l10n.actionRescan),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
     }
 
     if (appearance.useGridInLibrary && !libState.isSelectionMode) {
