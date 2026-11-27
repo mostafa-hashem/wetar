@@ -8,6 +8,7 @@ import 'package:wetar/core/platform/platform_interfaces.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/library/presentation/widgets/track_list_tile.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
@@ -109,180 +110,60 @@ class PlaylistsScreen extends StatelessWidget {
 
     final content = BlocBuilder<PlaylistsCubit, PlaylistsState>(
       builder: (context, state) {
-        return ListView(
-          padding: EdgeInsets.fromLTRB(
-            tokens.spacingMd,
-            tokens.spacingMd,
-            tokens.spacingMd,
-            tokens.spacingLg,
-          ),
-          children: <Widget>[
-            Wrap(
-              spacing: tokens.spacingSm,
-              runSpacing: tokens.spacingSm,
-              children: <Widget>[
-                FilledButton.tonalIcon(
-                  onPressed: () => _createDialog(context),
-                  icon: const Icon(Icons.playlist_add_rounded),
-                  label: Text(l10n.playlistsCreate),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _importM3u(context),
-                  icon: const Icon(Icons.file_open_outlined),
-                  label: Text(l10n.playlistsImportM3u),
-                ),
-              ],
+        return LayoutBuilder(
+          builder: (context, constraints) => ListView(
+            padding: WetarResponsive.listPadding(
+              constraints.maxWidth,
+              minHorizontal: tokens.spacingMd,
+              top: tokens.spacingMd,
+              bottom: tokens.spacingLg,
             ),
-            SizedBox(height: tokens.spacingLg),
-            Text(
-              l10n.playlistsSmartTitle,
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(color: tokens.accentPrimary),
-            ),
-            SizedBox(height: tokens.spacingSm),
-            for (final item in smartItems)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  backgroundColor: tokens.surfaceElevated,
-                  child: Icon(item.$3, color: tokens.accentSecondary),
-                ),
-                title: Text(
-                  item.$2,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () async {
-                  final tracks = await context
-                      .read<PlaylistsCubit>()
-                      .loadSmartTracks(item.$1, minDurationSec: minDur);
-                  if (!context.mounted) return;
-                  await Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => _PlaylistTracksView(
-                        title: item.$2,
-                        initialTracks: tracks,
-                        onOpenTrackDetails: onOpenTrackDetails,
-                      ),
-                    ),
-                  );
-                },
+            children: <Widget>[
+              Wrap(
+                spacing: tokens.spacingSm,
+                runSpacing: tokens.spacingSm,
+                children: <Widget>[
+                  FilledButton.tonalIcon(
+                    onPressed: () => _createDialog(context),
+                    icon: const Icon(Icons.playlist_add_rounded),
+                    label: Text(l10n.playlistsCreate),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _importM3u(context),
+                    icon: const Icon(Icons.file_open_outlined),
+                    label: Text(l10n.playlistsImportM3u),
+                  ),
+                ],
               ),
-            SizedBox(height: tokens.spacingLg),
-            Text(
-              l10n.playlistsUserTitle,
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(color: tokens.accentPrimary),
-            ),
-            SizedBox(height: tokens.spacingSm),
-            if (state.playlists.isEmpty)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: tokens.spacingLg),
-                child: Center(child: Text(l10n.playlistsEmpty)),
-              )
-            else
-              for (final pl in state.playlists)
+              SizedBox(height: tokens.spacingLg),
+              Text(
+                l10n.playlistsSmartTitle,
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(color: tokens.accentPrimary),
+              ),
+              SizedBox(height: tokens.spacingSm),
+              for (final item in smartItems)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: PlaylistCollageCover(
-                    tracks: pl.coverTracks,
-                    size: 52,
+                  leading: CircleAvatar(
+                    backgroundColor: tokens.surfaceElevated,
+                    child: Icon(item.$3, color: tokens.accentSecondary),
                   ),
                   title: Text(
-                    pl.name,
+                    item.$2,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: Text(
-                    NumeralFormatter.formatString(
-                      l10n.foldersTrackCount(pl.trackCount),
-                      numerals,
-                    ),
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (action) async {
-                      if (action == 'rename') {
-                        final ctrl = TextEditingController(text: pl.name);
-                        final renamed = await showDialog<String>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text(l10n.actionRename),
-                            content: TextField(
-                              controller: ctrl,
-                              autofocus: true,
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(),
-                                child: Text(l10n.actionCancel),
-                              ),
-                              FilledButton(
-                                onPressed: () =>
-                                    Navigator.of(ctx).pop(ctrl.text.trim()),
-                                child: Text(l10n.actionSave),
-                              ),
-                            ],
-                          ),
-                        );
-                        ctrl.dispose();
-                        if (renamed != null &&
-                            renamed.isNotEmpty &&
-                            context.mounted) {
-                          await context.read<PlaylistsCubit>().renamePlaylist(
-                            pl.id,
-                            renamed,
-                          );
-                        }
-                      } else if (action == 'delete') {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text(l10n.playlistsDeleteTitle),
-                            content: Text(l10n.playlistsDeleteBody(pl.name)),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(false),
-                                child: Text(l10n.actionCancel),
-                              ),
-                              FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: tokens.danger,
-                                ),
-                                onPressed: () => Navigator.of(ctx).pop(true),
-                                child: Text(l10n.actionDelete),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirm == true && context.mounted) {
-                          await context.read<PlaylistsCubit>().deletePlaylist(
-                            pl.id,
-                          );
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => <PopupMenuEntry<String>>[
-                      PopupMenuItem(
-                        value: 'rename',
-                        child: Text(l10n.actionRename),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(l10n.actionDelete),
-                      ),
-                    ],
-                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () async {
                     final tracks = await context
                         .read<PlaylistsCubit>()
-                        .loadTracks(pl.id);
+                        .loadSmartTracks(item.$1, minDurationSec: minDur);
                     if (!context.mounted) return;
                     await Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => _PlaylistTracksView(
-                          playlistId: pl.id,
-                          title: pl.name,
+                          title: item.$2,
                           initialTracks: tracks,
                           onOpenTrackDetails: onOpenTrackDetails,
                         ),
@@ -290,7 +171,129 @@ class PlaylistsScreen extends StatelessWidget {
                     );
                   },
                 ),
-          ],
+              SizedBox(height: tokens.spacingLg),
+              Text(
+                l10n.playlistsUserTitle,
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(color: tokens.accentPrimary),
+              ),
+              SizedBox(height: tokens.spacingSm),
+              if (state.playlists.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: tokens.spacingLg),
+                  child: Center(child: Text(l10n.playlistsEmpty)),
+                )
+              else
+                for (final pl in state.playlists)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: PlaylistCollageCover(
+                      tracks: pl.coverTracks,
+                      size: 52,
+                    ),
+                    title: Text(
+                      pl.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      NumeralFormatter.formatString(
+                        l10n.foldersTrackCount(pl.trackCount),
+                        numerals,
+                      ),
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (action) async {
+                        if (action == 'rename') {
+                          final ctrl = TextEditingController(text: pl.name);
+                          final renamed = await showDialog<String>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(l10n.actionRename),
+                              content: TextField(
+                                controller: ctrl,
+                                autofocus: true,
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(),
+                                  child: Text(l10n.actionCancel),
+                                ),
+                                FilledButton(
+                                  onPressed: () =>
+                                      Navigator.of(ctx).pop(ctrl.text.trim()),
+                                  child: Text(l10n.actionSave),
+                                ),
+                              ],
+                            ),
+                          );
+                          ctrl.dispose();
+                          if (renamed != null &&
+                              renamed.isNotEmpty &&
+                              context.mounted) {
+                            await context.read<PlaylistsCubit>().renamePlaylist(
+                              pl.id,
+                              renamed,
+                            );
+                          }
+                        } else if (action == 'delete') {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(l10n.playlistsDeleteTitle),
+                              content: Text(l10n.playlistsDeleteBody(pl.name)),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: Text(l10n.actionCancel),
+                                ),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: tokens.danger,
+                                  ),
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: Text(l10n.actionDelete),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true && context.mounted) {
+                            await context.read<PlaylistsCubit>().deletePlaylist(
+                              pl.id,
+                            );
+                          }
+                        }
+                      },
+                      itemBuilder: (_) => <PopupMenuEntry<String>>[
+                        PopupMenuItem(
+                          value: 'rename',
+                          child: Text(l10n.actionRename),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(l10n.actionDelete),
+                        ),
+                      ],
+                    ),
+                    onTap: () async {
+                      final tracks = await context
+                          .read<PlaylistsCubit>()
+                          .loadTracks(pl.id);
+                      if (!context.mounted) return;
+                      await Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => _PlaylistTracksView(
+                            playlistId: pl.id,
+                            title: pl.name,
+                            initialTracks: tracks,
+                            onOpenTrackDetails: onOpenTrackDetails,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+            ],
+          ),
         );
       },
     );

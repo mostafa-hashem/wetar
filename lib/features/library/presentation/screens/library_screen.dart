@@ -7,6 +7,7 @@ import 'package:wetar/core/utils/arabic_normalizer.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/library/data/library_repository.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
@@ -693,63 +694,65 @@ class _LibraryScreenState extends State<LibraryScreen> {
         children: <Widget>[
           _buildTrackCountBar(context, tracks, numerals, tokens, l10n),
           Expanded(
-            child: GridView.builder(
-              controller: _scrollController,
-              padding: EdgeInsets.all(tokens.spacingMd),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: appearance.gridColumns,
-                mainAxisSpacing: tokens.spacingMd,
-                crossAxisSpacing: tokens.spacingMd,
-                childAspectRatio: 0.78,
-              ),
-              itemCount: tracks.length,
-              itemBuilder: (context, index) {
-                final track = tracks[index];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(tokens.radiusCard),
-                  onTap: () => context.read<PlayerCubit>().playTracks(
-                    tracks,
-                    index: index,
-                  ),
-                  onLongPress: () => context
-                      .read<LibraryCubit>()
-                      .toggleTrackSelection(track.stableKey),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, box) => WetarArtworkImage(
-                            cacheKey: track.albumKey,
-                            size: box.maxWidth,
-                            artworkUri: track.artworkUri,
-                            filePath: track.filePath,
-                            customArtPath: track.customArtPath,
-                            thumbnailCache: thumbCache,
+            child: LayoutBuilder(
+              builder: (context, constraints) => GridView.builder(
+                controller: _scrollController,
+                padding: EdgeInsets.all(tokens.spacingMd),
+                gridDelegate: WetarResponsive.mediaGridDelegateForWidth(
+                  constraints.maxWidth,
+                  preferredColumns: appearance.gridColumns,
+                  spacing: tokens.spacingMd,
+                ),
+                itemCount: tracks.length,
+                itemBuilder: (context, index) {
+                  final track = tracks[index];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(tokens.radiusCard),
+                    onTap: () => context.read<PlayerCubit>().playTracks(
+                      tracks,
+                      index: index,
+                    ),
+                    onLongPress: () => context
+                        .read<LibraryCubit>()
+                        .toggleTrackSelection(track.stableKey),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, box) => WetarArtworkImage(
+                              cacheKey: track.albumKey,
+                              size: box.maxWidth,
+                              artworkUri: track.artworkUri,
+                              filePath: track.filePath,
+                              customArtPath: track.customArtPath,
+                              thumbnailCache: thumbCache,
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(height: tokens.spacingXs),
-                      Text(
-                        track.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: track.stableKey == currentTrackKey
-                              ? tokens.accentPrimary
-                              : null,
+                        SizedBox(height: tokens.spacingXs),
+                        Text(
+                          track.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: track.stableKey == currentTrackKey
+                                    ? tokens.accentPrimary
+                                    : null,
+                              ),
                         ),
-                      ),
-                      Text(
-                        track.resolvedArtist(l10n.libraryUnknownArtist),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        Text(
+                          track.resolvedArtist(l10n.libraryUnknownArtist),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -947,53 +950,54 @@ class _GroupCollectionView<T> extends StatelessWidget {
       return Center(child: Text(l10n.libraryFilteredEmpty));
     }
     if (useGrid) {
-      return GridView.builder(
-        padding: EdgeInsets.all(tokens.spacingMd),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: gridColumns,
-          mainAxisSpacing: tokens.spacingMd,
-          crossAxisSpacing: tokens.spacingMd,
-          childAspectRatio: 0.78,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final artTrack = artworkTrackOf(item);
-          return InkWell(
-            borderRadius: BorderRadius.circular(tokens.radiusCard),
-            onTap: () => onTap(item),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, box) => WetarArtworkImage(
-                      cacheKey: artTrack?.albumKey ?? titleOf(item),
-                      size: box.maxWidth,
-                      artworkUri: artTrack?.artworkUri,
-                      filePath: artTrack?.filePath,
-                      customArtPath: artTrack?.customArtPath,
-                      thumbnailCache: thumbnailCache,
+      return LayoutBuilder(
+        builder: (context, constraints) => GridView.builder(
+          padding: EdgeInsets.all(tokens.spacingMd),
+          gridDelegate: WetarResponsive.mediaGridDelegateForWidth(
+            constraints.maxWidth,
+            preferredColumns: gridColumns,
+            spacing: tokens.spacingMd,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final artTrack = artworkTrackOf(item);
+            return InkWell(
+              borderRadius: BorderRadius.circular(tokens.radiusCard),
+              onTap: () => onTap(item),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, box) => WetarArtworkImage(
+                        cacheKey: artTrack?.albumKey ?? titleOf(item),
+                        size: box.maxWidth,
+                        artworkUri: artTrack?.artworkUri,
+                        filePath: artTrack?.filePath,
+                        customArtPath: artTrack?.customArtPath,
+                        thumbnailCache: thumbnailCache,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: tokens.spacingXs),
-                Text(
-                  titleOf(item),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  subtitleOf(item),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          );
-        },
+                  SizedBox(height: tokens.spacingXs),
+                  Text(
+                    titleOf(item),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  Text(
+                    subtitleOf(item),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       );
     }
 

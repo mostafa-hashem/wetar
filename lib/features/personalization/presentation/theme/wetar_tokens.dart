@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
 
 /// Resolved visual tokens read by every Wetar widget (never hardcode colors/radii/fonts).
@@ -476,6 +477,7 @@ class WetarTokenResolver {
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: tokens.surfaceElevated,
+        constraints: WetarResponsive.sheetConstraints,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(tokens.radiusSheet),

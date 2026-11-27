@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/widgets/wetar_brand_logo.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/folder_picker_screen.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
@@ -78,63 +79,75 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: tokens.canvas,
       body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: tokens.spacingMd,
-                vertical: tokens.spacingSm,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Row(
-                    children: List<Widget>.generate(3, (i) {
-                      final active = i == _page;
-                      return AnimatedContainer(
-                        duration: tokens.motionDuration,
-                        margin: EdgeInsetsDirectional.only(
-                          end: tokens.spacingSm,
-                        ),
-                        width: active ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: active
-                              ? tokens.accentPrimary
-                              : tokens.borderSubtle,
-                          borderRadius: BorderRadius.circular(
-                            tokens.radiusPill,
-                          ),
-                        ),
-                      );
-                    }),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final sidePad = WetarResponsive.horizontalInset(
+              constraints.maxWidth,
+              tokens.spacingMd,
+              maxWidth: WetarResponsive.defaultWizardMaxWidth,
+            );
+            return Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: sidePad,
+                    vertical: tokens.spacingSm,
                   ),
-                  TextButton(onPressed: _finish, child: Text(l10n.actionSkip)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (i) => setState(() => _page = i),
-                children: <Widget>[
-                  _WelcomeLanguageAndThemeStep(
-                    onThemeSelected: _setThemeMode,
-                    onContinue: () => _goToPage(1),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Row(
+                        children: List<Widget>.generate(3, (i) {
+                          final active = i == _page;
+                          return AnimatedContainer(
+                            duration: tokens.motionDuration,
+                            margin: EdgeInsetsDirectional.only(
+                              end: tokens.spacingSm,
+                            ),
+                            width: active ? 24 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? tokens.accentPrimary
+                                  : tokens.borderSubtle,
+                              borderRadius: BorderRadius.circular(
+                                tokens.radiusPill,
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      TextButton(
+                        onPressed: _finish,
+                        child: Text(l10n.actionSkip),
+                      ),
+                    ],
                   ),
-                  _PermissionAndFoldersStep(
-                    capabilities: caps,
-                    onContinue: () => _goToPage(2),
+                ),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (i) => setState(() => _page = i),
+                    children: <Widget>[
+                      _WelcomeLanguageAndThemeStep(
+                        onThemeSelected: _setThemeMode,
+                        onContinue: () => _goToPage(1),
+                      ),
+                      _PermissionAndFoldersStep(
+                        capabilities: caps,
+                        onContinue: () => _goToPage(2),
+                      ),
+                      _LookOnboardingStep(
+                        preserveThemeMode: _userPickedThemeMode,
+                        onThemeSelected: _setThemeMode,
+                        onFinish: _finish,
+                      ),
+                    ],
                   ),
-                  _LookOnboardingStep(
-                    preserveThemeMode: _userPickedThemeMode,
-                    onThemeSelected: _setThemeMode,
-                    onFinish: _finish,
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -164,113 +177,125 @@ class _WelcomeLanguageAndThemeStep extends StatelessWidget {
       MediaQuery.platformBrightnessOf(context),
     );
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(tokens.spacingLg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          SizedBox(height: tokens.spacingSm),
-          const Center(child: WetarBrandLogo(size: 86)),
-          SizedBox(height: tokens.spacingMd),
-          Text(
-            l10n.onboardingWelcomeTitle,
-            textAlign: TextAlign.center,
-            style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: tokens.spacingXs),
-          Text(
-            l10n.onboardingWelcomeSubtitle,
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
-          ),
-          SizedBox(height: tokens.spacingMd),
-          Center(
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: tokens.spacingMd,
-                vertical: tokens.spacingSm,
-              ),
-              decoration: BoxDecoration(
-                color: tokens.surfaceElevated,
-                borderRadius: BorderRadius.circular(tokens.radiusPill),
-                border: Border.all(color: tokens.borderSubtle),
-              ),
-              child: Text(
-                l10n.onboardingOfflinePill,
-                style: textTheme.labelMedium?.copyWith(
-                  color: tokens.accentSecondary,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: WetarResponsive.listPadding(
+          constraints.maxWidth,
+          minHorizontal: tokens.spacingLg,
+          top: tokens.spacingLg,
+          bottom: tokens.spacingLg,
+          maxWidth: WetarResponsive.defaultWizardMaxWidth,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            SizedBox(height: tokens.spacingSm),
+            const Center(child: WetarBrandLogo(size: 86)),
+            SizedBox(height: tokens.spacingMd),
+            Text(
+              l10n.onboardingWelcomeTitle,
+              textAlign: TextAlign.center,
+              style: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-          SizedBox(height: tokens.spacingLg),
-          Text(
-            l10n.onboardingLanguageLabel,
-            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: tokens.spacingSm),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ChoiceOptionCard(
-                  icon: Icons.translate_rounded,
-                  label: l10n.languageArabic,
-                  selected: localeCode == 'ar',
-                  onTap: () =>
-                      context.read<SettingsCubit>().setLocaleCode('ar'),
-                ),
-              ),
-              SizedBox(width: tokens.spacingSm),
-              Expanded(
-                child: _ChoiceOptionCard(
-                  icon: Icons.language_rounded,
-                  label: l10n.languageEnglish,
-                  selected: localeCode == 'en',
-                  onTap: () =>
-                      context.read<SettingsCubit>().setLocaleCode('en'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: tokens.spacingMd),
-          Text(
-            l10n.onboardingThemeLabel,
-            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: tokens.spacingSm),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ChoiceOptionCard(
-                  icon: Icons.light_mode_rounded,
-                  label: l10n.personalizationThemeLight,
-                  selected: !isDark,
-                  onTap: () => onThemeSelected(WetarThemeMode.light),
-                ),
-              ),
-              SizedBox(width: tokens.spacingSm),
-              Expanded(
-                child: _ChoiceOptionCard(
-                  icon: Icons.dark_mode_rounded,
-                  label: l10n.personalizationThemeDark,
-                  selected: isDark,
-                  onTap: () => onThemeSelected(WetarThemeMode.dark),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: tokens.spacingLg),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              backgroundColor: tokens.accentPrimary,
+            SizedBox(height: tokens.spacingXs),
+            Text(
+              l10n.onboardingWelcomeSubtitle,
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
             ),
-            onPressed: onContinue,
-            child: Text(l10n.actionContinue),
-          ),
-        ],
+            SizedBox(height: tokens.spacingMd),
+            Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacingMd,
+                  vertical: tokens.spacingSm,
+                ),
+                decoration: BoxDecoration(
+                  color: tokens.surfaceElevated,
+                  borderRadius: BorderRadius.circular(tokens.radiusPill),
+                  border: Border.all(color: tokens.borderSubtle),
+                ),
+                child: Text(
+                  l10n.onboardingOfflinePill,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: tokens.accentSecondary,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: tokens.spacingLg),
+            Text(
+              l10n.onboardingLanguageLabel,
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: tokens.spacingSm),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _ChoiceOptionCard(
+                    icon: Icons.translate_rounded,
+                    label: l10n.languageArabic,
+                    selected: localeCode == 'ar',
+                    onTap: () =>
+                        context.read<SettingsCubit>().setLocaleCode('ar'),
+                  ),
+                ),
+                SizedBox(width: tokens.spacingSm),
+                Expanded(
+                  child: _ChoiceOptionCard(
+                    icon: Icons.language_rounded,
+                    label: l10n.languageEnglish,
+                    selected: localeCode == 'en',
+                    onTap: () =>
+                        context.read<SettingsCubit>().setLocaleCode('en'),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.spacingMd),
+            Text(
+              l10n.onboardingThemeLabel,
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: tokens.spacingSm),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _ChoiceOptionCard(
+                    icon: Icons.light_mode_rounded,
+                    label: l10n.personalizationThemeLight,
+                    selected: !isDark,
+                    onTap: () => onThemeSelected(WetarThemeMode.light),
+                  ),
+                ),
+                SizedBox(width: tokens.spacingSm),
+                Expanded(
+                  child: _ChoiceOptionCard(
+                    icon: Icons.dark_mode_rounded,
+                    label: l10n.personalizationThemeDark,
+                    selected: isDark,
+                    onTap: () => onThemeSelected(WetarThemeMode.dark),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.spacingLg),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: tokens.accentPrimary,
+              ),
+              onPressed: onContinue,
+              child: Text(l10n.actionContinue),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -367,177 +392,187 @@ class _PermissionAndFoldersStep extends StatelessWidget {
             capabilities.supportsInAppFolderPicker &&
             !state.permissions.audioGranted;
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(tokens.spacingLg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                l10n.onboardingFoldersTitle,
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: tokens.spacingSm),
-              Text(
-                l10n.onboardingFoldersSubtitle,
-                style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
-              ),
-              SizedBox(height: tokens.spacingMd),
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.all(tokens.spacingMd),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.folder_copy_outlined,
-                            color: tokens.accentPrimary,
-                          ),
-                          SizedBox(width: tokens.spacingSm),
-                          Expanded(
-                            child: Text(
-                              l10n.onboardingPermissionTitle,
-                              style: textTheme.titleMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: tokens.spacingSm),
-                      Text(
-                        l10n.onboardingPermissionBody,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: tokens.inkMuted,
-                        ),
-                      ),
-                    ],
+        return LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: WetarResponsive.listPadding(
+              constraints.maxWidth,
+              minHorizontal: tokens.spacingLg,
+              top: tokens.spacingLg,
+              bottom: tokens.spacingLg,
+              maxWidth: WetarResponsive.defaultWizardMaxWidth,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  l10n.onboardingFoldersTitle,
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              SizedBox(height: tokens.spacingLg),
-              if (needsAudioPermission)
-                FilledButton.icon(
+                SizedBox(height: tokens.spacingSm),
+                Text(
+                  l10n.onboardingFoldersSubtitle,
+                  style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
+                ),
+                SizedBox(height: tokens.spacingMd),
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(tokens.spacingMd),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Icon(
+                              Icons.folder_copy_outlined,
+                              color: tokens.accentPrimary,
+                            ),
+                            SizedBox(width: tokens.spacingSm),
+                            Expanded(
+                              child: Text(
+                                l10n.onboardingPermissionTitle,
+                                style: textTheme.titleMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: tokens.spacingSm),
+                        Text(
+                          l10n.onboardingPermissionBody,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: tokens.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: tokens.spacingLg),
+                if (needsAudioPermission)
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      backgroundColor: tokens.accentPrimary,
+                    ),
+                    onPressed: () => context
+                        .read<MusicFoldersCubit>()
+                        .requestPermissions(includeNotifications: true),
+                    icon: const Icon(Icons.verified_user_outlined),
+                    label: Text(l10n.onboardingGrantPermission),
+                  )
+                else if (capabilities.supportsInAppFolderPicker) ...<Widget>[
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    onPressed:
+                        state.isLoadingDiscovery ||
+                            state.scanProgress.isScanning
+                        ? null
+                        : () => context
+                              .read<MusicFoldersCubit>()
+                              .selectAllDiscoveredMusicFolders(),
+                    icon: const Icon(Icons.library_music_outlined),
+                    label: Text(l10n.onboardingSelectAllMusicFolders),
+                  ),
+                  SizedBox(height: tokens.spacingMd),
+                  FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    onPressed:
+                        state.isLoadingDiscovery ||
+                            state.scanProgress.isScanning
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const FolderPickerScreen(),
+                              ),
+                            );
+                          },
+                    icon: const Icon(Icons.checklist_rounded),
+                    label: Text(l10n.foldersChooseCta),
+                  ),
+                ] else
+                  FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    onPressed: state.scanProgress.isScanning
+                        ? null
+                        : () => context
+                              .read<MusicFoldersCubit>()
+                              .pickSystemFolder(),
+                    icon: const Icon(Icons.create_new_folder_outlined),
+                    label: Text(l10n.foldersChooseCta),
+                  ),
+                SizedBox(height: tokens.spacingLg),
+                if (state.isLoadingDiscovery || state.scanProgress.isScanning)
+                  Container(
+                    padding: EdgeInsets.all(tokens.spacingMd),
+                    decoration: BoxDecoration(
+                      color: tokens.surfaceElevated,
+                      borderRadius: BorderRadius.circular(tokens.radiusCard),
+                      border: Border.all(color: tokens.borderSubtle),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        if (state.scanProgress.isScanning)
+                          Text(
+                            l10n.foldersScanProgress(
+                              state.scanProgress.currentFolderName,
+                              state.scanProgress.processedCount,
+                              state.scanProgress.totalCount,
+                            ),
+                            style: textTheme.bodySmall,
+                          ),
+                        if (state.scanProgress.isScanning)
+                          SizedBox(height: tokens.spacingXs),
+                        LinearProgressIndicator(
+                          value: state.scanProgress.isScanning
+                              ? state.scanProgress.fraction
+                              : null,
+                        ),
+                      ],
+                    ),
+                  )
+                else if (state.selectedFolders.isNotEmpty)
+                  Container(
+                    padding: EdgeInsets.all(tokens.spacingMd),
+                    decoration: BoxDecoration(
+                      color: tokens.surfaceElevated,
+                      borderRadius: BorderRadius.circular(tokens.radiusCard),
+                      border: Border.all(color: tokens.borderSubtle),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(Icons.check_circle_outline, color: tokens.success),
+                        SizedBox(width: tokens.spacingSm),
+                        Expanded(
+                          child: Text(
+                            l10n.foldersSelectedSummary(
+                              state.selectedFolders.length,
+                              state.totalLibraryTracks,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SizedBox(height: tokens.spacingLg),
+                FilledButton(
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     backgroundColor: tokens.accentPrimary,
                   ),
-                  onPressed: () => context
-                      .read<MusicFoldersCubit>()
-                      .requestPermissions(includeNotifications: true),
-                  icon: const Icon(Icons.verified_user_outlined),
-                  label: Text(l10n.onboardingGrantPermission),
-                )
-              else if (capabilities.supportsInAppFolderPicker) ...<Widget>[
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  onPressed:
-                      state.isLoadingDiscovery || state.scanProgress.isScanning
-                      ? null
-                      : () => context
-                            .read<MusicFoldersCubit>()
-                            .selectAllDiscoveredMusicFolders(),
-                  icon: const Icon(Icons.library_music_outlined),
-                  label: Text(l10n.onboardingSelectAllMusicFolders),
+                  onPressed: onContinue,
+                  child: Text(l10n.actionContinue),
                 ),
-                SizedBox(height: tokens.spacingMd),
-                FilledButton.tonalIcon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  onPressed:
-                      state.isLoadingDiscovery || state.scanProgress.isScanning
-                      ? null
-                      : () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const FolderPickerScreen(),
-                            ),
-                          );
-                        },
-                  icon: const Icon(Icons.checklist_rounded),
-                  label: Text(l10n.foldersChooseCta),
-                ),
-              ] else
-                FilledButton.tonalIcon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  onPressed: state.scanProgress.isScanning
-                      ? null
-                      : () => context
-                            .read<MusicFoldersCubit>()
-                            .pickSystemFolder(),
-                  icon: const Icon(Icons.create_new_folder_outlined),
-                  label: Text(l10n.foldersChooseCta),
-                ),
-              SizedBox(height: tokens.spacingLg),
-              if (state.isLoadingDiscovery || state.scanProgress.isScanning)
-                Container(
-                  padding: EdgeInsets.all(tokens.spacingMd),
-                  decoration: BoxDecoration(
-                    color: tokens.surfaceElevated,
-                    borderRadius: BorderRadius.circular(tokens.radiusCard),
-                    border: Border.all(color: tokens.borderSubtle),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      if (state.scanProgress.isScanning)
-                        Text(
-                          l10n.foldersScanProgress(
-                            state.scanProgress.currentFolderName,
-                            state.scanProgress.processedCount,
-                            state.scanProgress.totalCount,
-                          ),
-                          style: textTheme.bodySmall,
-                        ),
-                      if (state.scanProgress.isScanning)
-                        SizedBox(height: tokens.spacingXs),
-                      LinearProgressIndicator(
-                        value: state.scanProgress.isScanning
-                            ? state.scanProgress.fraction
-                            : null,
-                      ),
-                    ],
-                  ),
-                )
-              else if (state.selectedFolders.isNotEmpty)
-                Container(
-                  padding: EdgeInsets.all(tokens.spacingMd),
-                  decoration: BoxDecoration(
-                    color: tokens.surfaceElevated,
-                    borderRadius: BorderRadius.circular(tokens.radiusCard),
-                    border: Border.all(color: tokens.borderSubtle),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Icon(Icons.check_circle_outline, color: tokens.success),
-                      SizedBox(width: tokens.spacingSm),
-                      Expanded(
-                        child: Text(
-                          l10n.foldersSelectedSummary(
-                            state.selectedFolders.length,
-                            state.totalLibraryTracks,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              SizedBox(height: tokens.spacingLg),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: tokens.accentPrimary,
-                ),
-                onPressed: onContinue,
-                child: Text(l10n.actionContinue),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -566,135 +601,142 @@ class _LookOnboardingStep extends StatelessWidget {
     return BlocBuilder<PersonalizationCubit, PersonalizationState>(
       builder: (context, pState) {
         final currentMode = pState.settings.themeMode;
-        return Padding(
-          padding: EdgeInsets.all(tokens.spacingLg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                l10n.onboardingLookTitle,
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+        return LayoutBuilder(
+          builder: (context, constraints) => Padding(
+            padding: WetarResponsive.listPadding(
+              constraints.maxWidth,
+              minHorizontal: tokens.spacingLg,
+              top: tokens.spacingLg,
+              bottom: tokens.spacingLg,
+              maxWidth: WetarResponsive.defaultWizardMaxWidth,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  l10n.onboardingLookTitle,
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              SizedBox(height: tokens.spacingXs),
-              Text(
-                l10n.onboardingLookSubtitle,
-                style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
-              ),
-              SizedBox(height: tokens.spacingMd),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _ChoiceOptionCard(
-                      icon: Icons.light_mode_rounded,
-                      label: l10n.personalizationThemeLight,
-                      selected: !tokens.isDark,
-                      onTap: () => onThemeSelected(WetarThemeMode.light),
-                    ),
-                  ),
-                  SizedBox(width: tokens.spacingSm),
-                  Expanded(
-                    child: _ChoiceOptionCard(
-                      icon: Icons.dark_mode_rounded,
-                      label: l10n.personalizationThemeDark,
-                      selected: tokens.isDark,
-                      onTap: () => onThemeSelected(WetarThemeMode.dark),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: tokens.spacingMd),
-              Expanded(
-                child: GridView.builder(
-                  itemCount: BuiltInLooks.all.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.5,
-                  ),
-                  itemBuilder: (context, idx) {
-                    final look = BuiltInLooks.all[idx];
-                    final selected =
-                        pState.settings.accentArgb ==
-                            look.settings.accentArgb &&
-                        (preserveThemeMode ||
-                            pState.settings.themeMode ==
-                                look.settings.themeMode);
-                    final lookColor = look.settings.accentColor;
-                    final effectiveDark = preserveThemeMode
-                        ? tokens.isDark
-                        : look.settings.themeMode != WetarThemeMode.light;
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(tokens.radiusCard),
-                      onTap: () {
-                        final nextSettings = preserveThemeMode
-                            ? look.settings.copyWith(themeMode: currentMode)
-                            : look.settings;
-                        context.read<PersonalizationCubit>().updateSettings(
-                          nextSettings,
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(tokens.spacingMd),
-                        decoration: BoxDecoration(
-                          color: effectiveDark
-                              ? tokens.surfaceElevated
-                              : tokens.surface,
-                          borderRadius: BorderRadius.circular(
-                            tokens.radiusCard,
-                          ),
-                          border: Border.all(
-                            color: selected ? lookColor : tokens.borderSubtle,
-                            width: selected ? 2.2 : 1.0,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                CircleAvatar(
-                                  radius: 10,
-                                  backgroundColor: lookColor,
-                                ),
-                                if (selected)
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 18,
-                                    color: lookColor,
-                                  ),
-                              ],
-                            ),
-                            Text(
-                              isArabic ? look.nameAr : look.nameEn,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleSmall?.copyWith(
-                                color: tokens.inkPrimary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
+                SizedBox(height: tokens.spacingXs),
+                Text(
+                  l10n.onboardingLookSubtitle,
+                  style: textTheme.bodyMedium?.copyWith(color: tokens.inkMuted),
+                ),
+                SizedBox(height: tokens.spacingMd),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _ChoiceOptionCard(
+                        icon: Icons.light_mode_rounded,
+                        label: l10n.personalizationThemeLight,
+                        selected: !tokens.isDark,
+                        onTap: () => onThemeSelected(WetarThemeMode.light),
                       ),
-                    );
-                  },
+                    ),
+                    SizedBox(width: tokens.spacingSm),
+                    Expanded(
+                      child: _ChoiceOptionCard(
+                        icon: Icons.dark_mode_rounded,
+                        label: l10n.personalizationThemeDark,
+                        selected: tokens.isDark,
+                        onTap: () => onThemeSelected(WetarThemeMode.dark),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(height: tokens.spacingMd),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: tokens.accentPrimary,
+                SizedBox(height: tokens.spacingMd),
+                Expanded(
+                  child: GridView.builder(
+                    itemCount: BuiltInLooks.all.length,
+                    gridDelegate: WetarResponsive.presetGridDelegate(
+                      maxTileExtent: 215,
+                      aspectRatio: 1.7,
+                    ),
+                    itemBuilder: (context, idx) {
+                      final look = BuiltInLooks.all[idx];
+                      final selected =
+                          pState.settings.accentArgb ==
+                              look.settings.accentArgb &&
+                          (preserveThemeMode ||
+                              pState.settings.themeMode ==
+                                  look.settings.themeMode);
+                      final lookColor = look.settings.accentColor;
+                      final effectiveDark = preserveThemeMode
+                          ? tokens.isDark
+                          : look.settings.themeMode != WetarThemeMode.light;
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(tokens.radiusCard),
+                        onTap: () {
+                          final nextSettings = preserveThemeMode
+                              ? look.settings.copyWith(themeMode: currentMode)
+                              : look.settings;
+                          context.read<PersonalizationCubit>().updateSettings(
+                            nextSettings,
+                          );
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(tokens.spacingMd),
+                          decoration: BoxDecoration(
+                            color: effectiveDark
+                                ? tokens.surfaceElevated
+                                : tokens.surface,
+                            borderRadius: BorderRadius.circular(
+                              tokens.radiusCard,
+                            ),
+                            border: Border.all(
+                              color: selected ? lookColor : tokens.borderSubtle,
+                              width: selected ? 2.2 : 1.0,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: <Widget>[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: lookColor,
+                                  ),
+                                  if (selected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      size: 18,
+                                      color: lookColor,
+                                    ),
+                                ],
+                              ),
+                              Text(
+                                isArabic ? look.nameAr : look.nameEn,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.titleSmall?.copyWith(
+                                  color: tokens.inkPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                onPressed: onFinish,
-                child: Text(l10n.actionDone),
-              ),
-            ],
+                SizedBox(height: tokens.spacingMd),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: tokens.accentPrimary,
+                  ),
+                  onPressed: onFinish,
+                  child: Text(l10n.actionDone),
+                ),
+              ],
+            ),
           ),
         );
       },

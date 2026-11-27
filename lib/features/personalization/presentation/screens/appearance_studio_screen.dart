@@ -9,6 +9,7 @@ import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/platform/platform_interfaces.dart';
 import 'package:wetar/core/storage/cache_manager.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/core/widgets/wetar_setting_control_tile.dart';
 import 'package:wetar/features/personalization/data/custom_font_loader_service.dart';
 import 'package:wetar/features/personalization/data/custom_image_processor.dart';
@@ -354,1146 +355,1182 @@ class AppearanceStudioScreen extends StatelessWidget {
             ),
             body: SafeArea(
               top: false,
-              child: TabBarView(
-                children: <Widget>[
-                  // 1. Looks
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final tabPadding = WetarResponsive.listPadding(
+                    constraints.maxWidth,
+                    minHorizontal: tokens.spacingMd,
+                    top: tokens.spacingMd,
+                    bottom: tokens.spacingLg,
+                  );
+                  return TabBarView(
                     children: <Widget>[
-                      Wrap(
-                        spacing: tokens.spacingSm,
-                        runSpacing: tokens.spacingSm,
+                      // 1. Looks
+                      ListView(
+                        padding: tabPadding,
                         children: <Widget>[
-                          FilledButton.tonalIcon(
-                            onPressed: () => _saveCurrentLookDialog(context),
-                            icon: const Icon(Icons.bookmark_add_outlined),
-                            label: Text(l10n.personalizationSaveLook),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () => _exportLook(context, s),
-                            icon: const Icon(Icons.ios_share_rounded),
-                            label: Text(l10n.personalizationExportLook),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () => _importLook(context),
-                            icon: const Icon(Icons.file_open_outlined),
-                            label: Text(l10n.personalizationImportLook),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: tokens.spacingMd),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount:
-                            BuiltInLooks.all.length + pState.savedLooks.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.55,
-                            ),
-                        itemBuilder: (context, idx) {
-                          final all = <WetarLookPreset>[
-                            ...pState.savedLooks,
-                            ...BuiltInLooks.all,
-                          ];
-                          final look = all[idx];
-                          final dark =
-                              look.settings.themeMode != WetarThemeMode.light;
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(
-                              tokens.radiusCard,
-                            ),
-                            onTap: () => cubit.applyLook(look),
-                            onLongPress: look.isBuiltIn
-                                ? null
-                                : () => cubit.deleteSavedLook(look.id),
-                            child: Container(
-                              padding: EdgeInsets.all(tokens.spacingMd),
-                              decoration: BoxDecoration(
-                                color: dark
-                                    ? const Color(0xFF1A1512)
-                                    : const Color(0xFFF6EFE4),
-                                borderRadius: BorderRadius.circular(
-                                  tokens.radiusCard,
-                                ),
-                                border: Border.all(
-                                  color: look.settings.accentColor,
-                                  width: 1.4,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  CircleAvatar(
-                                    radius: 10,
-                                    backgroundColor: look.settings.accentColor,
-                                  ),
-                                  Text(
-                                    isArabic ? look.nameAr : look.nameEn,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(
-                                          color: dark
-                                              ? Colors.white
-                                              : Colors.black87,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                  // 2. Colors
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
-                    children: <Widget>[
-                      WetarStackedControlTile(
-                        title: l10n.personalizationThemeMode,
-                        child: WetarOptionChips<WetarThemeMode>(
-                          selectedValue: s.themeMode,
-                          onSelected: (mode) =>
-                              cubit.updateSettings(s.copyWith(themeMode: mode)),
-                          options: <WetarOptionItem<WetarThemeMode>>[
-                            WetarOptionItem(
-                              value: WetarThemeMode.system,
-                              label: l10n.personalizationThemeSystem,
-                            ),
-                            WetarOptionItem(
-                              value: WetarThemeMode.light,
-                              label: l10n.personalizationThemeLight,
-                            ),
-                            WetarOptionItem(
-                              value: WetarThemeMode.dark,
-                              label: l10n.personalizationThemeDark,
-                            ),
-                            WetarOptionItem(
-                              value: WetarThemeMode.amoled,
-                              label: l10n.personalizationThemeAmoled,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: tokens.spacingMd),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: <Widget>[
-                          for (final argb in BuiltInLooks.curatedAccents)
-                            InkWell(
-                              onTap: () => cubit.updateSettings(
-                                s.copyWith(accentArgb: argb),
-                              ),
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor: Color(argb),
-                                child: s.accentArgb == argb
-                                    ? const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ActionChip(
-                            avatar: const Icon(Icons.colorize_rounded),
-                            label: Text(l10n.personalizationCustomColor),
-                            onPressed: () => _showCustomColorDialog(context, s),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: tokens.spacingMd),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationScheduledDark),
-                        value: s.scheduledDarkEnabled,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(scheduledDarkEnabled: v),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationAdaptArtwork),
-                        value: s.adaptColorsToArtwork,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(adaptColorsToArtwork: v),
-                        ),
-                      ),
-                      if (caps.supportsSystemDynamicColor)
-                        SwitchListTile.adaptive(
-                          title: Text(l10n.personalizationSystemDynamicColor),
-                          value: s.useSystemDynamicColor,
-                          activeTrackColor: tokens.accentPrimary,
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(useSystemDynamicColor: v),
-                          ),
-                        ),
-                      WetarDropdownTile<WetarContrastLevel>(
-                        title: l10n.personalizationContrast,
-                        value: s.contrastLevel,
-                        items: <DropdownMenuItem<WetarContrastLevel>>[
-                          DropdownMenuItem(
-                            value: WetarContrastLevel.standard,
-                            child: Text(l10n.personalizationContrastStandard),
-                          ),
-                          DropdownMenuItem(
-                            value: WetarContrastLevel.medium,
-                            child: Text(l10n.personalizationContrastMedium),
-                          ),
-                          DropdownMenuItem(
-                            value: WetarContrastLevel.high,
-                            child: Text(l10n.personalizationContrastHigh),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(contrastLevel: v));
-                          }
-                        },
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationSurfaceTint),
-                        subtitle: Slider(
-                          value: s.surfaceTintIntensity.clamp(0.0, 1.0),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(surfaceTintIntensity: v),
-                          ),
-                        ),
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationTextEmphasis),
-                        subtitle: Slider(
-                          min: 0.75,
-                          max: 1.25,
-                          value: s.textEmphasis.clamp(0.75, 1.25),
-                          onChanged: (v) =>
-                              cubit.updateSettings(s.copyWith(textEmphasis: v)),
-                        ),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              cubit.updateSettings(s.resetColors()),
-                          child: Text(l10n.personalizationResetSection),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // 3. Fonts
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
-                    children: <Widget>[
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationFontSystem),
-                        value: s.useSystemFont,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) =>
-                            cubit.updateSettings(s.copyWith(useSystemFont: v)),
-                      ),
-                      WetarDropdownTile<String>(
-                        title: l10n.personalizationFontArabic,
-                        value: s.arabicFontFamily,
-                        items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                            value: 'Cairo',
-                            child: Text(
-                              'Cairo / القاهرة',
-                              style: TextStyle(fontFamily: 'Cairo'),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Almarai',
-                            child: Text(
-                              'Almarai / المراعي',
-                              style: TextStyle(fontFamily: 'Almarai'),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Alexandria',
-                            child: Text(
-                              'Alexandria / الإسكندرية',
-                              style: TextStyle(fontFamily: 'Alexandria'),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(
-                                arabicFontFamily: v,
-                                importedFontFamily: null,
-                                useSystemFont: false,
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      WetarDropdownTile<String>(
-                        title: l10n.personalizationFontLatin,
-                        value: s.latinFontFamily,
-                        items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                            value: 'PlusJakartaSans',
-                            child: Text(
-                              'Plus Jakarta Sans',
-                              style: TextStyle(fontFamily: 'PlusJakartaSans'),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Jost',
-                            child: Text(
-                              'Jost',
-                              style: TextStyle(fontFamily: 'Jost'),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(
-                                latinFontFamily: v,
-                                importedFontFamily: null,
-                                useSystemFont: false,
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationFontScale),
-                        subtitle: Slider(
-                          min: 0.85,
-                          max: 1.35,
-                          divisions: 10,
-                          value: s.fontScale.clamp(0.85, 1.35),
-                          onChanged: (v) =>
-                              cubit.updateSettings(s.copyWith(fontScale: v)),
-                        ),
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationFontWeight),
-                        subtitle: Slider(
-                          min: -1,
-                          max: 2,
-                          divisions: 3,
-                          value: s.fontWeightStep.toDouble().clamp(-1.0, 2.0),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(fontWeightStep: v.round()),
-                          ),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          final picked = await sl<FolderPickerService>()
-                              .pickFile(
-                                mimeTypes: const <String>[
-                                  'font/ttf',
-                                  'font/otf',
-                                  'application/x-font-ttf',
-                                  'application/octet-stream',
-                                  '*/*',
-                                ],
-                              );
-                          if (picked == null || !context.mounted) return;
-                          final family = await sl<CustomFontLoaderService>()
-                              .importAndRegisterFont(picked);
-                          if (!context.mounted) return;
-                          if (family == null) {
-                            WetarFeedback.showError(
-                              context,
-                              l10n.personalizationFontInvalid,
-                            );
-                            return;
-                          }
-                          await cubit.updateSettings(
-                            s.copyWith(
-                              importedFontFamily: family,
-                              useSystemFont: false,
-                            ),
-                          );
-                          if (context.mounted) {
-                            WetarFeedback.showSuccess(
-                              context,
-                              l10n.personalizationFontImported(
-                                p.basename(picked),
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.font_download_outlined),
-                        label: Text(l10n.personalizationImportFont),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              cubit.updateSettings(s.resetTypography()),
-                          child: Text(l10n.personalizationResetSection),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // 4. Player & Mini Player
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
-                    children: <Widget>[
-                      WetarDropdownTile<PlayerLayoutVariant>(
-                        title: l10n.personalizationPlayerLayout,
-                        value: s.playerLayout,
-                        items: <DropdownMenuItem<PlayerLayoutVariant>>[
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.oudStrings,
-                            child: Text(l10n.personalizationLayoutOudStrings),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.classicCard,
-                            child: Text(l10n.personalizationLayoutClassic),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.immersiveBleed,
-                            child: Text(l10n.personalizationLayoutImmersive),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.minimal,
-                            child: Text(l10n.personalizationLayoutMinimal),
-                          ),
-                          DropdownMenuItem(
-                            value: PlayerLayoutVariant.vinylDisc,
-                            child: Text(l10n.personalizationLayoutVinyl),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(playerLayout: v));
-                          }
-                        },
-                      ),
-                      WetarDropdownTile<SeekBarStyle>(
-                        title: l10n.personalizationSeekBarStyle,
-                        value: s.seekBarStyle,
-                        items: SeekBarStyle.values
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(_seekBarStyleLabel(l10n, e)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(seekBarStyle: v));
-                          }
-                        },
-                      ),
-                      WetarDropdownTile<ArtworkShapeStyle>(
-                        title: l10n.personalizationArtShape,
-                        value: s.artworkShape,
-                        items: ArtworkShapeStyle.values
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(_artworkShapeLabel(l10n, e)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(artworkShape: v));
-                          }
-                        },
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationCornerRadius),
-                        subtitle: Slider(
-                          min: 4,
-                          max: 40,
-                          value: s.artworkCornerRadius.clamp(4.0, 40.0),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(artworkCornerRadius: v),
-                          ),
-                        ),
-                      ),
-                      WetarStackedControlTile(
-                        title: l10n.personalizationMiniPlayerStyle,
-                        child: WetarOptionChips<MiniPlayerStyle>(
-                          selectedValue: s.miniPlayerStyle,
-                          onSelected: (style) => cubit.updateSettings(
-                            s.copyWith(miniPlayerStyle: style),
-                          ),
-                          options: <WetarOptionItem<MiniPlayerStyle>>[
-                            WetarOptionItem(
-                              value: MiniPlayerStyle.floatingPill,
-                              label: l10n.personalizationMiniPlayerFloating,
-                            ),
-                            WetarOptionItem(
-                              value: MiniPlayerStyle.dockedBar,
-                              label: l10n.personalizationMiniPlayerDocked,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationMiniPlayerShowProgress),
-                        value: s.miniPlayerShowProgress,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(miniPlayerShowProgress: v),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.playbackSwipeDownDismissPaused),
-                        subtitle: Text(
-                          l10n.playbackSwipeDownDismissPausedSubtitle,
-                        ),
-                        value: s.miniPlayerSwipeDownDismiss,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(miniPlayerSwipeDownDismiss: v),
-                        ),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              cubit.updateSettings(s.resetPlayer()),
-                          child: Text(l10n.personalizationResetSection),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // 5. Backgrounds
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
-                    children: <Widget>[
-                      WetarDropdownTile<BackgroundMode>(
-                        title: l10n.personalizationBackgroundMode,
-                        value: s.backgroundMode,
-                        items: <DropdownMenuItem<BackgroundMode>>[
-                          DropdownMenuItem(
-                            value: BackgroundMode.blurredArtwork,
-                            child: Text(l10n.personalizationBgBlurredArt),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.artworkGradient,
-                            child: Text(l10n.personalizationBgArtGradient),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.solidColor,
-                            child: Text(l10n.personalizationBgSolid),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.animatedGradient,
-                            child: Text(l10n.personalizationBgAnimatedGradient),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralAurora,
-                            child: Text(l10n.personalizationBgProceduralAurora),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralWaves,
-                            child: Text(l10n.personalizationBgProceduralWaves),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralGrain,
-                            child: Text(l10n.personalizationBgProceduralGrain),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.proceduralStrings,
-                            child: Text(
-                              l10n.personalizationBgProceduralStrings,
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: BackgroundMode.customImage,
-                            child: Text(l10n.personalizationBgCustomImage),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(s.copyWith(backgroundMode: v));
-                          }
-                        },
-                      ),
-                      if (s.backgroundMode == BackgroundMode.customImage &&
-                          s.customBackgroundImagePath != null &&
-                          !s.customBackgroundImagePath!.startsWith(
-                            BuiltInWallpapers.assetPrefix,
-                          ) &&
-                          File(s.customBackgroundImagePath!).existsSync())
-                        Container(
-                          margin: EdgeInsets.only(bottom: tokens.spacingMd),
-                          padding: EdgeInsets.all(tokens.spacingSm),
-                          decoration: BoxDecoration(
-                            color: tokens.surface,
-                            borderRadius: BorderRadius.circular(
-                              tokens.radiusCard,
-                            ),
-                            border: Border.all(color: tokens.accentPrimary),
-                          ),
-                          child: Row(
+                          Wrap(
+                            spacing: tokens.spacingSm,
+                            runSpacing: tokens.spacingSm,
                             children: <Widget>[
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                  tokens.radiusCard * 0.65,
-                                ),
-                                child: Image.file(
-                                  File(s.customBackgroundImagePath!),
-                                  width: 52,
-                                  height: 52,
-                                  fit: BoxFit.cover,
-                                  cacheWidth: 160,
-                                ),
+                              FilledButton.tonalIcon(
+                                onPressed: () =>
+                                    _saveCurrentLookDialog(context),
+                                icon: const Icon(Icons.bookmark_add_outlined),
+                                label: Text(l10n.personalizationSaveLook),
                               ),
-                              SizedBox(width: tokens.spacingMd),
-                              Expanded(
-                                child: Text(
-                                  l10n.personalizationBgCustomImage,
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
+                              OutlinedButton.icon(
+                                onPressed: () => _exportLook(context, s),
+                                icon: const Icon(Icons.ios_share_rounded),
+                                label: Text(l10n.personalizationExportLook),
                               ),
-                              TextButton(
-                                onPressed: () => cubit.updateSettings(
-                                  s.copyWith(
-                                    backgroundMode:
-                                        BackgroundMode.artworkGradient,
-                                    customBackgroundImagePath: null,
-                                  ),
-                                ),
-                                child: Text(
-                                  l10n.personalizationRemoveWallpaper,
-                                ),
+                              OutlinedButton.icon(
+                                onPressed: () => _importLook(context),
+                                icon: const Icon(Icons.file_open_outlined),
+                                label: Text(l10n.personalizationImportLook),
                               ),
                             ],
                           ),
-                        ),
-                      WetarStackedControlTile(
-                        title: l10n.personalizationBgScope,
-                        child: WetarOptionChips<BackgroundScope>(
-                          selectedValue: s.backgroundScope,
-                          onSelected: (scope) => cubit.updateSettings(
-                            s.copyWith(backgroundScope: scope),
-                          ),
-                          options: <WetarOptionItem<BackgroundScope>>[
-                            WetarOptionItem(
-                              value: BackgroundScope.playerOnly,
-                              label: l10n.personalizationBgScopePlayer,
+                          SizedBox(height: tokens.spacingMd),
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount:
+                                BuiltInLooks.all.length +
+                                pState.savedLooks.length,
+                            gridDelegate: WetarResponsive.presetGridDelegate(
+                              maxTileExtent: 215,
+                              aspectRatio: 1.55,
                             ),
-                            WetarOptionItem(
-                              value: BackgroundScope.homeAndPlayer,
-                              label: l10n.personalizationBgScopeHomePlayer,
-                            ),
-                            WetarOptionItem(
-                              value: BackgroundScope.wholeApp,
-                              label: l10n.personalizationBgScopeWholeApp,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(),
-                      Padding(
-                        padding: EdgeInsets.only(
-                          top: tokens.spacingSm,
-                          bottom: tokens.spacingSm,
-                        ),
-                        child: Text(
-                          l10n.personalizationWallpapersTitle,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(color: tokens.accentPrimary),
-                        ),
-                      ),
-                      FilledButton.tonalIcon(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        onPressed: () async {
-                          final picked = await sl<FolderPickerService>()
-                              .pickGalleryImage();
-                          if (picked == null || !context.mounted) return;
-                          final stored = await sl<CustomImageProcessor>()
-                              .processAndStoreBackground(picked);
-                          if (stored != null && context.mounted) {
-                            final wasImage =
-                                s.backgroundMode == BackgroundMode.customImage;
-                            await cubit.updateSettings(
-                              s.copyWith(
-                                customBackgroundImagePath: stored,
-                                backgroundMode: BackgroundMode.customImage,
-                                backgroundBlur: wasImage
-                                    ? s.backgroundBlur
-                                    : 0.0,
-                                backgroundDim: wasImage
-                                    ? s.backgroundDim
-                                    : 0.35,
-                                backgroundScope:
-                                    s.backgroundScope ==
-                                        BackgroundScope.playerOnly
-                                    ? BackgroundScope.homeAndPlayer
-                                    : s.backgroundScope,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: Text(l10n.personalizationPickGalleryWallpaper),
-                      ),
-                      SizedBox(height: tokens.spacingMd),
-                      Text(
-                        l10n.personalizationNatureWallpapers,
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      SizedBox(height: tokens.spacingSm),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: BuiltInWallpapers.all.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 10,
-                              childAspectRatio: 1.45,
-                            ),
-                        itemBuilder: (context, idx) {
-                          final wallpaper = BuiltInWallpapers.all[idx];
-                          final active =
-                              s.backgroundMode == BackgroundMode.customImage &&
-                              s.customBackgroundImagePath ==
-                                  wallpaper.sourceRef;
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(
-                              tokens.radiusCard,
-                            ),
-                            onTap: () {
-                              final wasImage =
-                                  s.backgroundMode ==
-                                  BackgroundMode.customImage;
-                              cubit.updateSettings(
-                                s.copyWith(
-                                  backgroundMode: BackgroundMode.customImage,
-                                  customBackgroundImagePath:
-                                      wallpaper.sourceRef,
-                                  backgroundBlur: wasImage
-                                      ? s.backgroundBlur
-                                      : 0.0,
-                                  backgroundDim: wasImage
-                                      ? s.backgroundDim
-                                      : 0.35,
-                                  backgroundScope:
-                                      s.backgroundScope ==
-                                          BackgroundScope.playerOnly
-                                      ? BackgroundScope.homeAndPlayer
-                                      : s.backgroundScope,
-                                ),
-                              );
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
+                            itemBuilder: (context, idx) {
+                              final all = <WetarLookPreset>[
+                                ...pState.savedLooks,
+                                ...BuiltInLooks.all,
+                              ];
+                              final look = all[idx];
+                              final dark =
+                                  look.settings.themeMode !=
+                                  WetarThemeMode.light;
+                              return InkWell(
                                 borderRadius: BorderRadius.circular(
                                   tokens.radiusCard,
                                 ),
-                                border: Border.all(
-                                  color: active
-                                      ? tokens.accentPrimary
-                                      : tokens.borderSubtle,
-                                  width: active ? 2.2 : 1.0,
+                                onTap: () => cubit.applyLook(look),
+                                onLongPress: look.isBuiltIn
+                                    ? null
+                                    : () => cubit.deleteSavedLook(look.id),
+                                child: Container(
+                                  padding: EdgeInsets.all(tokens.spacingMd),
+                                  decoration: BoxDecoration(
+                                    color: dark
+                                        ? const Color(0xFF1A1512)
+                                        : const Color(0xFFF6EFE4),
+                                    borderRadius: BorderRadius.circular(
+                                      tokens.radiusCard,
+                                    ),
+                                    border: Border.all(
+                                      color: look.settings.accentColor,
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      CircleAvatar(
+                                        radius: 10,
+                                        backgroundColor:
+                                            look.settings.accentColor,
+                                      ),
+                                      Text(
+                                        isArabic ? look.nameAr : look.nameEn,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                              color: dark
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+
+                      // 2. Colors
+                      ListView(
+                        padding: tabPadding,
+                        children: <Widget>[
+                          WetarStackedControlTile(
+                            title: l10n.personalizationThemeMode,
+                            child: WetarOptionChips<WetarThemeMode>(
+                              selectedValue: s.themeMode,
+                              onSelected: (mode) => cubit.updateSettings(
+                                s.copyWith(themeMode: mode),
+                              ),
+                              options: <WetarOptionItem<WetarThemeMode>>[
+                                WetarOptionItem(
+                                  value: WetarThemeMode.system,
+                                  label: l10n.personalizationThemeSystem,
+                                ),
+                                WetarOptionItem(
+                                  value: WetarThemeMode.light,
+                                  label: l10n.personalizationThemeLight,
+                                ),
+                                WetarOptionItem(
+                                  value: WetarThemeMode.dark,
+                                  label: l10n.personalizationThemeDark,
+                                ),
+                                WetarOptionItem(
+                                  value: WetarThemeMode.amoled,
+                                  label: l10n.personalizationThemeAmoled,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: tokens.spacingMd),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: <Widget>[
+                              for (final argb in BuiltInLooks.curatedAccents)
+                                InkWell(
+                                  onTap: () => cubit.updateSettings(
+                                    s.copyWith(accentArgb: argb),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: Color(argb),
+                                    child: s.accentArgb == argb
+                                        ? const Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ActionChip(
+                                avatar: const Icon(Icons.colorize_rounded),
+                                label: Text(l10n.personalizationCustomColor),
+                                onPressed: () =>
+                                    _showCustomColorDialog(context, s),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: tokens.spacingMd),
+                          SwitchListTile.adaptive(
+                            title: Text(l10n.personalizationScheduledDark),
+                            value: s.scheduledDarkEnabled,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(scheduledDarkEnabled: v),
+                            ),
+                          ),
+                          SwitchListTile.adaptive(
+                            title: Text(l10n.personalizationAdaptArtwork),
+                            value: s.adaptColorsToArtwork,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(adaptColorsToArtwork: v),
+                            ),
+                          ),
+                          if (caps.supportsSystemDynamicColor)
+                            SwitchListTile.adaptive(
+                              title: Text(
+                                l10n.personalizationSystemDynamicColor,
+                              ),
+                              value: s.useSystemDynamicColor,
+                              activeTrackColor: tokens.accentPrimary,
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(useSystemDynamicColor: v),
+                              ),
+                            ),
+                          WetarDropdownTile<WetarContrastLevel>(
+                            title: l10n.personalizationContrast,
+                            value: s.contrastLevel,
+                            items: <DropdownMenuItem<WetarContrastLevel>>[
+                              DropdownMenuItem(
+                                value: WetarContrastLevel.standard,
+                                child: Text(
+                                  l10n.personalizationContrastStandard,
                                 ),
                               ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Stack(
-                                fit: StackFit.expand,
+                              DropdownMenuItem(
+                                value: WetarContrastLevel.medium,
+                                child: Text(l10n.personalizationContrastMedium),
+                              ),
+                              DropdownMenuItem(
+                                value: WetarContrastLevel.high,
+                                child: Text(l10n.personalizationContrastHigh),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(contrastLevel: v),
+                                );
+                              }
+                            },
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationSurfaceTint),
+                            subtitle: Slider(
+                              value: s.surfaceTintIntensity.clamp(0.0, 1.0),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(surfaceTintIntensity: v),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationTextEmphasis),
+                            subtitle: Slider(
+                              min: 0.75,
+                              max: 1.25,
+                              value: s.textEmphasis.clamp(0.75, 1.25),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(textEmphasis: v),
+                              ),
+                            ),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TextButton(
+                              onPressed: () =>
+                                  cubit.updateSettings(s.resetColors()),
+                              child: Text(l10n.personalizationResetSection),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // 3. Fonts
+                      ListView(
+                        padding: tabPadding,
+                        children: <Widget>[
+                          SwitchListTile.adaptive(
+                            title: Text(l10n.personalizationFontSystem),
+                            value: s.useSystemFont,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(useSystemFont: v),
+                            ),
+                          ),
+                          WetarDropdownTile<String>(
+                            title: l10n.personalizationFontArabic,
+                            value: s.arabicFontFamily,
+                            items: const <DropdownMenuItem<String>>[
+                              DropdownMenuItem(
+                                value: 'Cairo',
+                                child: Text(
+                                  'Cairo / القاهرة',
+                                  style: TextStyle(fontFamily: 'Cairo'),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Almarai',
+                                child: Text(
+                                  'Almarai / المراعي',
+                                  style: TextStyle(fontFamily: 'Almarai'),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Alexandria',
+                                child: Text(
+                                  'Alexandria / الإسكندرية',
+                                  style: TextStyle(fontFamily: 'Alexandria'),
+                                ),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(
+                                    arabicFontFamily: v,
+                                    importedFontFamily: null,
+                                    useSystemFont: false,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          WetarDropdownTile<String>(
+                            title: l10n.personalizationFontLatin,
+                            value: s.latinFontFamily,
+                            items: const <DropdownMenuItem<String>>[
+                              DropdownMenuItem(
+                                value: 'PlusJakartaSans',
+                                child: Text(
+                                  'Plus Jakarta Sans',
+                                  style: TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Jost',
+                                child: Text(
+                                  'Jost',
+                                  style: TextStyle(fontFamily: 'Jost'),
+                                ),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(
+                                    latinFontFamily: v,
+                                    importedFontFamily: null,
+                                    useSystemFont: false,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationFontScale),
+                            subtitle: Slider(
+                              min: 0.85,
+                              max: 1.35,
+                              divisions: 10,
+                              value: s.fontScale.clamp(0.85, 1.35),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(fontScale: v),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationFontWeight),
+                            subtitle: Slider(
+                              min: -1,
+                              max: 2,
+                              divisions: 3,
+                              value: s.fontWeightStep.toDouble().clamp(
+                                -1.0,
+                                2.0,
+                              ),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(fontWeightStep: v.round()),
+                              ),
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await sl<FolderPickerService>()
+                                  .pickFile(
+                                    mimeTypes: const <String>[
+                                      'font/ttf',
+                                      'font/otf',
+                                      'application/x-font-ttf',
+                                      'application/octet-stream',
+                                      '*/*',
+                                    ],
+                                  );
+                              if (picked == null || !context.mounted) return;
+                              final family = await sl<CustomFontLoaderService>()
+                                  .importAndRegisterFont(picked);
+                              if (!context.mounted) return;
+                              if (family == null) {
+                                WetarFeedback.showError(
+                                  context,
+                                  l10n.personalizationFontInvalid,
+                                );
+                                return;
+                              }
+                              await cubit.updateSettings(
+                                s.copyWith(
+                                  importedFontFamily: family,
+                                  useSystemFont: false,
+                                ),
+                              );
+                              if (context.mounted) {
+                                WetarFeedback.showSuccess(
+                                  context,
+                                  l10n.personalizationFontImported(
+                                    p.basename(picked),
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.font_download_outlined),
+                            label: Text(l10n.personalizationImportFont),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TextButton(
+                              onPressed: () =>
+                                  cubit.updateSettings(s.resetTypography()),
+                              child: Text(l10n.personalizationResetSection),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // 4. Player & Mini Player
+                      ListView(
+                        padding: tabPadding,
+                        children: <Widget>[
+                          WetarDropdownTile<PlayerLayoutVariant>(
+                            title: l10n.personalizationPlayerLayout,
+                            value: s.playerLayout,
+                            items: <DropdownMenuItem<PlayerLayoutVariant>>[
+                              DropdownMenuItem(
+                                value: PlayerLayoutVariant.oudStrings,
+                                child: Text(
+                                  l10n.personalizationLayoutOudStrings,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: PlayerLayoutVariant.classicCard,
+                                child: Text(l10n.personalizationLayoutClassic),
+                              ),
+                              DropdownMenuItem(
+                                value: PlayerLayoutVariant.immersiveBleed,
+                                child: Text(
+                                  l10n.personalizationLayoutImmersive,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: PlayerLayoutVariant.minimal,
+                                child: Text(l10n.personalizationLayoutMinimal),
+                              ),
+                              DropdownMenuItem(
+                                value: PlayerLayoutVariant.vinylDisc,
+                                child: Text(l10n.personalizationLayoutVinyl),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(playerLayout: v),
+                                );
+                              }
+                            },
+                          ),
+                          WetarDropdownTile<SeekBarStyle>(
+                            title: l10n.personalizationSeekBarStyle,
+                            value: s.seekBarStyle,
+                            items: SeekBarStyle.values
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(_seekBarStyleLabel(l10n, e)),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(seekBarStyle: v),
+                                );
+                              }
+                            },
+                          ),
+                          WetarDropdownTile<ArtworkShapeStyle>(
+                            title: l10n.personalizationArtShape,
+                            value: s.artworkShape,
+                            items: ArtworkShapeStyle.values
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(_artworkShapeLabel(l10n, e)),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(artworkShape: v),
+                                );
+                              }
+                            },
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationCornerRadius),
+                            subtitle: Slider(
+                              min: 4,
+                              max: 40,
+                              value: s.artworkCornerRadius.clamp(4.0, 40.0),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(artworkCornerRadius: v),
+                              ),
+                            ),
+                          ),
+                          WetarStackedControlTile(
+                            title: l10n.personalizationMiniPlayerStyle,
+                            child: WetarOptionChips<MiniPlayerStyle>(
+                              selectedValue: s.miniPlayerStyle,
+                              onSelected: (style) => cubit.updateSettings(
+                                s.copyWith(miniPlayerStyle: style),
+                              ),
+                              options: <WetarOptionItem<MiniPlayerStyle>>[
+                                WetarOptionItem(
+                                  value: MiniPlayerStyle.floatingPill,
+                                  label: l10n.personalizationMiniPlayerFloating,
+                                ),
+                                WetarOptionItem(
+                                  value: MiniPlayerStyle.dockedBar,
+                                  label: l10n.personalizationMiniPlayerDocked,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SwitchListTile.adaptive(
+                            title: Text(
+                              l10n.personalizationMiniPlayerShowProgress,
+                            ),
+                            value: s.miniPlayerShowProgress,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(miniPlayerShowProgress: v),
+                            ),
+                          ),
+                          SwitchListTile.adaptive(
+                            title: Text(l10n.playbackSwipeDownDismissPaused),
+                            subtitle: Text(
+                              l10n.playbackSwipeDownDismissPausedSubtitle,
+                            ),
+                            value: s.miniPlayerSwipeDownDismiss,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(miniPlayerSwipeDownDismiss: v),
+                            ),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TextButton(
+                              onPressed: () =>
+                                  cubit.updateSettings(s.resetPlayer()),
+                              child: Text(l10n.personalizationResetSection),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // 5. Backgrounds
+                      ListView(
+                        padding: tabPadding,
+                        children: <Widget>[
+                          WetarDropdownTile<BackgroundMode>(
+                            title: l10n.personalizationBackgroundMode,
+                            value: s.backgroundMode,
+                            items: <DropdownMenuItem<BackgroundMode>>[
+                              DropdownMenuItem(
+                                value: BackgroundMode.blurredArtwork,
+                                child: Text(l10n.personalizationBgBlurredArt),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.artworkGradient,
+                                child: Text(l10n.personalizationBgArtGradient),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.solidColor,
+                                child: Text(l10n.personalizationBgSolid),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.animatedGradient,
+                                child: Text(
+                                  l10n.personalizationBgAnimatedGradient,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.proceduralAurora,
+                                child: Text(
+                                  l10n.personalizationBgProceduralAurora,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.proceduralWaves,
+                                child: Text(
+                                  l10n.personalizationBgProceduralWaves,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.proceduralGrain,
+                                child: Text(
+                                  l10n.personalizationBgProceduralGrain,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.proceduralStrings,
+                                child: Text(
+                                  l10n.personalizationBgProceduralStrings,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: BackgroundMode.customImage,
+                                child: Text(l10n.personalizationBgCustomImage),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(backgroundMode: v),
+                                );
+                              }
+                            },
+                          ),
+                          if (s.backgroundMode == BackgroundMode.customImage &&
+                              s.customBackgroundImagePath != null &&
+                              !s.customBackgroundImagePath!.startsWith(
+                                BuiltInWallpapers.assetPrefix,
+                              ) &&
+                              File(s.customBackgroundImagePath!).existsSync())
+                            Container(
+                              margin: EdgeInsets.only(bottom: tokens.spacingMd),
+                              padding: EdgeInsets.all(tokens.spacingSm),
+                              decoration: BoxDecoration(
+                                color: tokens.surface,
+                                borderRadius: BorderRadius.circular(
+                                  tokens.radiusCard,
+                                ),
+                                border: Border.all(color: tokens.accentPrimary),
+                              ),
+                              child: Row(
                                 children: <Widget>[
-                                  Image.asset(
-                                    wallpaper.assetPath,
-                                    fit: BoxFit.cover,
-                                    cacheWidth: 360,
-                                  ),
-                                  DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: <Color>[
-                                          Colors.transparent,
-                                          Colors.black.withValues(alpha: 0.72),
-                                        ],
-                                      ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      tokens.radiusCard * 0.65,
+                                    ),
+                                    child: Image.file(
+                                      File(s.customBackgroundImagePath!),
+                                      width: 52,
+                                      height: 52,
+                                      fit: BoxFit.cover,
+                                      cacheWidth: 160,
                                     ),
                                   ),
-                                  if (active)
-                                    PositionedDirectional(
-                                      top: 6,
-                                      end: 6,
-                                      child: CircleAvatar(
-                                        radius: 12,
-                                        backgroundColor: tokens.accentPrimary,
-                                        child: const Icon(
-                                          Icons.check_rounded,
-                                          size: 15,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  Positioned(
-                                    left: 8,
-                                    right: 8,
-                                    bottom: 6,
+                                  SizedBox(width: tokens.spacingMd),
+                                  Expanded(
                                     child: Text(
-                                      isArabic
-                                          ? wallpaper.nameAr
-                                          : wallpaper.nameEn,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      l10n.personalizationBgCustomImage,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .labelMedium
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                          .titleSmall,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => cubit.updateSettings(
+                                      s.copyWith(
+                                        backgroundMode:
+                                            BackgroundMode.artworkGradient,
+                                        customBackgroundImagePath: null,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      l10n.personalizationRemoveWallpaper,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: tokens.spacingMd),
-                      ListTile(
-                        title: Text(l10n.personalizationBgBlur),
-                        subtitle: Slider(
-                          min: 0,
-                          max: 48,
-                          value: s.backgroundBlur.clamp(0.0, 48.0),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(backgroundBlur: v),
-                          ),
-                        ),
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationBgDim),
-                        subtitle: Slider(
-                          min: 0,
-                          max: 0.85,
-                          value: s.backgroundDim.clamp(0.0, 0.85),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(backgroundDim: v),
-                          ),
-                        ),
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationBgSaturation),
-                        subtitle: Slider(
-                          min: 0.4,
-                          max: 1.6,
-                          value: s.backgroundSaturation.clamp(0.4, 1.6),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(backgroundSaturation: v),
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              cubit.updateSettings(s.resetBackgrounds()),
-                          child: Text(l10n.personalizationResetSection),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // 6. Home & Library Layout
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
-                    children: <Widget>[
-                      WetarStackedControlTile(
-                        title: l10n.personalizationListDensity,
-                        child: WetarOptionChips<ListDensity>(
-                          selectedValue: s.listDensity,
-                          onSelected: (d) =>
-                              cubit.updateSettings(s.copyWith(listDensity: d)),
-                          options: ListDensity.values
-                              .map(
-                                (d) => WetarOptionItem<ListDensity>(
-                                  value: d,
-                                  label: _listDensityLabel(l10n, d),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      WetarStackedControlTile(
-                        title: l10n.personalizationGridColumns,
-                        child: WetarOptionChips<int>(
-                          selectedValue: s.gridColumns.clamp(2, 4),
-                          onSelected: (cols) => cubit.updateSettings(
-                            s.copyWith(gridColumns: cols),
-                          ),
-                          options: const <WetarOptionItem<int>>[
-                            WetarOptionItem<int>(value: 2, label: '2'),
-                            WetarOptionItem<int>(value: 3, label: '3'),
-                            WetarOptionItem<int>(value: 4, label: '4'),
-                          ],
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationShowArtInLists),
-                        value: s.showArtworkInLists,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(showArtworkInLists: v),
-                        ),
-                      ),
-                      const Divider(),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: tokens.spacingSm,
-                        ),
-                        child: Text(
-                          l10n.homeCustomizeBlocks,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                      ReorderableListView(
-                        shrinkWrap: true,
-                        buildDefaultDragHandles: false,
-                        physics: const NeverScrollableScrollPhysics(),
-                        onReorderItem: (oldIndex, newIndex) {
-                          final list = List<HomeBlockKind>.from(
-                            s.homeBlocksOrder,
-                          );
-                          if (oldIndex < 0 || oldIndex >= list.length) return;
-                          final moved = list.removeAt(oldIndex);
-                          final safeNew = newIndex.clamp(0, list.length);
-                          list.insert(safeNew, moved);
-                          cubit.updateSettings(
-                            s.copyWith(homeBlocksOrder: list),
-                          );
-                        },
-                        children: <Widget>[
-                          for (var i = 0; i < s.homeBlocksOrder.length; i++)
-                            Material(
-                              key: ValueKey<HomeBlockKind>(
-                                s.homeBlocksOrder[i],
+                          WetarStackedControlTile(
+                            title: l10n.personalizationBgScope,
+                            child: WetarOptionChips<BackgroundScope>(
+                              selectedValue: s.backgroundScope,
+                              onSelected: (scope) => cubit.updateSettings(
+                                s.copyWith(backgroundScope: scope),
                               ),
-                              color: Colors.transparent,
-                              child: CheckboxListTile(
-                                value: !s.hiddenHomeBlocks.contains(
-                                  s.homeBlocksOrder[i],
+                              options: <WetarOptionItem<BackgroundScope>>[
+                                WetarOptionItem(
+                                  value: BackgroundScope.playerOnly,
+                                  label: l10n.personalizationBgScopePlayer,
                                 ),
-                                title: Text(
-                                  _homeBlockLabel(l10n, s.homeBlocksOrder[i]),
+                                WetarOptionItem(
+                                  value: BackgroundScope.homeAndPlayer,
+                                  label: l10n.personalizationBgScopeHomePlayer,
                                 ),
-                                secondary: ReorderableDragStartListener(
-                                  index: i,
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(4),
-                                    child: Icon(Icons.drag_handle_rounded),
+                                WetarOptionItem(
+                                  value: BackgroundScope.wholeApp,
+                                  label: l10n.personalizationBgScopeWholeApp,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(),
+                          Padding(
+                            padding: EdgeInsets.only(
+                              top: tokens.spacingSm,
+                              bottom: tokens.spacingSm,
+                            ),
+                            child: Text(
+                              l10n.personalizationWallpapersTitle,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(color: tokens.accentPrimary),
+                            ),
+                          ),
+                          FilledButton.tonalIcon(
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                            ),
+                            onPressed: () async {
+                              final picked = await sl<FolderPickerService>()
+                                  .pickGalleryImage();
+                              if (picked == null || !context.mounted) return;
+                              final stored = await sl<CustomImageProcessor>()
+                                  .processAndStoreBackground(picked);
+                              if (stored != null && context.mounted) {
+                                final wasImage =
+                                    s.backgroundMode ==
+                                    BackgroundMode.customImage;
+                                await cubit.updateSettings(
+                                  s.copyWith(
+                                    customBackgroundImagePath: stored,
+                                    backgroundMode: BackgroundMode.customImage,
+                                    backgroundBlur: wasImage
+                                        ? s.backgroundBlur
+                                        : 0.0,
+                                    backgroundDim: wasImage
+                                        ? s.backgroundDim
+                                        : 0.35,
+                                    backgroundScope:
+                                        s.backgroundScope ==
+                                            BackgroundScope.playerOnly
+                                        ? BackgroundScope.homeAndPlayer
+                                        : s.backgroundScope,
                                   ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.photo_library_outlined),
+                            label: Text(
+                              l10n.personalizationPickGalleryWallpaper,
+                            ),
+                          ),
+                          SizedBox(height: tokens.spacingMd),
+                          Text(
+                            l10n.personalizationNatureWallpapers,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          SizedBox(height: tokens.spacingSm),
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: BuiltInWallpapers.all.length,
+                            gridDelegate: WetarResponsive.presetGridDelegate(
+                              maxTileExtent: 215,
+                              aspectRatio: 1.45,
+                              spacing: 10,
+                            ),
+                            itemBuilder: (context, idx) {
+                              final wallpaper = BuiltInWallpapers.all[idx];
+                              final active =
+                                  s.backgroundMode ==
+                                      BackgroundMode.customImage &&
+                                  s.customBackgroundImagePath ==
+                                      wallpaper.sourceRef;
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(
+                                  tokens.radiusCard,
                                 ),
-                                onChanged: (show) {
-                                  final block = s.homeBlocksOrder[i];
-                                  final next = Set<HomeBlockKind>.from(
-                                    s.hiddenHomeBlocks,
-                                  );
-                                  if (show == true) {
-                                    next.remove(block);
-                                  } else {
-                                    next.add(block);
-                                  }
+                                onTap: () {
+                                  final wasImage =
+                                      s.backgroundMode ==
+                                      BackgroundMode.customImage;
                                   cubit.updateSettings(
-                                    s.copyWith(hiddenHomeBlocks: next.toList()),
+                                    s.copyWith(
+                                      backgroundMode:
+                                          BackgroundMode.customImage,
+                                      customBackgroundImagePath:
+                                          wallpaper.sourceRef,
+                                      backgroundBlur: wasImage
+                                          ? s.backgroundBlur
+                                          : 0.0,
+                                      backgroundDim: wasImage
+                                          ? s.backgroundDim
+                                          : 0.35,
+                                      backgroundScope:
+                                          s.backgroundScope ==
+                                              BackgroundScope.playerOnly
+                                          ? BackgroundScope.homeAndPlayer
+                                          : s.backgroundScope,
+                                    ),
                                   );
                                 },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(
+                                      tokens.radiusCard,
+                                    ),
+                                    border: Border.all(
+                                      color: active
+                                          ? tokens.accentPrimary
+                                          : tokens.borderSubtle,
+                                      width: active ? 2.2 : 1.0,
+                                    ),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: <Widget>[
+                                      Image.asset(
+                                        wallpaper.assetPath,
+                                        fit: BoxFit.cover,
+                                        cacheWidth: 360,
+                                      ),
+                                      DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: <Color>[
+                                              Colors.transparent,
+                                              Colors.black.withValues(
+                                                alpha: 0.72,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      if (active)
+                                        PositionedDirectional(
+                                          top: 6,
+                                          end: 6,
+                                          child: CircleAvatar(
+                                            radius: 12,
+                                            backgroundColor:
+                                                tokens.accentPrimary,
+                                            child: const Icon(
+                                              Icons.check_rounded,
+                                              size: 15,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      Positioned(
+                                        left: 8,
+                                        right: 8,
+                                        bottom: 6,
+                                        child: Text(
+                                          isArabic
+                                              ? wallpaper.nameAr
+                                              : wallpaper.nameEn,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          SizedBox(height: tokens.spacingMd),
+                          ListTile(
+                            title: Text(l10n.personalizationBgBlur),
+                            subtitle: Slider(
+                              min: 0,
+                              max: 48,
+                              value: s.backgroundBlur.clamp(0.0, 48.0),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(backgroundBlur: v),
                               ),
                             ),
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationBgDim),
+                            subtitle: Slider(
+                              min: 0,
+                              max: 0.85,
+                              value: s.backgroundDim.clamp(0.0, 0.85),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(backgroundDim: v),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationBgSaturation),
+                            subtitle: Slider(
+                              min: 0.4,
+                              max: 1.6,
+                              value: s.backgroundSaturation.clamp(0.4, 1.6),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(backgroundSaturation: v),
+                              ),
+                            ),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TextButton(
+                              onPressed: () =>
+                                  cubit.updateSettings(s.resetBackgrounds()),
+                              child: Text(l10n.personalizationResetSection),
+                            ),
+                          ),
                         ],
                       ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              cubit.updateSettings(s.resetLayout()),
-                          child: Text(l10n.personalizationResetSection),
-                        ),
-                      ),
-                    ],
-                  ),
 
-                  // 7. Motion, Gestures & Lite Mode
-                  ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingMd,
-                      tokens.spacingLg,
-                    ),
-                    children: <Widget>[
-                      WetarDropdownTile<LiteModePreference>(
-                        title: l10n.personalizationLiteMode,
-                        value: s.liteModePreference,
-                        items: <DropdownMenuItem<LiteModePreference>>[
-                          DropdownMenuItem(
-                            value: LiteModePreference.auto,
-                            child: Text(l10n.personalizationLiteModeAuto),
+                      // 6. Home & Library Layout
+                      ListView(
+                        padding: tabPadding,
+                        children: <Widget>[
+                          WetarStackedControlTile(
+                            title: l10n.personalizationListDensity,
+                            child: WetarOptionChips<ListDensity>(
+                              selectedValue: s.listDensity,
+                              onSelected: (d) => cubit.updateSettings(
+                                s.copyWith(listDensity: d),
+                              ),
+                              options: ListDensity.values
+                                  .map(
+                                    (d) => WetarOptionItem<ListDensity>(
+                                      value: d,
+                                      label: _listDensityLabel(l10n, d),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                           ),
-                          DropdownMenuItem(
-                            value: LiteModePreference.alwaysOn,
-                            child: Text(l10n.personalizationLiteModeOn),
+                          WetarStackedControlTile(
+                            title: l10n.personalizationGridColumns,
+                            child: WetarOptionChips<int>(
+                              selectedValue: s.gridColumns.clamp(2, 4),
+                              onSelected: (cols) => cubit.updateSettings(
+                                s.copyWith(gridColumns: cols),
+                              ),
+                              options: const <WetarOptionItem<int>>[
+                                WetarOptionItem<int>(value: 2, label: '2'),
+                                WetarOptionItem<int>(value: 3, label: '3'),
+                                WetarOptionItem<int>(value: 4, label: '4'),
+                              ],
+                            ),
                           ),
-                          DropdownMenuItem(
-                            value: LiteModePreference.alwaysOff,
-                            child: Text(l10n.personalizationLiteModeOff),
+                          SwitchListTile.adaptive(
+                            title: Text(l10n.personalizationShowArtInLists),
+                            value: s.showArtworkInLists,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(showArtworkInLists: v),
+                            ),
+                          ),
+                          const Divider(),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: tokens.spacingSm,
+                            ),
+                            child: Text(
+                              l10n.homeCustomizeBlocks,
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                          ),
+                          ReorderableListView(
+                            shrinkWrap: true,
+                            buildDefaultDragHandles: false,
+                            physics: const NeverScrollableScrollPhysics(),
+                            onReorderItem: (oldIndex, newIndex) {
+                              final list = List<HomeBlockKind>.from(
+                                s.homeBlocksOrder,
+                              );
+                              if (oldIndex < 0 || oldIndex >= list.length) {
+                                return;
+                              }
+                              final moved = list.removeAt(oldIndex);
+                              final safeNew = newIndex.clamp(0, list.length);
+                              list.insert(safeNew, moved);
+                              cubit.updateSettings(
+                                s.copyWith(homeBlocksOrder: list),
+                              );
+                            },
+                            children: <Widget>[
+                              for (var i = 0; i < s.homeBlocksOrder.length; i++)
+                                Material(
+                                  key: ValueKey<HomeBlockKind>(
+                                    s.homeBlocksOrder[i],
+                                  ),
+                                  color: Colors.transparent,
+                                  child: CheckboxListTile(
+                                    value: !s.hiddenHomeBlocks.contains(
+                                      s.homeBlocksOrder[i],
+                                    ),
+                                    title: Text(
+                                      _homeBlockLabel(
+                                        l10n,
+                                        s.homeBlocksOrder[i],
+                                      ),
+                                    ),
+                                    secondary: ReorderableDragStartListener(
+                                      index: i,
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(4),
+                                        child: Icon(Icons.drag_handle_rounded),
+                                      ),
+                                    ),
+                                    onChanged: (show) {
+                                      final block = s.homeBlocksOrder[i];
+                                      final next = Set<HomeBlockKind>.from(
+                                        s.hiddenHomeBlocks,
+                                      );
+                                      if (show == true) {
+                                        next.remove(block);
+                                      } else {
+                                        next.add(block);
+                                      }
+                                      cubit.updateSettings(
+                                        s.copyWith(
+                                          hiddenHomeBlocks: next.toList(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TextButton(
+                              onPressed: () =>
+                                  cubit.updateSettings(s.resetLayout()),
+                              child: Text(l10n.personalizationResetSection),
+                            ),
                           ),
                         ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(liteModePreference: v),
-                            );
-                          }
-                        },
                       ),
-                      WetarDropdownTile<MotionIntensity>(
-                        title: l10n.personalizationMotionIntensity,
-                        value: s.motionIntensity,
-                        items: MotionIntensity.values
-                            .map(
-                              (m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(_motionIntensityLabel(l10n, m)),
+
+                      // 7. Motion, Gestures & Lite Mode
+                      ListView(
+                        padding: tabPadding,
+                        children: <Widget>[
+                          WetarDropdownTile<LiteModePreference>(
+                            title: l10n.personalizationLiteMode,
+                            value: s.liteModePreference,
+                            items: <DropdownMenuItem<LiteModePreference>>[
+                              DropdownMenuItem(
+                                value: LiteModePreference.auto,
+                                child: Text(l10n.personalizationLiteModeAuto),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(motionIntensity: v),
-                            );
-                          }
-                        },
-                      ),
-                      WetarDropdownTile<HapticsIntensity>(
-                        title: l10n.personalizationHapticsIntensity,
-                        value: s.hapticsIntensity,
-                        items: HapticsIntensity.values
-                            .map(
-                              (h) => DropdownMenuItem(
-                                value: h,
-                                child: Text(_hapticsIntensityLabel(l10n, h)),
+                              DropdownMenuItem(
+                                value: LiteModePreference.alwaysOn,
+                                child: Text(l10n.personalizationLiteModeOn),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            cubit.updateSettings(
-                              s.copyWith(hapticsIntensity: v),
-                            );
-                          }
-                        },
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationShadowIntensity),
-                        subtitle: Slider(
-                          value: s.shadowIntensity.clamp(0.0, 1.0),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(shadowIntensity: v),
+                              DropdownMenuItem(
+                                value: LiteModePreference.alwaysOff,
+                                child: Text(l10n.personalizationLiteModeOff),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(liteModePreference: v),
+                                );
+                              }
+                            },
                           ),
-                        ),
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationBlurIntensity),
-                        subtitle: Slider(
-                          value: s.glassBlurIntensity.clamp(0.0, 1.0),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(glassBlurIntensity: v),
+                          WetarDropdownTile<MotionIntensity>(
+                            title: l10n.personalizationMotionIntensity,
+                            value: s.motionIntensity,
+                            items: MotionIntensity.values
+                                .map(
+                                  (m) => DropdownMenuItem(
+                                    value: m,
+                                    child: Text(_motionIntensityLabel(l10n, m)),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(motionIntensity: v),
+                                );
+                              }
+                            },
                           ),
-                        ),
-                      ),
-                      ListTile(
-                        title: Text(l10n.personalizationCornerRadius),
-                        subtitle: Slider(
-                          min: 0.25,
-                          max: 1.6,
-                          value: s.cornerRadiusScale.clamp(0.25, 1.6),
-                          onChanged: (v) => cubit.updateSettings(
-                            s.copyWith(cornerRadiusScale: v),
+                          WetarDropdownTile<HapticsIntensity>(
+                            title: l10n.personalizationHapticsIntensity,
+                            value: s.hapticsIntensity,
+                            items: HapticsIntensity.values
+                                .map(
+                                  (h) => DropdownMenuItem(
+                                    value: h,
+                                    child: Text(
+                                      _hapticsIntensityLabel(l10n, h),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                cubit.updateSettings(
+                                  s.copyWith(hapticsIntensity: v),
+                                );
+                              }
+                            },
                           ),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationSwipeCoverHorizontal),
-                        value: s.swipeCoverHorizontal,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(swipeCoverHorizontal: v),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        title: Text(l10n.personalizationMirrorTimelineRtl),
-                        value: s.mirrorTimelineInRtl,
-                        activeTrackColor: tokens.accentPrimary,
-                        onChanged: (v) => cubit.updateSettings(
-                          s.copyWith(mirrorTimelineInRtl: v),
-                        ),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              cubit.updateSettings(s.resetMotionAndGestures()),
-                          child: Text(l10n.personalizationResetSection),
-                        ),
+                          ListTile(
+                            title: Text(l10n.personalizationShadowIntensity),
+                            subtitle: Slider(
+                              value: s.shadowIntensity.clamp(0.0, 1.0),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(shadowIntensity: v),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationBlurIntensity),
+                            subtitle: Slider(
+                              value: s.glassBlurIntensity.clamp(0.0, 1.0),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(glassBlurIntensity: v),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: Text(l10n.personalizationCornerRadius),
+                            subtitle: Slider(
+                              min: 0.25,
+                              max: 1.6,
+                              value: s.cornerRadiusScale.clamp(0.25, 1.6),
+                              onChanged: (v) => cubit.updateSettings(
+                                s.copyWith(cornerRadiusScale: v),
+                              ),
+                            ),
+                          ),
+                          SwitchListTile.adaptive(
+                            title: Text(
+                              l10n.personalizationSwipeCoverHorizontal,
+                            ),
+                            value: s.swipeCoverHorizontal,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(swipeCoverHorizontal: v),
+                            ),
+                          ),
+                          SwitchListTile.adaptive(
+                            title: Text(l10n.personalizationMirrorTimelineRtl),
+                            value: s.mirrorTimelineInRtl,
+                            activeTrackColor: tokens.accentPrimary,
+                            onChanged: (v) => cubit.updateSettings(
+                              s.copyWith(mirrorTimelineInRtl: v),
+                            ),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TextButton(
+                              onPressed: () => cubit.updateSettings(
+                                s.resetMotionAndGestures(),
+                              ),
+                              child: Text(l10n.personalizationResetSection),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           );

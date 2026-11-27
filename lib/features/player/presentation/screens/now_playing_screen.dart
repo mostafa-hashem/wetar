@@ -9,6 +9,7 @@ import 'package:wetar/core/utils/haptic_service.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
@@ -378,7 +379,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                     children: <Widget>[
                       Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: tokens.spacingSm,
+                          horizontal: WetarResponsive.horizontalInset(
+                            constraints.maxWidth,
+                            tokens.spacingSm,
+                            maxWidth: 920,
+                          ),
                           vertical: tokens.spacingXs,
                         ),
                         child: Row(
@@ -549,8 +554,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                       else
                         Expanded(child: artworkStage),
                       Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: tokens.spacingLg,
+                        padding: WetarResponsive.listPadding(
+                          constraints.maxWidth,
+                          minHorizontal: tokens.spacingLg,
+                          top: 0,
+                          bottom: 0,
+                          maxWidth: WetarResponsive.defaultWizardMaxWidth,
                         ),
                         child: Column(
                           children: <Widget>[

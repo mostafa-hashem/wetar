@@ -17,6 +17,7 @@ import 'package:wetar/features/library/presentation/screens/home_screen.dart';
 import 'package:wetar/features/music_folders/data/music_folders_repository.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/music_folders_settings_screen.dart';
+import 'package:wetar/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
@@ -279,6 +280,92 @@ void main() {
 
       // Folder card still shows 1 track for the indexed short audio file.
       expect(find.text('1 track'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Desktop macOS viewport keeps Onboarding look tiles compact and centered',
+    (tester) async {
+      await sl.reset();
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final db = WetarDatabase(NativeDatabase.memory());
+      final settingsRepo = SettingsRepository.inMemory();
+      final source = _EmptyScanFakePlatform();
+      const caps = PlatformCapabilities(
+        supportsNativeEqualizer: false,
+        supportsBassBoost: false,
+        supportsVirtualizer: false,
+        supportsLoudnessEnhancer: false,
+        supportsSkipSilence: false,
+        supportsPitchControl: false,
+        supportsInAppFolderPicker: false,
+        supportsSafFolderPicker: false,
+        supportsSystemFolderBookmarks: true,
+        supportsSystemDynamicColor: false,
+        supportsHomeWidgets: false,
+        supportsDesktopShell: true,
+        supportsBatteryOptimizationGuide: false,
+        supportsICloudStatus: false,
+      );
+      sl.registerSingleton<PlatformCapabilities>(caps);
+
+      final foldersRepo = MusicFoldersRepository(db, source, source);
+      final foldersCubit = MusicFoldersCubit(foldersRepo, source, caps);
+      final settingsCubit = SettingsCubit(settingsRepo);
+      await settingsCubit.setLocaleCode('en');
+      final personalizationCubit = PersonalizationCubit(settingsRepo);
+
+      addTearDown(() async {
+        await foldersCubit.close();
+        await settingsCubit.close();
+        await personalizationCubit.close();
+        await foldersRepo.dispose();
+        await db.close();
+        await sl.reset();
+      });
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: <BlocProvider<dynamic>>[
+            BlocProvider<SettingsCubit>.value(value: settingsCubit),
+            BlocProvider<PersonalizationCubit>.value(
+              value: personalizationCubit,
+            ),
+            BlocProvider<MusicFoldersCubit>.value(value: foldersCubit),
+          ],
+          child: MaterialApp(
+            locale: const Locale('en'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            theme: WetarTokenResolver.buildThemeData(
+              personalizationCubit.state.settings,
+              platformBrightness: Brightness.dark,
+              systemDisableAnimations: false,
+              isArabicLocale: false,
+            ),
+            home: OnboardingScreen(onFinished: () {}, capabilities: caps),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Advance to the Look selection step.
+      await tester.tap(find.text('Continue').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue').last);
+      await tester.pumpAndSettle();
+
+      final lookRect = tester.getRect(find.text('Oud Nocturne'));
+      final doneRect = tester.getRect(find.text('Done'));
+      expect(lookRect.width, lessThan(260));
+      expect(doneRect.width, lessThanOrEqualTo(680));
+      expect(tester.takeException(), isNull);
     },
   );
 }

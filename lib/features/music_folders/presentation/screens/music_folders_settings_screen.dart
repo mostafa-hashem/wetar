@@ -7,6 +7,7 @@ import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
 import 'package:wetar/features/library/presentation/widgets/track_list_tile.dart';
@@ -159,36 +160,39 @@ class _MusicFoldersSettingsScreenState
                     ),
                   ),
                 if (state.selectedFolders.length >= 5)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.spacingMd,
-                      tokens.spacingSm,
-                      tokens.spacingMd,
-                      0,
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (v) => setState(() => _query = v),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        suffixIcon: _query.isNotEmpty
-                            ? IconButton(
-                                tooltip: l10n.actionClear,
-                                icon: const Icon(Icons.close_rounded),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _query = '');
-                                },
-                              )
-                            : null,
-                        hintText: l10n.foldersSearchHint,
-                        filled: true,
-                        fillColor: tokens.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            tokens.radiusCard,
+                  LayoutBuilder(
+                    builder: (context, constraints) => Padding(
+                      padding: WetarResponsive.listPadding(
+                        constraints.maxWidth,
+                        minHorizontal: tokens.spacingMd,
+                        top: tokens.spacingSm,
+                        bottom: 0,
+                        maxWidth: WetarResponsive.defaultDashboardMaxWidth,
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (v) => setState(() => _query = v),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: _query.isNotEmpty
+                              ? IconButton(
+                                  tooltip: l10n.actionClear,
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _query = '');
+                                  },
+                                )
+                              : null,
+                          hintText: l10n.foldersSearchHint,
+                          filled: true,
+                          fillColor: tokens.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              tokens.radiusCard,
+                            ),
+                            borderSide: BorderSide(color: tokens.borderSubtle),
                           ),
-                          borderSide: BorderSide(color: tokens.borderSubtle),
                         ),
                       ),
                     ),
@@ -262,34 +266,38 @@ class _MusicFoldersSettingsScreenState
                             ],
                           ),
                         )
-                      : ListView.separated(
-                          padding: EdgeInsets.fromLTRB(
-                            tokens.spacingMd,
-                            tokens.spacingMd,
-                            tokens.spacingMd,
-                            tokens.spacingLg,
+                      : LayoutBuilder(
+                          builder: (context, constraints) => ListView.separated(
+                            padding: WetarResponsive.listPadding(
+                              constraints.maxWidth,
+                              minHorizontal: tokens.spacingMd,
+                              top: tokens.spacingMd,
+                              bottom: tokens.spacingLg,
+                              maxWidth:
+                                  WetarResponsive.defaultDashboardMaxWidth,
+                            ),
+                            itemCount: visibleFolders.length,
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: tokens.spacingSm),
+                            itemBuilder: (context, index) {
+                              final folder = visibleFolders[index];
+                              final folderTracks = libState == null
+                                  ? const <WetarTrack>[]
+                                  : libState.allTracks
+                                        .where((t) => t.folderId == folder.id)
+                                        .toList();
+                              return _FolderCard(
+                                folder: folder,
+                                folderTracks: folderTracks,
+                                hasLibrary: libState != null,
+                                playerCubit: playerCubit,
+                                numerals: numerals,
+                                onOpenTrackDetails: widget.onOpenTrackDetails,
+                                onAddToPlaylistRequested:
+                                    widget.onAddToPlaylistRequested,
+                              );
+                            },
                           ),
-                          itemCount: visibleFolders.length,
-                          separatorBuilder: (context, index) =>
-                              SizedBox(height: tokens.spacingSm),
-                          itemBuilder: (context, index) {
-                            final folder = visibleFolders[index];
-                            final folderTracks = libState == null
-                                ? const <WetarTrack>[]
-                                : libState.allTracks
-                                      .where((t) => t.folderId == folder.id)
-                                      .toList();
-                            return _FolderCard(
-                              folder: folder,
-                              folderTracks: folderTracks,
-                              hasLibrary: libState != null,
-                              playerCubit: playerCubit,
-                              numerals: numerals,
-                              onOpenTrackDetails: widget.onOpenTrackDetails,
-                              onAddToPlaylistRequested:
-                                  widget.onAddToPlaylistRequested,
-                            );
-                          },
                         ),
                 ),
               ],

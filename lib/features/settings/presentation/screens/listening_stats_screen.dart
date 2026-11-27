@@ -12,6 +12,7 @@ import 'package:wetar/core/platform/platform_interfaces.dart';
 import 'package:wetar/core/storage/cache_manager.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_feedback.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/library/data/library_repository.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 import 'package:wetar/features/player/data/wetar_audio_handler.dart';
@@ -212,116 +213,119 @@ class _ListeningStatsScreenState extends State<ListeningStatsScreen> {
             if (summary == null) {
               return const Center(child: CircularProgressIndicator());
             }
-            return ListView(
-              padding: EdgeInsets.fromLTRB(
-                tokens.spacingMd,
-                tokens.spacingMd,
-                tokens.spacingMd,
-                tokens.spacingLg,
-              ),
-              children: <Widget>[
-                RepaintBoundary(
-                  key: _posterKey,
-                  child: Container(
-                    padding: EdgeInsets.all(tokens.spacingLg),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: <Color>[
-                          Color.lerp(
-                            tokens.canvas,
-                            tokens.accentPrimary,
-                            0.35,
-                          )!,
-                          tokens.surface,
-                          Color.lerp(
-                            tokens.canvas,
-                            tokens.accentSecondary,
-                            0.25,
-                          )!,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(
-                        tokens.radiusCard * 1.3,
-                      ),
-                      border: Border.all(
-                        color: tokens.accentPrimary.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          '${l10n.appName} Wrapped',
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: tokens.accentPrimary,
-                              ),
-                        ),
-                        SizedBox(height: tokens.spacingMd),
-                        Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: _StatTile(
-                                label: l10n.statsTotalTime,
-                                value: _formatTotalListeningTime(
-                                  l10n,
-                                  summary.totalMs,
-                                  numerals,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: tokens.spacingSm),
-                            Expanded(
-                              child: _StatTile(
-                                label: l10n.statsTotalPlays,
-                                value: NumeralFormatter.formatInt(
-                                  summary.totalPlays,
-                                  numerals,
-                                ),
-                              ),
-                            ),
+            return LayoutBuilder(
+              builder: (context, constraints) => ListView(
+                padding: WetarResponsive.listPadding(
+                  constraints.maxWidth,
+                  minHorizontal: tokens.spacingMd,
+                  top: tokens.spacingMd,
+                  bottom: tokens.spacingLg,
+                  maxWidth: 720,
+                ),
+                children: <Widget>[
+                  RepaintBoundary(
+                    key: _posterKey,
+                    child: Container(
+                      padding: EdgeInsets.all(tokens.spacingLg),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[
+                            Color.lerp(
+                              tokens.canvas,
+                              tokens.accentPrimary,
+                              0.35,
+                            )!,
+                            tokens.surface,
+                            Color.lerp(
+                              tokens.canvas,
+                              tokens.accentSecondary,
+                              0.25,
+                            )!,
                           ],
                         ),
-                        SizedBox(height: tokens.spacingMd),
-                        Text(
-                          l10n.statsTopArtists,
-                          style: Theme.of(context).textTheme.titleSmall,
+                        borderRadius: BorderRadius.circular(
+                          tokens.radiusCard * 1.3,
                         ),
-                        for (var i = 0; i < summary.topArtists.length; i++)
-                          Text(
-                            '${NumeralFormatter.formatInt(i + 1, numerals)}. ${summary.topArtists[i].$1} (${NumeralFormatter.formatInt(summary.topArtists[i].$2, numerals)})',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        SizedBox(height: tokens.spacingMd),
-                        Text(
-                          l10n.statsTopTracks,
-                          style: Theme.of(context).textTheme.titleSmall,
+                        border: Border.all(
+                          color: tokens.accentPrimary.withValues(alpha: 0.5),
                         ),
-                        for (var i = 0; i < summary.topTracks.length; i++)
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
                           Text(
-                            '${NumeralFormatter.formatInt(i + 1, numerals)}. ${summary.topTracks[i].$1}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            '${l10n.appName} Wrapped',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: tokens.accentPrimary,
+                                ),
                           ),
-                      ],
+                          SizedBox(height: tokens.spacingMd),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: _StatTile(
+                                  label: l10n.statsTotalTime,
+                                  value: _formatTotalListeningTime(
+                                    l10n,
+                                    summary.totalMs,
+                                    numerals,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: tokens.spacingSm),
+                              Expanded(
+                                child: _StatTile(
+                                  label: l10n.statsTotalPlays,
+                                  value: NumeralFormatter.formatInt(
+                                    summary.totalPlays,
+                                    numerals,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: tokens.spacingMd),
+                          Text(
+                            l10n.statsTopArtists,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          for (var i = 0; i < summary.topArtists.length; i++)
+                            Text(
+                              '${NumeralFormatter.formatInt(i + 1, numerals)}. ${summary.topArtists[i].$1} (${NumeralFormatter.formatInt(summary.topArtists[i].$2, numerals)})',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          SizedBox(height: tokens.spacingMd),
+                          Text(
+                            l10n.statsTopTracks,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          for (var i = 0; i < summary.topTracks.length; i++)
+                            Text(
+                              '${NumeralFormatter.formatInt(i + 1, numerals)}. ${summary.topTracks[i].$1}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: tokens.spacingLg),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: tokens.accentPrimary,
-                    minimumSize: const Size.fromHeight(50),
+                  SizedBox(height: tokens.spacingLg),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: tokens.accentPrimary,
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    onPressed: _sharePoster,
+                    icon: const Icon(Icons.ios_share_rounded),
+                    label: Text(l10n.statsSharePoster),
                   ),
-                  onPressed: _sharePoster,
-                  icon: const Icon(Icons.ios_share_rounded),
-                  label: Text(l10n.statsSharePoster),
-                ),
-              ],
+                ],
+              ),
             );
           },
         ),

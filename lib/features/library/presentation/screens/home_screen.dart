@@ -5,6 +5,7 @@ import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
 import 'package:wetar/core/widgets/wetar_brand_logo.dart';
+import 'package:wetar/core/widgets/wetar_responsive.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
 import 'package:wetar/features/library/presentation/screens/search_screen.dart';
@@ -358,7 +359,15 @@ class HomeScreen extends StatelessWidget {
                 )
               else
                 SliverPadding(
-                  padding: EdgeInsets.all(tokens.spacingMd),
+                  padding: WetarResponsive.listPadding(
+                    MediaQuery.sizeOf(context).width >= 760
+                        ? (MediaQuery.sizeOf(context).width - 214)
+                        : MediaQuery.sizeOf(context).width,
+                    minHorizontal: tokens.spacingMd,
+                    top: tokens.spacingMd,
+                    bottom: tokens.spacingLg,
+                    maxWidth: WetarResponsive.defaultDashboardMaxWidth,
+                  ),
                   sliver: SliverList.separated(
                     itemCount: visibleBlocks.length,
                     separatorBuilder: (context, index) =>
