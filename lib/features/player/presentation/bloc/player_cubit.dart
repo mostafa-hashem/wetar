@@ -202,6 +202,12 @@ class PlayerCubit extends Cubit<PlayerStateSnapshot> {
       _handler.reorderQueue(oldIndex, newIndex);
   Future<void> clearQueue() => _handler.clearQueue();
 
+  /// Dismisses and clears the queue only when playback is paused.
+  Future<void> dismissPausedPlayer() async {
+    if (state.isPlaying) return;
+    await _handler.clearQueue();
+  }
+
   Future<void> toggleShuffle() => _handler.setShuffleMode(
     state.shuffleEnabled
         ? AudioServiceShuffleMode.none

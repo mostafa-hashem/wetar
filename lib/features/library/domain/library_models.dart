@@ -79,11 +79,32 @@ class WetarTrack extends Equatable {
 
   Duration get duration => Duration(milliseconds: durationMs);
 
-  String get albumKey =>
-      '${album.trim().toLowerCase()}__${(albumArtist.isNotEmpty ? albumArtist : artist).trim().toLowerCase()}';
+  static bool isUnknownTag(String? value) {
+    if (value == null) return true;
+    final trimmed = value.trim();
+    return trimmed.isEmpty || trimmed.toLowerCase() == '<unknown>';
+  }
 
-  String get displayArtist => artist.isNotEmpty ? artist : 'Unknown Artist';
-  String get displayAlbum => album.isNotEmpty ? album : 'Unknown Album';
+  bool get hasKnownArtist => !isUnknownTag(artist);
+  bool get hasKnownAlbum => !isUnknownTag(album);
+  bool get hasKnownAlbumArtist => !isUnknownTag(albumArtist);
+
+  String resolvedArtist(String fallback) =>
+      hasKnownArtist ? artist.trim() : fallback;
+
+  String resolvedAlbum(String fallback) =>
+      hasKnownAlbum ? album.trim() : fallback;
+
+  String get albumKey {
+    final normalizedAlbum = hasKnownAlbum ? album.trim().toLowerCase() : '';
+    final rawAlbumArtist = hasKnownAlbumArtist
+        ? albumArtist.trim()
+        : (hasKnownArtist ? artist.trim() : '');
+    return '${normalizedAlbum}__${rawAlbumArtist.toLowerCase()}';
+  }
+
+  String get displayArtist => resolvedArtist('Unknown Artist');
+  String get displayAlbum => resolvedAlbum('Unknown Album');
 
   WetarTrack copyWith({
     bool? isFavorite,

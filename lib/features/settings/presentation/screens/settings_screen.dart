@@ -191,9 +191,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
             if (_matches(
-              l10n.settingsPlayback,
-              l10n.settingsPlaybackSubtitle,
-            )) ...<Widget>[
+                  l10n.settingsPlayback,
+                  l10n.settingsPlaybackSubtitle,
+                ) ||
+                _matches(
+                  l10n.playbackSwipeDownDismissPaused,
+                  l10n.playbackSwipeDownDismissPausedSubtitle,
+                )) ...<Widget>[
               SwitchListTile.adaptive(
                 title: Text(l10n.playbackFadePlayPause),
                 value: settings.fadeOnPlayPause,
@@ -226,6 +230,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onChanged: (v) => context.read<SettingsCubit>().update(
                   settings.copyWith(autoPlayOnHeadsetConnect: v),
                 ),
+              ),
+              SwitchListTile.adaptive(
+                title: Text(l10n.playbackSwipeDownDismissPaused),
+                subtitle: Text(l10n.playbackSwipeDownDismissPausedSubtitle),
+                value: appearance.miniPlayerSwipeDownDismiss,
+                activeTrackColor: tokens.accentPrimary,
+                onChanged: (v) =>
+                    context.read<PersonalizationCubit>().updateSettings(
+                      appearance.copyWith(miniPlayerSwipeDownDismiss: v),
+                    ),
               ),
             ],
             if (_matches(l10n.settingsLibrary, l10n.settingsLibrarySubtitle))

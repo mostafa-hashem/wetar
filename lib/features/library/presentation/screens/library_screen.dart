@@ -617,61 +617,70 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     if (appearance.useGridInLibrary && !libState.isSelectionMode) {
-      return GridView.builder(
-        controller: _scrollController,
-        padding: EdgeInsets.all(tokens.spacingMd),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: appearance.gridColumns,
-          mainAxisSpacing: tokens.spacingMd,
-          crossAxisSpacing: tokens.spacingMd,
-          childAspectRatio: 0.78,
-        ),
-        itemCount: tracks.length,
-        itemBuilder: (context, index) {
-          final track = tracks[index];
-          return InkWell(
-            borderRadius: BorderRadius.circular(tokens.radiusCard),
-            onTap: () =>
-                context.read<PlayerCubit>().playTracks(tracks, index: index),
-            onLongPress: () => context
-                .read<LibraryCubit>()
-                .toggleTrackSelection(track.stableKey),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, box) => WetarArtworkImage(
-                      cacheKey: track.albumKey,
-                      size: box.maxWidth,
-                      artworkUri: track.artworkUri,
-                      filePath: track.filePath,
-                      customArtPath: track.customArtPath,
-                      thumbnailCache: thumbCache,
-                    ),
+      return Column(
+        children: <Widget>[
+          _buildTrackCountBar(context, tracks, numerals, tokens, l10n),
+          Expanded(
+            child: GridView.builder(
+              controller: _scrollController,
+              padding: EdgeInsets.all(tokens.spacingMd),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: appearance.gridColumns,
+                mainAxisSpacing: tokens.spacingMd,
+                crossAxisSpacing: tokens.spacingMd,
+                childAspectRatio: 0.78,
+              ),
+              itemCount: tracks.length,
+              itemBuilder: (context, index) {
+                final track = tracks[index];
+                return InkWell(
+                  borderRadius: BorderRadius.circular(tokens.radiusCard),
+                  onTap: () => context.read<PlayerCubit>().playTracks(
+                    tracks,
+                    index: index,
                   ),
-                ),
-                SizedBox(height: tokens.spacingXs),
-                Text(
-                  track.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: track.stableKey == currentTrackKey
-                        ? tokens.accentPrimary
-                        : null,
+                  onLongPress: () => context
+                      .read<LibraryCubit>()
+                      .toggleTrackSelection(track.stableKey),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, box) => WetarArtworkImage(
+                            cacheKey: track.albumKey,
+                            size: box.maxWidth,
+                            artworkUri: track.artworkUri,
+                            filePath: track.filePath,
+                            customArtPath: track.customArtPath,
+                            thumbnailCache: thumbCache,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: tokens.spacingXs),
+                      Text(
+                        track.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: track.stableKey == currentTrackKey
+                              ? tokens.accentPrimary
+                              : null,
+                        ),
+                      ),
+                      Text(
+                        track.resolvedArtist(l10n.libraryUnknownArtist),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
-                ),
-                Text(
-                  track.displayArtist,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       );
     }
 
@@ -680,7 +689,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ? tokens.listRowExtent * (textScale * 0.72).clamp(1.0, 1.55)
         : tokens.listRowExtent;
 
-    return WetarFastScrollbar(
+    final fastList = WetarFastScrollbar(
       controller: _scrollController,
       itemCount: tracks.length,
       itemExtent: effectiveExtent,
@@ -722,6 +731,60 @@ class _LibraryScreenState extends State<LibraryScreen> {
             },
           );
         },
+      ),
+    );
+
+    if (libState.isSelectionMode) {
+      return fastList;
+    }
+
+    return Column(
+      children: <Widget>[
+        _buildTrackCountBar(context, tracks, numerals, tokens, l10n),
+        Expanded(child: fastList),
+      ],
+    );
+  }
+
+  Widget _buildTrackCountBar(
+    BuildContext context,
+    List<WetarTrack> tracks,
+    NumeralStyle numerals,
+    WetarTokens tokens,
+    AppLocalizations l10n,
+  ) {
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(
+        tokens.spacingMd,
+        tokens.spacingXs,
+        tokens.spacingSm,
+        tokens.spacingXs,
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              NumeralFormatter.formatString(
+                l10n.foldersTrackCount(tracks.length),
+                numerals,
+              ),
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(color: tokens.inkMuted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.actionPlay,
+            icon: Icon(Icons.play_arrow_rounded, color: tokens.accentPrimary),
+            onPressed: () => context.read<PlayerCubit>().playTracks(tracks),
+          ),
+          IconButton(
+            tooltip: l10n.actionShuffleAll,
+            icon: const Icon(Icons.shuffle_rounded),
+            onPressed: () => context.read<PlayerCubit>().shuffleAll(tracks),
+          ),
+        ],
       ),
     );
   }

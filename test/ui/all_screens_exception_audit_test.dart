@@ -41,6 +41,7 @@ import 'package:wetar/features/player/presentation/screens/now_playing_screen.da
 import 'package:wetar/features/player/presentation/widgets/queue_sheet.dart';
 import 'package:wetar/features/player/presentation/widgets/share_track_card_sheet.dart';
 import 'package:wetar/features/player/presentation/widgets/track_details_sheet.dart';
+import 'package:wetar/features/player/presentation/widgets/wetar_mini_player.dart';
 import 'package:wetar/features/playlists/data/playlists_repository.dart';
 import 'package:wetar/features/playlists/presentation/bloc/playlists_cubit.dart';
 import 'package:wetar/features/playlists/presentation/screens/playlists_screen.dart';
@@ -731,6 +732,99 @@ void main() {
       expect(find.text('0 min'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'WetarMiniPlayer dismisses on swipe down only when paused & enabled, and HomeScreen hides folders + <unknown>',
+    (tester) async {
+      final env = await _TestEnv.create();
+      addTearDown(env.dispose);
+
+      // 1. Playing state: downward drag must NOT dismiss mini player.
+      env.playerCubit.setPlaying(true);
+      await tester.pumpWidget(
+        env.wrapScreen(
+          Scaffold(
+            body: const SizedBox.shrink(),
+            bottomNavigationBar: WetarMiniPlayer(onTap: () {}),
+          ),
+          textScale: 1.0,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(WetarMiniPlayer), const Offset(0, 80));
+      await tester.pumpAndSettle();
+      expect(env.playerCubit.state.currentTrack, isNotNull);
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+
+      // 2. Paused & option enabled: downward drag dismisses completely.
+      env.playerCubit.setPlaying(false);
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      await tester.drag(find.byType(WetarMiniPlayer), const Offset(0, 80));
+      await tester.pumpAndSettle();
+      expect(env.playerCubit.state.currentTrack, isNull);
+      expect(tester.getSize(find.byType(WetarMiniPlayer)).height, 0.0);
+
+      // 3. Paused & option disabled: downward drag does NOT dismiss, close button still works.
+      env.playerCubit.setTracks(env.tracks);
+      await env.personalizationCubit.updateSettings(
+        env.personalizationCubit.state.settings.copyWith(
+          miniPlayerSwipeDownDismiss: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(WetarMiniPlayer), const Offset(0, 80));
+      await tester.pumpAndSettle();
+      expect(env.playerCubit.state.currentTrack, isNotNull);
+
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+      expect(env.playerCubit.state.currentTrack, isNull);
+
+      // 4. HomeScreen hides Your folders by default and normalizes <unknown> artist tags.
+      const unknownTrack = WetarTrack(
+        stableKey: '/storage/emulated/0/Music/unknown_artist.mp3',
+        folderId: 1,
+        uri: 'file:///storage/emulated/0/Music/unknown_artist.mp3',
+        filePath: '/storage/emulated/0/Music/unknown_artist.mp3',
+        folderPath: '/storage/emulated/0/Music',
+        title: 'Untagged Lecture',
+        artist: '<unknown>',
+        album: '<unknown>',
+        albumArtist: '<unknown>',
+        genre: '',
+        year: 0,
+        trackNumber: 1,
+        discNumber: 1,
+        durationMs: 120000,
+        bitrateKbps: 128,
+        sampleRateHz: 44100,
+        channels: 2,
+        sizeBytes: 2048000,
+        mimeType: 'audio/mpeg',
+        dateModifiedSec: 1700000500,
+        dateAddedSec: 1700000500,
+      );
+      env.playerCubit.setTracks(<WetarTrack>[unknownTrack]);
+      await tester.pumpWidget(
+        env.wrapScreen(
+          HomeScreen(
+            onOpenNowPlaying: () {},
+            onOpenFavorites: () {},
+            onOpenPlaylists: () {},
+            onOpenCarMode: () {},
+            onOpenTrackDetails: (_) {},
+            onAddToPlaylistRequested: (_) {},
+          ),
+          textScale: 1.0,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Your folders'), findsNothing);
+      expect(find.text('<unknown>'), findsNothing);
+      expect(find.text('Unknown Artist'), findsOneWidget);
+    },
+  );
 }
 
 class _StubPlayerCubit extends Cubit<PlayerStateSnapshot>
@@ -746,6 +840,17 @@ class _StubPlayerCubit extends Cubit<PlayerStateSnapshot>
           pitch: 1.0,
         ),
       );
+
+  void setPlaying(bool playing) => emit(state.copyWith(isPlaying: playing));
+
+  void setTracks(List<WetarTrack> tracks) =>
+      emit(state.copyWith(queue: tracks, currentIndex: 0));
+
+  @override
+  Future<void> dismissPausedPlayer() async {
+    if (state.isPlaying) return;
+    emit(state.copyWith(queue: const <WetarTrack>[], currentIndex: 0));
+  }
 
   @override
   Future<void> reorderQueue(int oldIndex, int newIndex) async {

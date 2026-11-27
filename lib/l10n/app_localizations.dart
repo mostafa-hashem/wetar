@@ -2281,6 +2281,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Space: Play/Pause • Arrows: Seek • Cmd+F: Search'**
   String get desktopShortcutsHint;
+
+  /// No description provided for @playbackSwipeDownDismissPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe down when paused to close player'**
+  String get playbackSwipeDownDismissPaused;
+
+  /// No description provided for @playbackSwipeDownDismissPausedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the mini player down while paused to hide it and clear playback'**
+  String get playbackSwipeDownDismissPausedSubtitle;
+
+  /// No description provided for @personalizationMiniPlayerShowProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Show progress bar on mini player'**
+  String get personalizationMiniPlayerShowProgress;
+
+  /// No description provided for @personalizationSwipeCoverHorizontal.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe album cover to skip tracks'**
+  String get personalizationSwipeCoverHorizontal;
+
+  /// No description provided for @playerDismissPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Close player'**
+  String get playerDismissPaused;
+
+  /// No description provided for @actionSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get actionSeeAll;
+
+  /// No description provided for @homeListeningStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening stats'**
+  String get homeListeningStats;
+
+  /// No description provided for @foldersPlayFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Play folder'**
+  String get foldersPlayFolder;
+
+  /// No description provided for @foldersShuffleFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Shuffle folder'**
+  String get foldersShuffleFolder;
 }
 
 class _AppLocalizationsDelegate

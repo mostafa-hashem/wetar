@@ -577,7 +577,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '${track.displayArtist} • ${track.displayAlbum}',
+                                        '${track.resolvedArtist(l10n.libraryUnknownArtist)} • ${track.resolvedAlbum(l10n.libraryUnknownAlbum)}',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: Theme.of(context)

@@ -172,6 +172,7 @@ class AppearanceSettings extends Equatable {
     this.controlIconScale = 1.0,
     this.miniPlayerStyle = MiniPlayerStyle.floatingPill,
     this.miniPlayerShowProgress = true,
+    this.miniPlayerSwipeDownDismiss = true,
     this.secondaryActions = const <PlayerSecondaryAction>[
       PlayerSecondaryAction.favorite,
       PlayerSecondaryAction.lyrics,
@@ -203,7 +204,7 @@ class AppearanceSettings extends Equatable {
       HomeBlockKind.folders,
       HomeBlockKind.playlists,
     ],
-    this.hiddenHomeBlocks = const <HomeBlockKind>[],
+    this.hiddenHomeBlocks = const <HomeBlockKind>[HomeBlockKind.folders],
     this.listDensity = ListDensity.comfortable,
     this.useGridInLibrary = false,
     this.gridColumns = 2,
@@ -220,7 +221,7 @@ class AppearanceSettings extends Equatable {
     this.mirrorTimelineInRtl = false,
   });
 
-  static const int currentSchemaVersion = 1;
+  static const int currentSchemaVersion = 2;
 
   final int schemaVersion;
   final WetarThemeMode themeMode;
@@ -249,6 +250,7 @@ class AppearanceSettings extends Equatable {
   final double controlIconScale;
   final MiniPlayerStyle miniPlayerStyle;
   final bool miniPlayerShowProgress;
+  final bool miniPlayerSwipeDownDismiss;
   final List<PlayerSecondaryAction> secondaryActions;
 
   final BackgroundMode backgroundMode;
@@ -332,6 +334,7 @@ class AppearanceSettings extends Equatable {
       controlIconScale: d.controlIconScale,
       miniPlayerStyle: d.miniPlayerStyle,
       miniPlayerShowProgress: d.miniPlayerShowProgress,
+      miniPlayerSwipeDownDismiss: d.miniPlayerSwipeDownDismiss,
       secondaryActions: d.secondaryActions,
     );
   }
@@ -404,6 +407,7 @@ class AppearanceSettings extends Equatable {
     double? controlIconScale,
     MiniPlayerStyle? miniPlayerStyle,
     bool? miniPlayerShowProgress,
+    bool? miniPlayerSwipeDownDismiss,
     List<PlayerSecondaryAction>? secondaryActions,
     BackgroundMode? backgroundMode,
     BackgroundScope? backgroundScope,
@@ -467,6 +471,8 @@ class AppearanceSettings extends Equatable {
       miniPlayerStyle: miniPlayerStyle ?? this.miniPlayerStyle,
       miniPlayerShowProgress:
           miniPlayerShowProgress ?? this.miniPlayerShowProgress,
+      miniPlayerSwipeDownDismiss:
+          miniPlayerSwipeDownDismiss ?? this.miniPlayerSwipeDownDismiss,
       secondaryActions: secondaryActions ?? this.secondaryActions,
       backgroundMode: backgroundMode ?? this.backgroundMode,
       backgroundScope: backgroundScope ?? this.backgroundScope,
@@ -534,6 +540,7 @@ class AppearanceSettings extends Equatable {
     'controlIconScale': controlIconScale,
     'miniPlayerStyle': miniPlayerStyle.name,
     'miniPlayerShowProgress': miniPlayerShowProgress,
+    'miniPlayerSwipeDownDismiss': miniPlayerSwipeDownDismiss,
     'secondaryActions': secondaryActions.map((e) => e.name).toList(),
     'backgroundMode': backgroundMode.name,
     'backgroundScope': backgroundScope.name,
@@ -591,6 +598,7 @@ class AppearanceSettings extends Equatable {
     controlIconScale,
     miniPlayerStyle,
     miniPlayerShowProgress,
+    miniPlayerSwipeDownDismiss,
     secondaryActions,
     backgroundMode,
     backgroundScope,
@@ -730,6 +738,9 @@ class AppearanceSettingsMigration {
       miniPlayerShowProgress:
           migrated['miniPlayerShowProgress'] as bool? ??
           d.miniPlayerShowProgress,
+      miniPlayerSwipeDownDismiss:
+          migrated['miniPlayerSwipeDownDismiss'] as bool? ??
+          d.miniPlayerSwipeDownDismiss,
       secondaryActions: enumList(
         PlayerSecondaryAction.values,
         'secondaryActions',
@@ -838,6 +849,18 @@ class AppearanceSettingsMigration {
     final out = Map<String, dynamic>.from(raw);
     if (version < 1) {
       out['schemaVersion'] = 1;
+    }
+    if (version < 2) {
+      final rawHidden = out['hiddenHomeBlocks'];
+      final hidden = rawHidden is List
+          ? rawHidden.whereType<String>().toList()
+          : <String>[];
+      if (!hidden.contains(HomeBlockKind.folders.name)) {
+        hidden.add(HomeBlockKind.folders.name);
+      }
+      out['hiddenHomeBlocks'] = hidden;
+      out['miniPlayerSwipeDownDismiss'] ??= true;
+      out['schemaVersion'] = 2;
     }
     return out;
   }

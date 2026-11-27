@@ -1198,4 +1198,35 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get desktopShortcutsHint =>
       'Space: Play/Pause • Arrows: Seek • Cmd+F: Search';
+
+  @override
+  String get playbackSwipeDownDismissPaused =>
+      'Swipe down when paused to close player';
+
+  @override
+  String get playbackSwipeDownDismissPausedSubtitle =>
+      'Drag the mini player down while paused to hide it and clear playback';
+
+  @override
+  String get personalizationMiniPlayerShowProgress =>
+      'Show progress bar on mini player';
+
+  @override
+  String get personalizationSwipeCoverHorizontal =>
+      'Swipe album cover to skip tracks';
+
+  @override
+  String get playerDismissPaused => 'Close player';
+
+  @override
+  String get actionSeeAll => 'See all';
+
+  @override
+  String get homeListeningStats => 'Listening stats';
+
+  @override
+  String get foldersPlayFolder => 'Play folder';
+
+  @override
+  String get foldersShuffleFolder => 'Shuffle folder';
 }

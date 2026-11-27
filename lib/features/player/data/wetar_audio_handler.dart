@@ -468,6 +468,16 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   Future<void> clearQueue() async {
+    cancelSleepTimer();
+    final current = currentTrack;
+    final posMs = _player.position.inMilliseconds;
+    if (current != null &&
+        !current.isTemporaryExternal &&
+        _settings.rememberLongTrackPosition &&
+        current.durationMs >= 15 * 60 * 1000 &&
+        posMs > 2000) {
+      unawaited(_libraryRepo.setRememberedPosition(current.stableKey, posMs));
+    }
     await flushListeningSession(endSession: true);
     await _player.stop();
     _queueTracksSubject.add(const <WetarTrack>[]);
@@ -475,6 +485,15 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     _abLoopSubject.add(const AbLoopState());
     mediaItem.add(null);
     queue.add(const <MediaItem>[]);
+    playbackState.add(
+      playbackState.value.copyWith(
+        controls: const <MediaControl>[],
+        androidCompactActionIndices: const <int>[],
+        playing: false,
+        processingState: AudioProcessingState.idle,
+        updatePosition: Duration.zero,
+      ),
+    );
     await _db.delete(_db.queueSnapshots).go();
     await _systemService.updateHomeWidget(
       title: null,
@@ -898,6 +917,18 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void _broadcastPlaybackState(PlaybackEvent event) {
+    if (_queueTracksSubject.value.isEmpty) {
+      playbackState.add(
+        playbackState.value.copyWith(
+          controls: const <MediaControl>[],
+          androidCompactActionIndices: const <int>[],
+          playing: false,
+          processingState: AudioProcessingState.idle,
+          updatePosition: Duration.zero,
+        ),
+      );
+      return;
+    }
     final playing = _player.playing;
     playbackState.add(
       playbackState.value.copyWith(

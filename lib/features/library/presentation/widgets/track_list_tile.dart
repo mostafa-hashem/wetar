@@ -119,9 +119,7 @@ class TrackListTile extends StatelessWidget {
                               ),
                             Expanded(
                               child: Text(
-                                track.artist.isNotEmpty
-                                    ? '${track.artist} • ${track.album.isNotEmpty ? track.album : l10n.libraryUnknownAlbum}'
-                                    : l10n.libraryUnknownArtist,
+                                _subtitleLabel(track, l10n),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: textTheme.bodySmall,
@@ -156,5 +154,18 @@ class TrackListTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _subtitleLabel(WetarTrack track, AppLocalizations l10n) {
+    if (track.hasKnownArtist && track.hasKnownAlbum) {
+      return '${track.artist.trim()} • ${track.album.trim()}';
+    }
+    if (track.hasKnownArtist) {
+      return track.artist.trim();
+    }
+    if (track.hasKnownAlbum) {
+      return '${l10n.libraryUnknownArtist} • ${track.album.trim()}';
+    }
+    return l10n.libraryUnknownArtist;
   }
 }

@@ -536,5 +536,14 @@
   "desktopMenuLibrary": "Library",
   "desktopMenuPlayback": "Playback",
   "desktopMenuView": "View",
-  "desktopShortcutsHint": "Space: Play/Pause • Arrows: Seek • Cmd+F: Search"
+  "desktopShortcutsHint": "Space: Play/Pause • Arrows: Seek • Cmd+F: Search",
+  "playbackSwipeDownDismissPaused": "Swipe down when paused to close player",
+  "playbackSwipeDownDismissPausedSubtitle": "Drag the mini player down while paused to hide it and clear playback",
+  "personalizationMiniPlayerShowProgress": "Show progress bar on mini player",
+  "personalizationSwipeCoverHorizontal": "Swipe album cover to skip tracks",
+  "playerDismissPaused": "Close player",
+  "actionSeeAll": "See all",
+  "homeListeningStats": "Listening stats",
+  "foldersPlayFolder": "Play folder",
+  "foldersShuffleFolder": "Shuffle folder"
 }

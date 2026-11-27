@@ -866,6 +866,25 @@ class AppearanceStudioScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+                      SwitchListTile.adaptive(
+                        title: Text(l10n.personalizationMiniPlayerShowProgress),
+                        value: s.miniPlayerShowProgress,
+                        activeTrackColor: tokens.accentPrimary,
+                        onChanged: (v) => cubit.updateSettings(
+                          s.copyWith(miniPlayerShowProgress: v),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        title: Text(l10n.playbackSwipeDownDismissPaused),
+                        subtitle: Text(
+                          l10n.playbackSwipeDownDismissPausedSubtitle,
+                        ),
+                        value: s.miniPlayerSwipeDownDismiss,
+                        activeTrackColor: tokens.accentPrimary,
+                        onChanged: (v) => cubit.updateSettings(
+                          s.copyWith(miniPlayerSwipeDownDismiss: v),
+                        ),
+                      ),
                       Align(
                         alignment: AlignmentDirectional.centerEnd,
                         child: TextButton(
@@ -1446,6 +1465,14 @@ class AppearanceStudioScreen extends StatelessWidget {
                           onChanged: (v) => cubit.updateSettings(
                             s.copyWith(cornerRadiusScale: v),
                           ),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        title: Text(l10n.personalizationSwipeCoverHorizontal),
+                        value: s.swipeCoverHorizontal,
+                        activeTrackColor: tokens.accentPrimary,
+                        onChanged: (v) => cubit.updateSettings(
+                          s.copyWith(swipeCoverHorizontal: v),
                         ),
                       ),
                       SwitchListTile.adaptive(

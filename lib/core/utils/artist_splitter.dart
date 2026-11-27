@@ -20,7 +20,9 @@ class ArtistSplitter {
     String fallback = 'Unknown Artist',
   }) {
     final trimmed = rawArtist?.trim() ?? '';
-    if (trimmed.isEmpty) return <String>[fallback];
+    if (trimmed.isEmpty || trimmed.toLowerCase() == '<unknown>') {
+      return <String>[fallback];
+    }
     if (separators.isEmpty) return <String>[trimmed];
 
     final escaped = separators

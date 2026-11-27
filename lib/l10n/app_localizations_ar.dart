@@ -1207,4 +1207,35 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get desktopShortcutsHint =>
       'مسافة: تشغيل/إيقاف • الأسهم: تقديم/ترجيع • Cmd+F: بحث';
+
+  @override
+  String get playbackSwipeDownDismissPaused =>
+      'سحب المشغل المصغر لأسفل عند الإيقاف لإغلاقه';
+
+  @override
+  String get playbackSwipeDownDismissPausedSubtitle =>
+      'اسحب الشريط السفلي للأسفل وهو متوقف لإخفائه وإغلاق الملف الحالي';
+
+  @override
+  String get personalizationMiniPlayerShowProgress =>
+      'إظهار شريط التقدم في المشغل المصغر';
+
+  @override
+  String get personalizationSwipeCoverHorizontal =>
+      'سحب الغلاف يميناً ويساراً لتغيير المقطع';
+
+  @override
+  String get playerDismissPaused => 'إغلاق المشغل';
+
+  @override
+  String get actionSeeAll => 'عرض الكل';
+
+  @override
+  String get homeListeningStats => 'إحصائيات الاستماع';
+
+  @override
+  String get foldersPlayFolder => 'تشغيل المجلد';
+
+  @override
+  String get foldersShuffleFolder => 'تشغيل عشوائي للمجلد';
 }

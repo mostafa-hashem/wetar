@@ -4,17 +4,18 @@ import 'package:wetar/core/capabilities/platform_capabilities.dart';
 import 'package:wetar/core/di/service_locator.dart';
 import 'package:wetar/core/utils/numeral_formatter.dart';
 import 'package:wetar/core/widgets/wetar_artwork_image.dart';
+import 'package:wetar/core/widgets/wetar_brand_logo.dart';
 import 'package:wetar/features/library/domain/library_models.dart';
 import 'package:wetar/features/library/presentation/bloc/library_cubit.dart';
 import 'package:wetar/features/library/presentation/screens/search_screen.dart';
 import 'package:wetar/features/music_folders/presentation/bloc/music_folders_cubit.dart';
 import 'package:wetar/features/music_folders/presentation/screens/folder_picker_screen.dart';
-import 'package:wetar/features/music_folders/presentation/screens/music_folders_settings_screen.dart';
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
 import 'package:wetar/features/personalization/presentation/bloc/personalization_cubit.dart';
 import 'package:wetar/features/personalization/presentation/theme/wetar_tokens.dart';
 import 'package:wetar/features/personalization/presentation/widgets/wetar_background_renderer.dart';
 import 'package:wetar/features/player/presentation/bloc/player_cubit.dart';
+import 'package:wetar/features/playlists/presentation/bloc/playlists_cubit.dart';
 import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
 import 'package:wetar/l10n/app_localizations.dart';
 
@@ -28,6 +29,11 @@ class HomeScreen extends StatelessWidget {
     required this.onOpenCarMode,
     required this.onOpenTrackDetails,
     required this.onAddToPlaylistRequested,
+    this.onOpenRecentlyPlayed,
+    this.onOpenRecentlyAdded,
+    this.onOpenMostPlayed,
+    this.onOpenFolders,
+    this.onOpenStats,
   });
 
   final VoidCallback onOpenNowPlaying;
@@ -36,6 +42,165 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onOpenCarMode;
   final ValueChanged<WetarTrack> onOpenTrackDetails;
   final ValueChanged<List<WetarTrack>> onAddToPlaylistRequested;
+  final VoidCallback? onOpenRecentlyPlayed;
+  final VoidCallback? onOpenRecentlyAdded;
+  final VoidCallback? onOpenMostPlayed;
+  final VoidCallback? onOpenFolders;
+  final VoidCallback? onOpenStats;
+
+  int _maybeWatchPlaylistsCount(BuildContext context) {
+    try {
+      return BlocProvider.of<PlaylistsCubit>(
+        context,
+        listen: true,
+      ).state.playlists.length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  bool _hasBlockContent(
+    HomeBlockKind block, {
+    required LibraryState libState,
+    required MusicFoldersState foldersState,
+    required PlayerStateSnapshot playerState,
+    required int playlistsCount,
+  }) {
+    return switch (block) {
+      HomeBlockKind.continueListening => playerState.currentTrack != null,
+      HomeBlockKind.quickActions => libState.allTracks.isNotEmpty,
+      HomeBlockKind.recentlyAdded => libState.recentlyAddedTracks.isNotEmpty,
+      HomeBlockKind.mostPlayed => libState.mostPlayedTracks.isNotEmpty,
+      HomeBlockKind.folders => foldersState.selectedFolders.isNotEmpty,
+      HomeBlockKind.playlists => playlistsCount > 0,
+    };
+  }
+
+  String _homeBlockLabel(AppLocalizations l10n, HomeBlockKind kind) {
+    return switch (kind) {
+      HomeBlockKind.continueListening => l10n.homeContinueListening,
+      HomeBlockKind.quickActions => l10n.homeQuickActions,
+      HomeBlockKind.recentlyAdded => l10n.homeRecentlyAdded,
+      HomeBlockKind.mostPlayed => l10n.homeMostPlayed,
+      HomeBlockKind.folders => l10n.homeYourFolders,
+      HomeBlockKind.playlists => l10n.homeYourPlaylists,
+    };
+  }
+
+  void _showCustomizeHomeSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tokens = context.wetarTokens;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: BlocBuilder<PersonalizationCubit, PersonalizationState>(
+          builder: (ctx, pState) {
+            final s = pState.settings;
+            final cubit = ctx.read<PersonalizationCubit>();
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                tokens.spacingMd,
+                tokens.spacingSm,
+                tokens.spacingMd,
+                tokens.spacingLg,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: tokens.inkMuted.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(tokens.radiusPill),
+                    ),
+                  ),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          l10n.homeCustomizeBlocks,
+                          style: Theme.of(ctx).textTheme.titleMedium,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          const defaults = AppearanceSettings();
+                          cubit.updateSettings(
+                            s.copyWith(
+                              homeBlocksOrder: defaults.homeBlocksOrder,
+                              hiddenHomeBlocks: defaults.hiddenHomeBlocks,
+                            ),
+                          );
+                        },
+                        child: Text(l10n.actionReset),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: tokens.spacingXs),
+                  ReorderableListView(
+                    shrinkWrap: true,
+                    buildDefaultDragHandles: false,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onReorderItem: (oldIndex, newIndex) {
+                      final list = List<HomeBlockKind>.from(s.homeBlocksOrder);
+                      if (oldIndex < 0 || oldIndex >= list.length) return;
+                      final moved = list.removeAt(oldIndex);
+                      final safeNew = newIndex.clamp(0, list.length);
+                      list.insert(safeNew, moved);
+                      cubit.updateSettings(s.copyWith(homeBlocksOrder: list));
+                    },
+                    children: <Widget>[
+                      for (var i = 0; i < s.homeBlocksOrder.length; i++)
+                        Material(
+                          key: ValueKey<HomeBlockKind>(s.homeBlocksOrder[i]),
+                          color: Colors.transparent,
+                          child: CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: !s.hiddenHomeBlocks.contains(
+                              s.homeBlocksOrder[i],
+                            ),
+                            activeColor: tokens.accentPrimary,
+                            title: Text(
+                              _homeBlockLabel(l10n, s.homeBlocksOrder[i]),
+                            ),
+                            secondary: ReorderableDragStartListener(
+                              index: i,
+                              child: const Padding(
+                                padding: EdgeInsets.all(4),
+                                child: Icon(Icons.drag_handle_rounded),
+                              ),
+                            ),
+                            onChanged: (show) {
+                              final block = s.homeBlocksOrder[i];
+                              final next = Set<HomeBlockKind>.from(
+                                s.hiddenHomeBlocks,
+                              );
+                              if (show == true) {
+                                next.remove(block);
+                              } else {
+                                next.add(block);
+                              }
+                              cubit.updateSettings(
+                                s.copyWith(hiddenHomeBlocks: next.toList()),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,10 +213,21 @@ class HomeScreen extends StatelessWidget {
     final libState = context.watch<LibraryCubit>().state;
     final foldersState = context.watch<MusicFoldersCubit>().state;
     final playerState = context.watch<PlayerCubit>().state;
+    final playlistsCount = _maybeWatchPlaylistsCount(context);
     final thumbCache = sl<ThumbnailPathCache>();
 
     final visibleBlocks = appearance.homeBlocksOrder
-        .where((b) => !appearance.hiddenHomeBlocks.contains(b))
+        .where(
+          (b) =>
+              !appearance.hiddenHomeBlocks.contains(b) &&
+              _hasBlockContent(
+                b,
+                libState: libState,
+                foldersState: foldersState,
+                playerState: playerState,
+                playlistsCount: playlistsCount,
+              ),
+        )
         .toList();
 
     return Scaffold(
@@ -65,9 +241,29 @@ class HomeScreen extends StatelessWidget {
           child: CustomScrollView(
             slivers: <Widget>[
               SliverAppBar(
-                floating: true,
-                backgroundColor: Colors.transparent,
-                title: Text(l10n.appName),
+                pinned: true,
+                backgroundColor: tokens.canvas.withValues(alpha: 0.88),
+                surfaceTintColor: Colors.transparent,
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const WetarBrandLogo(size: 24),
+                    SizedBox(width: tokens.spacingSm),
+                    Flexible(
+                      child: Text(
+                        l10n.appName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(1),
+                  child: ColoredBox(
+                    color: tokens.borderSubtle.withValues(alpha: 0.6),
+                    child: const SizedBox(height: 1, width: double.infinity),
+                  ),
+                ),
                 actions: <Widget>[
                   IconButton(
                     tooltip: l10n.actionSearch,
@@ -85,6 +281,11 @@ class HomeScreen extends StatelessWidget {
                     tooltip: l10n.playerCarMode,
                     icon: const Icon(Icons.directions_car_outlined),
                     onPressed: onOpenCarMode,
+                  ),
+                  IconButton(
+                    tooltip: l10n.homeCustomizeBlocks,
+                    icon: const Icon(Icons.tune_rounded),
+                    onPressed: () => _showCustomizeHomeSheet(context),
                   ),
                 ],
               ),
@@ -186,6 +387,7 @@ class HomeScreen extends StatelessWidget {
         final current = playerState.currentTrack;
         if (current == null) return const SizedBox.shrink();
         return Card(
+          color: tokens.surface.withValues(alpha: 0.9),
           child: InkWell(
             borderRadius: BorderRadius.circular(tokens.radiusCard),
             onTap: onOpenNowPlaying,
@@ -219,7 +421,7 @@ class HomeScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          current.displayArtist,
+                          current.resolvedArtist(l10n.libraryUnknownArtist),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall,
@@ -276,23 +478,24 @@ class HomeScreen extends StatelessWidget {
                   label: Text(l10n.tabFavorites),
                   onPressed: onOpenFavorites,
                 ),
-                ActionChip(
-                  avatar: Icon(
-                    Icons.folder_copy_rounded,
-                    color: tokens.accentSecondary,
-                  ),
-                  label: Text(l10n.homeYourFolders),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const MusicFoldersSettingsScreen(),
+                if (onOpenRecentlyPlayed != null)
+                  ActionChip(
+                    avatar: Icon(
+                      Icons.history_rounded,
+                      color: tokens.accentSecondary,
                     ),
+                    label: Text(l10n.tabRecentlyPlayed),
+                    onPressed: onOpenRecentlyPlayed,
                   ),
-                ),
-                ActionChip(
-                  avatar: const Icon(Icons.queue_music_rounded),
-                  label: Text(l10n.homeYourPlaylists),
-                  onPressed: onOpenPlaylists,
-                ),
+                if (onOpenStats != null)
+                  ActionChip(
+                    avatar: Icon(
+                      Icons.insights_rounded,
+                      color: tokens.accentSecondary,
+                    ),
+                    label: Text(l10n.homeListeningStats),
+                    onPressed: onOpenStats,
+                  ),
               ],
             ),
           ],
@@ -304,9 +507,20 @@ class HomeScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              l10n.homeRecentlyAdded,
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    l10n.homeRecentlyAdded,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (onOpenRecentlyAdded != null)
+                  TextButton(
+                    onPressed: onOpenRecentlyAdded,
+                    child: Text(l10n.actionSeeAll),
+                  ),
+              ],
             ),
             SizedBox(height: tokens.spacingSm),
             SizedBox(
@@ -345,7 +559,7 @@ class HomeScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           Text(
-                            track.displayArtist,
+                            track.resolvedArtist(l10n.libraryUnknownArtist),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall,
@@ -366,80 +580,128 @@ class HomeScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              l10n.homeMostPlayed,
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    l10n.homeMostPlayed,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (onOpenMostPlayed != null)
+                  TextButton(
+                    onPressed: onOpenMostPlayed,
+                    child: Text(l10n.actionSeeAll),
+                  ),
+              ],
             ),
             SizedBox(height: tokens.spacingSm),
-            for (var i = 0; i < top.length.clamp(0, 5); i++)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: WetarArtworkImage(
-                  cacheKey: top[i].albumKey,
-                  size: 46,
-                  artworkUri: top[i].artworkUri,
-                  filePath: top[i].filePath,
-                  customArtPath: top[i].customArtPath,
-                  thumbnailCache: thumbCache,
-                ),
-                title: Text(
-                  top[i].title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(top[i].displayArtist),
-                trailing: Text(
-                  NumeralFormatter.formatInt(top[i].playCount, numerals),
-                  style: Theme.of(context).textTheme.labelMedium
-                      ?.copyWith(color: tokens.accentPrimary),
-                ),
-                onTap: () =>
-                    context.read<PlayerCubit>().playTracks(top, index: i),
+            Card(
+              color: tokens.surface.withValues(alpha: 0.88),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  for (var i = 0; i < top.length.clamp(0, 5); i++)
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacingMd,
+                      ),
+                      leading: WetarArtworkImage(
+                        cacheKey: top[i].albumKey,
+                        size: 46,
+                        artworkUri: top[i].artworkUri,
+                        filePath: top[i].filePath,
+                        customArtPath: top[i].customArtPath,
+                        thumbnailCache: thumbCache,
+                      ),
+                      title: Text(
+                        top[i].title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        top[i].resolvedArtist(l10n.libraryUnknownArtist),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Text(
+                        NumeralFormatter.formatInt(top[i].playCount, numerals),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: tokens.accentPrimary),
+                      ),
+                      onTap: () =>
+                          context.read<PlayerCubit>().playTracks(top, index: i),
+                    ),
+                ],
               ),
+            ),
           ],
         );
 
       case HomeBlockKind.folders:
+        final previewFolders = foldersState.selectedFolders.take(6).toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              l10n.homeYourFolders,
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    l10n.homeYourFolders,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (onOpenFolders != null)
+                  TextButton(
+                    onPressed: onOpenFolders,
+                    child: Text(l10n.actionSeeAll),
+                  ),
+              ],
             ),
             SizedBox(height: tokens.spacingSm),
             Wrap(
               spacing: tokens.spacingSm,
               runSpacing: tokens.spacingSm,
-              children: foldersState.selectedFolders
-                  .map(
-                    (f) => InputChip(
-                      avatar: const Icon(Icons.folder_rounded, size: 18),
-                      label: Text(
-                        '${f.displayName} (${NumeralFormatter.formatInt(f.trackCount, numerals)})',
-                      ),
-                      onPressed: () {
-                        final folderTracks = libState.allTracks
-                            .where((t) => t.folderId == f.id)
-                            .toList();
-                        if (folderTracks.isNotEmpty) {
-                          context.read<PlayerCubit>().playTracks(folderTracks);
-                        }
-                      },
+              children: <Widget>[
+                for (final f in previewFolders)
+                  InputChip(
+                    avatar: const Icon(Icons.folder_rounded, size: 18),
+                    label: Text(
+                      '${f.displayName} (${NumeralFormatter.formatInt(f.trackCount, numerals)})',
                     ),
-                  )
-                  .toList(),
+                    onPressed: () {
+                      final folderTracks = libState.allTracks
+                          .where((t) => t.folderId == f.id)
+                          .toList();
+                      if (folderTracks.isNotEmpty) {
+                        context.read<PlayerCubit>().playTracks(folderTracks);
+                      }
+                    },
+                  ),
+                if (foldersState.selectedFolders.length > 6 &&
+                    onOpenFolders != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.chevron_right_rounded, size: 18),
+                    label: Text(l10n.actionSeeAll),
+                    onPressed: onOpenFolders,
+                  ),
+              ],
             ),
           ],
         );
 
       case HomeBlockKind.playlists:
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.queue_music_rounded, color: tokens.accentPrimary),
-          title: Text(l10n.homeYourPlaylists),
-          trailing: const Icon(Icons.chevron_right_rounded),
-          onTap: onOpenPlaylists,
+        return Card(
+          color: tokens.surface.withValues(alpha: 0.88),
+          child: ListTile(
+            leading: Icon(
+              Icons.queue_music_rounded,
+              color: tokens.accentPrimary,
+            ),
+            title: Text(l10n.homeYourPlaylists),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: onOpenPlaylists,
+          ),
         );
     }
   }

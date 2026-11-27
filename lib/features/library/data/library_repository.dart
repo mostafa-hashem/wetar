@@ -419,10 +419,10 @@ class LibraryRepository {
       groups.add(
         AlbumGroup(
           albumKey: entry.key,
-          name: first.album.isNotEmpty ? first.album : fallbackAlbum,
-          artist: first.albumArtist.isNotEmpty
-              ? first.albumArtist
-              : (first.artist.isNotEmpty ? first.artist : fallbackArtist),
+          name: first.resolvedAlbum(fallbackAlbum),
+          artist: first.hasKnownAlbumArtist
+              ? first.albumArtist.trim()
+              : first.resolvedArtist(fallbackArtist),
           year: first.year,
           tracks: sorted,
         ),
@@ -441,9 +441,9 @@ class LibraryRepository {
     final map = <String, List<WetarTrack>>{};
     for (final t in tracks) {
       if (useAlbumArtist) {
-        final raw = t.albumArtist.isNotEmpty
-            ? t.albumArtist
-            : (t.artist.isNotEmpty ? t.artist : fallbackArtist);
+        final raw = t.hasKnownAlbumArtist
+            ? t.albumArtist.trim()
+            : t.resolvedArtist(fallbackArtist);
         map.putIfAbsent(raw, () => <WetarTrack>[]).add(t);
       } else {
         final split = ArtistSplitter.split(

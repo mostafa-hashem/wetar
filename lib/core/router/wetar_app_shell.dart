@@ -38,6 +38,7 @@ import 'package:wetar/features/playlists/presentation/screens/playlists_screen.d
 import 'package:wetar/features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import 'package:wetar/features/settings/presentation/bloc/settings_cubit.dart';
 import 'package:wetar/features/settings/presentation/screens/backup_stats_diagnostics_screen.dart';
+import 'package:wetar/features/settings/presentation/screens/listening_stats_screen.dart';
 import 'package:wetar/features/settings/presentation/screens/settings_screen.dart';
 import 'package:wetar/l10n/app_localizations.dart';
 
@@ -281,6 +282,14 @@ class _WetarAppShellState extends State<WetarAppShell> {
     );
   }
 
+  void _openListeningStats() {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const ListeningStatsScreen()),
+      ),
+    );
+  }
+
   void _openNowPlaying() {
     if (_isNowPlayingOpen) return;
     _isNowPlayingOpen = true;
@@ -353,7 +362,27 @@ class _WetarAppShellState extends State<WetarAppShell> {
             context.read<LibraryCubit>().setCategory(LibraryCategory.favorites);
             _jumpToTab(WetarNavTab.library);
           },
+          onOpenRecentlyPlayed: () {
+            context.read<LibraryCubit>().setCategory(
+              LibraryCategory.recentlyPlayed,
+            );
+            _jumpToTab(WetarNavTab.library);
+          },
+          onOpenRecentlyAdded: () {
+            context.read<LibraryCubit>().setCategory(
+              LibraryCategory.recentlyAdded,
+            );
+            _jumpToTab(WetarNavTab.library);
+          },
+          onOpenMostPlayed: () {
+            context.read<LibraryCubit>().setCategory(
+              LibraryCategory.mostPlayed,
+            );
+            _jumpToTab(WetarNavTab.library);
+          },
+          onOpenFolders: () => _jumpToTab(WetarNavTab.folders),
           onOpenPlaylists: () => _jumpToTab(WetarNavTab.playlists),
+          onOpenStats: _openListeningStats,
           onOpenCarMode: _openCarMode,
           onOpenTrackDetails: _openTrackDetails,
           onAddToPlaylistRequested: _openAddToPlaylist,
@@ -364,7 +393,10 @@ class _WetarAppShellState extends State<WetarAppShell> {
           onAddToPlaylistRequested: _openAddToPlaylist,
         );
       case WetarNavTab.folders:
-        return const MusicFoldersSettingsScreen();
+        return MusicFoldersSettingsScreen(
+          onOpenTrackDetails: _openTrackDetails,
+          onAddToPlaylistRequested: _openAddToPlaylist,
+        );
       case WetarNavTab.playlists:
         return PlaylistsScreen(onOpenTrackDetails: _openTrackDetails);
       case WetarNavTab.settings:
@@ -420,7 +452,8 @@ class _WetarAppShellState extends State<WetarAppShell> {
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          track?.displayArtist ?? l10n.queueEmpty,
+                          track?.resolvedArtist(l10n.libraryUnknownArtist) ??
+                              l10n.queueEmpty,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall,
@@ -685,7 +718,9 @@ class _WetarAppShellState extends State<WetarAppShell> {
                                         ?.copyWith(fontWeight: FontWeight.w700),
                                   ),
                                   Text(
-                                    track.displayArtist,
+                                    track.resolvedArtist(
+                                      l10n.libraryUnknownArtist,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context)
@@ -817,6 +852,17 @@ class _WetarAppShellState extends State<WetarAppShell> {
                           icon: const Icon(Icons.open_in_full_rounded),
                           onPressed: _openNowPlaying,
                         ),
+                        if (!playerState.isPlaying)
+                          IconButton(
+                            tooltip: l10n.playerDismissPaused,
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: tokens.inkMuted,
+                            ),
+                            onPressed: () => unawaited(
+                              context.read<PlayerCubit>().dismissPausedPlayer(),
+                            ),
+                          ),
                       ],
                     ),
                   ],

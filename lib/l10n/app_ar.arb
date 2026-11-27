@@ -536,5 +536,14 @@
   "desktopMenuLibrary": "المكتبة",
   "desktopMenuPlayback": "التشغيل",
   "desktopMenuView": "العرض",
-  "desktopShortcutsHint": "مسافة: تشغيل/إيقاف • الأسهم: تقديم/ترجيع • Cmd+F: بحث"
+  "desktopShortcutsHint": "مسافة: تشغيل/إيقاف • الأسهم: تقديم/ترجيع • Cmd+F: بحث",
+  "playbackSwipeDownDismissPaused": "سحب المشغل المصغر لأسفل عند الإيقاف لإغلاقه",
+  "playbackSwipeDownDismissPausedSubtitle": "اسحب الشريط السفلي للأسفل وهو متوقف لإخفائه وإغلاق الملف الحالي",
+  "personalizationMiniPlayerShowProgress": "إظهار شريط التقدم في المشغل المصغر",
+  "personalizationSwipeCoverHorizontal": "سحب الغلاف يميناً ويساراً لتغيير المقطع",
+  "playerDismissPaused": "إغلاق المشغل",
+  "actionSeeAll": "عرض الكل",
+  "homeListeningStats": "إحصائيات الاستماع",
+  "foldersPlayFolder": "تشغيل المجلد",
+  "foldersShuffleFolder": "تشغيل عشوائي للمجلد"
 }
