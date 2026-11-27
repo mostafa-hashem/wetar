@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 
@@ -220,9 +221,42 @@ class LibraryRepository {
         );
   }
 
-  Future<void> recordTrackPlay(WetarTrack track, {int listenedMs = 0}) async {
+  /// Creates or updates a single play history row with real listened duration.
+  Future<int?> upsertPlayHistorySession({
+    int? eventId,
+    required WetarTrack track,
+    required int playedAtMs,
+    required int listenedMs,
+  }) async {
+    if (track.isTemporaryExternal) return null;
+    final safeMs = math.max(0, listenedMs);
+    if (eventId != null) {
+      final updatedRows =
+          await (_db.update(_db.playHistoryEvents)
+                ..where((t) => t.id.equals(eventId)))
+              .write(PlayHistoryEventsCompanion(listenedMs: Value(safeMs)));
+      if (updatedRows > 0) return eventId;
+    }
+    return _db
+        .into(_db.playHistoryEvents)
+        .insert(
+          PlayHistoryEventsCompanion.insert(
+            trackStableKey: track.stableKey,
+            trackTitle: track.title,
+            artistName: track.displayArtist,
+            albumName: track.displayAlbum,
+            playedAt: playedAtMs,
+            listenedMs: safeMs,
+          ),
+        );
+  }
+
+  /// Increments a track's play counter once a listening session qualifies.
+  Future<void> incrementTrackPlayCount(
+    WetarTrack track, {
+    required int playedAtMs,
+  }) async {
     if (track.isTemporaryExternal) return;
-    final now = DateTime.now().millisecondsSinceEpoch;
     final current = await (_db.select(
       _db.trackUserMeta,
     )..where((t) => t.stableKey.equals(track.stableKey))).getSingleOrNull();
@@ -233,7 +267,7 @@ class LibraryRepository {
             stableKey: track.stableKey,
             isFavorite: Value(current?.isFavorite ?? track.isFavorite),
             playCount: Value((current?.playCount ?? 0) + 1),
-            lastPlayedAt: Value(now),
+            lastPlayedAt: Value(playedAtMs),
             rememberedPositionMs: Value(current?.rememberedPositionMs),
             attachedLrcPath: Value(current?.attachedLrcPath),
             lyricOffsetMs: Value(current?.lyricOffsetMs ?? 0),
@@ -241,19 +275,32 @@ class LibraryRepository {
           ),
           mode: InsertMode.insertOrReplace,
         );
+  }
 
-    await _db
-        .into(_db.playHistoryEvents)
-        .insert(
-          PlayHistoryEventsCompanion.insert(
-            trackStableKey: track.stableKey,
-            trackTitle: track.title,
-            artistName: track.displayArtist,
-            albumName: track.displayAlbum,
-            playedAt: now,
-            listenedMs: listenedMs > 0 ? listenedMs : track.durationMs,
-          ),
-        );
+  /// Clears listening recap events and play counts while keeping user library prefs.
+  Future<void> clearListeningHistory() async {
+    await _db.transaction(() async {
+      await _db.delete(_db.playHistoryEvents).go();
+      await _db
+          .update(_db.trackUserMeta)
+          .write(
+            const TrackUserMetaCompanion(
+              playCount: Value(0),
+              lastPlayedAt: Value(null),
+            ),
+          );
+    });
+  }
+
+  Future<void> recordTrackPlay(WetarTrack track, {int listenedMs = 0}) async {
+    if (track.isTemporaryExternal) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await incrementTrackPlayCount(track, playedAtMs: now);
+    await upsertPlayHistorySession(
+      track: track,
+      playedAtMs: now,
+      listenedMs: math.max(0, listenedMs),
+    );
   }
 
   Future<void> setRememberedPosition(String stableKey, int? positionMs) async {

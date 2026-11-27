@@ -486,6 +486,36 @@
   "statsTopTracks": "Top tracks",
   "statsTopArtists": "Top artists",
   "statsSharePoster": "Share Wrapped card",
+  "statsDurationSeconds": "{seconds} sec",
+  "@statsDurationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "statsDurationMinutes": "{minutes} min",
+  "@statsDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "statsDurationHoursMinutes": "{hours}h {minutes}m",
+  "@statsDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "statsResetTitle": "Reset listening stats?",
+  "statsResetBody": "This clears your recorded listening time and play counts so you can start fresh.",
+  "statsResetSuccess": "Listening stats reset",
   "cacheClearButton": "Clear app caches",
   "cacheSizeLabel": "Cache usage: {size}",
   "@cacheSizeLabel": {

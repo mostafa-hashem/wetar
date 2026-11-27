@@ -506,312 +506,324 @@ class _WetarAppShellState extends State<WetarAppShell> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: 214,
-                  decoration: BoxDecoration(
-                    color: tokens.surface.withValues(alpha: 0.94),
-                    border: BorderDirectional(
-                      end: BorderSide(color: tokens.borderSubtle),
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Padding(
-                          padding: EdgeInsets.all(tokens.spacingMd),
-                          child: Row(
-                            children: <Widget>[
-                              const WetarBrandLogo(size: 28),
-                              SizedBox(width: tokens.spacingSm),
-                              Expanded(
-                                child: Text(
-                                  l10n.appName,
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: l10n.actionSearch,
-                                icon: const Icon(Icons.search_rounded),
-                                onPressed: _openSearch,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(height: 1),
-                        Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: tokens.spacingSm,
-                              vertical: tokens.spacingSm,
-                            ),
-                            children: <Widget>[
-                              for (var i = 0; i < tabs.length; i++)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: ListTile(
-                                    dense: true,
-                                    selected: i == safeIndex,
-                                    selectedTileColor: tokens.accentPrimary
-                                        .withValues(alpha: 0.14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        tokens.radiusCard * 0.75,
-                                      ),
-                                    ),
-                                    leading: Icon(
-                                      _tabIcon(tabs[i]),
-                                      color: i == safeIndex
-                                          ? tokens.accentPrimary
-                                          : tokens.inkMuted,
-                                    ),
-                                    title: Text(
-                                      _tabLabel(l10n, tabs[i]),
-                                      style: TextStyle(
-                                        color: i == safeIndex
-                                            ? tokens.accentPrimary
-                                            : tokens.inkPrimary,
-                                        fontWeight: i == safeIndex
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                      ),
-                                    ),
-                                    onTap: () => setState(() => _navIndex = i),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (caps.supportsDesktopShell) ...<Widget>[
-                          const Divider(height: 1),
-                          ListTile(
-                            dense: true,
-                            leading: const Icon(
-                              Icons.picture_in_picture_alt_rounded,
-                            ),
-                            title: Text(l10n.desktopCompactMiniMode),
-                            onTap: _toggleCompactWindow,
-                          ),
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              tokens.spacingMd,
-                              0,
-                              tokens.spacingMd,
-                              tokens.spacingSm,
-                            ),
-                            child: Text(
-                              l10n.desktopShortcutsHint,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(color: tokens.inkMuted),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: IndexedStack(
-                    index: safeIndex,
-                    children: tabs.map(_buildTabContent).toList(),
-                  ),
-                ),
-                if (_rightPane != _DesktopRightPane.none)
-                  Container(
-                    width: 336,
-                    decoration: BoxDecoration(
-                      color: tokens.surface,
-                      border: BorderDirectional(
-                        start: BorderSide(color: tokens.borderSubtle),
-                      ),
-                    ),
-                    child: _rightPane == _DesktopRightPane.queue
-                        ? const QueuePanel(embedded: true)
-                        : const LyricsSheet(),
-                  ),
-              ],
-            ),
-          ),
-          if (track != null)
-            Container(
-              height: 82,
-              padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-              decoration: BoxDecoration(
-                color: tokens.surfaceElevated,
-                border: Border(top: BorderSide(color: tokens.borderSubtle)),
-              ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: <Widget>[
+            Expanded(
               child: Row(
                 children: <Widget>[
-                  InkWell(
-                    borderRadius: BorderRadius.circular(tokens.radiusCard),
-                    onTap: _openNowPlaying,
-                    child: SizedBox(
-                      width: 220,
-                      child: Row(
+                  Container(
+                    width: 214,
+                    decoration: BoxDecoration(
+                      color: tokens.surface.withValues(alpha: 0.94),
+                      border: BorderDirectional(
+                        end: BorderSide(color: tokens.borderSubtle),
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          WetarArtworkImage(
-                            cacheKey: track.albumKey,
-                            size: 52,
-                            artworkUri: track.artworkUri,
-                            filePath: track.filePath,
-                            customArtPath: track.customArtPath,
-                            thumbnailCache: sl<ThumbnailPathCache>(),
-                            decodeSizePx: 144,
-                          ),
-                          SizedBox(width: tokens.spacingSm),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          Padding(
+                            padding: EdgeInsets.all(tokens.spacingMd),
+                            child: Row(
                               children: <Widget>[
-                                Text(
-                                  track.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                const WetarBrandLogo(size: 28),
+                                SizedBox(width: tokens.spacingSm),
+                                Expanded(
+                                  child: Text(
+                                    l10n.appName,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
                                 ),
-                                Text(
-                                  track.displayArtist,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                IconButton(
+                                  tooltip: l10n.actionSearch,
+                                  icon: const Icon(Icons.search_rounded),
+                                  onPressed: _openSearch,
                                 ),
                               ],
                             ),
                           ),
+                          const Divider(height: 1),
+                          Expanded(
+                            child: ListView(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: tokens.spacingSm,
+                                vertical: tokens.spacingSm,
+                              ),
+                              children: <Widget>[
+                                for (var i = 0; i < tabs.length; i++)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: ListTile(
+                                      dense: true,
+                                      selected: i == safeIndex,
+                                      selectedTileColor: tokens.accentPrimary
+                                          .withValues(alpha: 0.14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          tokens.radiusCard * 0.75,
+                                        ),
+                                      ),
+                                      leading: Icon(
+                                        _tabIcon(tabs[i]),
+                                        color: i == safeIndex
+                                            ? tokens.accentPrimary
+                                            : tokens.inkMuted,
+                                      ),
+                                      title: Text(
+                                        _tabLabel(l10n, tabs[i]),
+                                        style: TextStyle(
+                                          color: i == safeIndex
+                                              ? tokens.accentPrimary
+                                              : tokens.inkPrimary,
+                                          fontWeight: i == safeIndex
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                        ),
+                                      ),
+                                      onTap: () =>
+                                          setState(() => _navIndex = i),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (caps.supportsDesktopShell) ...<Widget>[
+                            const Divider(height: 1),
+                            ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.picture_in_picture_alt_rounded,
+                              ),
+                              title: Text(l10n.desktopCompactMiniMode),
+                              onTap: _toggleCompactWindow,
+                            ),
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                tokens.spacingMd,
+                                0,
+                                tokens.spacingMd,
+                                tokens.spacingSm,
+                              ),
+                              child: Text(
+                                l10n.desktopShortcutsHint,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: tokens.inkMuted),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(width: tokens.spacingMd),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              IconButton(
-                                tooltip: l10n.actionShuffle,
-                                iconSize: 18,
-                                icon: Icon(
-                                  Icons.shuffle_rounded,
-                                  color: playerState.shuffleEnabled
-                                      ? tokens.accentPrimary
-                                      : tokens.inkMuted,
-                                ),
-                                onPressed: () =>
-                                    context.read<PlayerCubit>().toggleShuffle(),
-                              ),
-                              IconButton(
-                                tooltip: l10n.actionPrevious,
-                                icon: const Icon(Icons.skip_previous_rounded),
-                                onPressed: () =>
-                                    context.read<PlayerCubit>().previous(),
-                              ),
-                              IconButton.filled(
-                                tooltip: playerState.isPlaying
-                                    ? l10n.actionPause
-                                    : l10n.actionPlay,
-                                style: IconButton.styleFrom(
-                                  backgroundColor: tokens.accentPrimary,
-                                  foregroundColor: Colors.white,
-                                ),
-                                icon: Icon(
-                                  playerState.isPlaying
-                                      ? Icons.pause_rounded
-                                      : Icons.play_arrow_rounded,
-                                ),
-                                onPressed: () => context
-                                    .read<PlayerCubit>()
-                                    .togglePlayPause(),
-                              ),
-                              IconButton(
-                                tooltip: l10n.actionNext,
-                                icon: const Icon(Icons.skip_next_rounded),
-                                onPressed: () =>
-                                    context.read<PlayerCubit>().next(),
-                              ),
-                              Text(
-                                '${NumeralFormatter.formatDuration(playerState.position, numerals)} / ${NumeralFormatter.formatDuration(track.duration, numerals)}',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(color: tokens.inkMuted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: 22,
-                          child: WetarSeekBar(
-                            seedKey: track.stableKey,
-                            style: appearance.seekBarStyle,
-                            position: playerState.position,
-                            duration: track.duration,
-                            isPlaying: playerState.isPlaying,
-                            abLoop: playerState.abLoop,
-                            hapticsIntensity: appearance.hapticsIntensity,
-                            onSeek: (d) => context.read<PlayerCubit>().seek(d),
-                          ),
-                        ),
-                      ],
+                    child: IndexedStack(
+                      index: safeIndex,
+                      children: tabs.map(_buildTabContent).toList(),
                     ),
                   ),
-                  SizedBox(width: tokens.spacingMd),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      IconButton(
-                        tooltip: l10n.playerLyrics,
-                        icon: Icon(
-                          Icons.lyrics_outlined,
-                          color: _rightPane == _DesktopRightPane.lyrics
-                              ? tokens.accentPrimary
-                              : null,
-                        ),
-                        onPressed: () => _toggleRightPane(
-                          _DesktopRightPane.lyrics,
-                          isDesktop: true,
+                  if (_rightPane != _DesktopRightPane.none)
+                    Container(
+                      width: 336,
+                      decoration: BoxDecoration(
+                        color: tokens.surface,
+                        border: BorderDirectional(
+                          start: BorderSide(color: tokens.borderSubtle),
                         ),
                       ),
-                      IconButton(
-                        tooltip: l10n.playerQueue,
-                        icon: Icon(
-                          Icons.queue_music_rounded,
-                          color: _rightPane == _DesktopRightPane.queue
-                              ? tokens.accentPrimary
-                              : null,
-                        ),
-                        onPressed: () => _toggleRightPane(
-                          _DesktopRightPane.queue,
-                          isDesktop: true,
-                        ),
-                      ),
-                      if (caps.supportsAnyAudioEffects)
-                        IconButton(
-                          tooltip: l10n.playerEqualizer,
-                          icon: const Icon(Icons.equalizer_rounded),
-                          onPressed: _openEqualizer,
-                        ),
-                      IconButton(
-                        tooltip: l10n.playerNowPlaying,
-                        icon: const Icon(Icons.open_in_full_rounded),
-                        onPressed: _openNowPlaying,
-                      ),
-                    ],
-                  ),
+                      child: _rightPane == _DesktopRightPane.queue
+                          ? const QueuePanel(embedded: true)
+                          : const LyricsSheet(),
+                    ),
                 ],
               ),
             ),
-        ],
+            if (track != null)
+              Container(
+                height: 82,
+                padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
+                decoration: BoxDecoration(
+                  color: tokens.surfaceElevated,
+                  border: Border(top: BorderSide(color: tokens.borderSubtle)),
+                ),
+                child: Row(
+                  children: <Widget>[
+                    InkWell(
+                      borderRadius: BorderRadius.circular(tokens.radiusCard),
+                      onTap: _openNowPlaying,
+                      child: SizedBox(
+                        width: 220,
+                        child: Row(
+                          children: <Widget>[
+                            WetarArtworkImage(
+                              cacheKey: track.albumKey,
+                              size: 52,
+                              artworkUri: track.artworkUri,
+                              filePath: track.filePath,
+                              customArtPath: track.customArtPath,
+                              thumbnailCache: sl<ThumbnailPathCache>(),
+                              decodeSizePx: 144,
+                            ),
+                            SizedBox(width: tokens.spacingSm),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    track.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                  Text(
+                                    track.displayArtist,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: tokens.spacingMd),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                IconButton(
+                                  tooltip: l10n.actionShuffle,
+                                  iconSize: 18,
+                                  icon: Icon(
+                                    Icons.shuffle_rounded,
+                                    color: playerState.shuffleEnabled
+                                        ? tokens.accentPrimary
+                                        : tokens.inkMuted,
+                                  ),
+                                  onPressed: () => context
+                                      .read<PlayerCubit>()
+                                      .toggleShuffle(),
+                                ),
+                                IconButton(
+                                  tooltip: l10n.actionPrevious,
+                                  icon: const Icon(Icons.skip_previous_rounded),
+                                  onPressed: () =>
+                                      context.read<PlayerCubit>().previous(),
+                                ),
+                                IconButton.filled(
+                                  tooltip: playerState.isPlaying
+                                      ? l10n.actionPause
+                                      : l10n.actionPlay,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: tokens.accentPrimary,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  icon: Icon(
+                                    playerState.isPlaying
+                                        ? Icons.pause_rounded
+                                        : Icons.play_arrow_rounded,
+                                  ),
+                                  onPressed: () => context
+                                      .read<PlayerCubit>()
+                                      .togglePlayPause(),
+                                ),
+                                IconButton(
+                                  tooltip: l10n.actionNext,
+                                  icon: const Icon(Icons.skip_next_rounded),
+                                  onPressed: () =>
+                                      context.read<PlayerCubit>().next(),
+                                ),
+                                Text(
+                                  '${NumeralFormatter.formatDuration(playerState.position, numerals)} / ${NumeralFormatter.formatDuration(track.duration, numerals)}',
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(color: tokens.inkMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 22,
+                            child: WetarSeekBar(
+                              seedKey: track.stableKey,
+                              style: appearance.seekBarStyle,
+                              position: playerState.position,
+                              duration: track.duration,
+                              isPlaying: playerState.isPlaying,
+                              abLoop: playerState.abLoop,
+                              hapticsIntensity: appearance.hapticsIntensity,
+                              onSeek: (d) =>
+                                  context.read<PlayerCubit>().seek(d),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: tokens.spacingMd),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          tooltip: l10n.playerLyrics,
+                          icon: Icon(
+                            Icons.lyrics_outlined,
+                            color: _rightPane == _DesktopRightPane.lyrics
+                                ? tokens.accentPrimary
+                                : null,
+                          ),
+                          onPressed: () => _toggleRightPane(
+                            _DesktopRightPane.lyrics,
+                            isDesktop: true,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: l10n.playerQueue,
+                          icon: Icon(
+                            Icons.queue_music_rounded,
+                            color: _rightPane == _DesktopRightPane.queue
+                                ? tokens.accentPrimary
+                                : null,
+                          ),
+                          onPressed: () => _toggleRightPane(
+                            _DesktopRightPane.queue,
+                            isDesktop: true,
+                          ),
+                        ),
+                        if (caps.supportsAnyAudioEffects)
+                          IconButton(
+                            tooltip: l10n.playerEqualizer,
+                            icon: const Icon(Icons.equalizer_rounded),
+                            onPressed: _openEqualizer,
+                          ),
+                        IconButton(
+                          tooltip: l10n.playerNowPlaying,
+                          icon: const Icon(Icons.open_in_full_rounded),
+                          onPressed: _openNowPlaying,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -867,14 +879,22 @@ class _WetarAppShellState extends State<WetarAppShell> {
     } else {
       scaffoldContent = Scaffold(
         backgroundColor: Colors.transparent,
-        body: IndexedStack(
-          index: safeIndex,
-          children: tabs.map(_buildTabContent).toList(),
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: IndexedStack(
+            index: safeIndex,
+            children: tabs.map(_buildTabContent).toList(),
+          ),
         ),
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            WetarMiniPlayer(onTap: _openNowPlaying),
+            SafeArea(
+              top: false,
+              bottom: false,
+              child: WetarMiniPlayer(onTap: _openNowPlaying),
+            ),
             NavigationBar(
               backgroundColor: tokens.surface,
               indicatorColor: tokens.accentPrimary.withValues(alpha: 0.2),

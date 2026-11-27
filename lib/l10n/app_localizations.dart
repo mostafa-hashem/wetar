@@ -2162,6 +2162,42 @@ abstract class AppLocalizations {
   /// **'Share Wrapped card'**
   String get statsSharePoster;
 
+  /// No description provided for @statsDurationSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} sec'**
+  String statsDurationSeconds(String seconds);
+
+  /// No description provided for @statsDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String statsDurationMinutes(String minutes);
+
+  /// No description provided for @statsDurationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String statsDurationHoursMinutes(String hours, String minutes);
+
+  /// No description provided for @statsResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset listening stats?'**
+  String get statsResetTitle;
+
+  /// No description provided for @statsResetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears your recorded listening time and play counts so you can start fresh.'**
+  String get statsResetBody;
+
+  /// No description provided for @statsResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening stats reset'**
+  String get statsResetSuccess;
+
   /// No description provided for @cacheClearButton.
   ///
   /// In en, this message translates to:

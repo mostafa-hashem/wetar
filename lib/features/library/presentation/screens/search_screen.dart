@@ -81,130 +81,140 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
               ],
             ),
-            body: Column(
-              children: <Widget>[
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-                    children: <Widget>[
-                      for (final scope in SearchScopeFilter.values)
-                        Padding(
-                          padding: EdgeInsetsDirectional.only(
-                            end: tokens.spacingSm,
+            body: SafeArea(
+              top: false,
+              child: Column(
+                children: <Widget>[
+                  SizedBox(
+                    height: 44,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacingMd,
+                      ),
+                      children: <Widget>[
+                        for (final scope in SearchScopeFilter.values)
+                          Padding(
+                            padding: EdgeInsetsDirectional.only(
+                              end: tokens.spacingSm,
+                            ),
+                            child: ChoiceChip(
+                              selected: state.scope == scope,
+                              label: Text(switch (scope) {
+                                SearchScopeFilter.all => l10n.searchFilterAll,
+                                SearchScopeFilter.songs => l10n.tabSongs,
+                                SearchScopeFilter.albums => l10n.tabAlbums,
+                                SearchScopeFilter.artists => l10n.tabArtists,
+                                SearchScopeFilter.playlists =>
+                                  l10n.tabPlaylists,
+                              }),
+                              onSelected: (_) => _searchCubit.setScope(scope),
+                            ),
                           ),
-                          child: ChoiceChip(
-                            selected: state.scope == scope,
-                            label: Text(switch (scope) {
-                              SearchScopeFilter.all => l10n.searchFilterAll,
-                              SearchScopeFilter.songs => l10n.tabSongs,
-                              SearchScopeFilter.albums => l10n.tabAlbums,
-                              SearchScopeFilter.artists => l10n.tabArtists,
-                              SearchScopeFilter.playlists => l10n.tabPlaylists,
-                            }),
-                            onSelected: (_) => _searchCubit.setScope(scope),
-                          ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: state.query.trim().isEmpty
-                      ? _RecentSearchesList(
-                          queries: state.recentQueries,
-                          onSelect: (q) {
-                            _controller.text = q;
-                            _searchCubit.search(
-                              q,
-                              minDurationSec: settings.minTrackDurationSec,
-                            );
-                          },
-                          onClearAll: _searchCubit.clearRecent,
-                        )
-                      : !state.hasAnyResult && !state.isSearching
-                      ? Center(child: Text(l10n.searchNoResults(state.query)))
-                      : ListView(
-                          children: <Widget>[
-                            if ((state.scope == SearchScopeFilter.all ||
-                                    state.scope == SearchScopeFilter.albums) &&
-                                state.albums.isNotEmpty) ...<Widget>[
-                              _SectionHeader(title: l10n.tabAlbums),
-                              for (final album in state.albums.take(6))
-                                ListTile(
-                                  leading: WetarArtworkImage(
-                                    cacheKey: album.albumKey,
-                                    size: 46,
-                                    artworkUri: album.representative.artworkUri,
-                                    filePath: album.representative.filePath,
-                                    thumbnailCache: thumbCache,
-                                  ),
-                                  title: Text(album.name),
-                                  subtitle: Text(album.artist),
-                                  onTap: () {
-                                    _searchCubit.commitRecentSearch(
-                                      state.query,
-                                    );
-                                    context.read<PlayerCubit>().playTracks(
-                                      album.tracks,
-                                    );
-                                  },
-                                ),
-                            ],
-                            if ((state.scope == SearchScopeFilter.all ||
-                                    state.scope == SearchScopeFilter.artists) &&
-                                state.artists.isNotEmpty) ...<Widget>[
-                              _SectionHeader(title: l10n.tabArtists),
-                              for (final artist in state.artists.take(6))
-                                ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: tokens.surfaceElevated,
-                                    child: const Icon(Icons.person_rounded),
-                                  ),
-                                  title: Text(artist.name),
-                                  subtitle: Text(
-                                    l10n.foldersTrackCount(
-                                      artist.tracks.length,
+                  Expanded(
+                    child: state.query.trim().isEmpty
+                        ? _RecentSearchesList(
+                            queries: state.recentQueries,
+                            onSelect: (q) {
+                              _controller.text = q;
+                              _searchCubit.search(
+                                q,
+                                minDurationSec: settings.minTrackDurationSec,
+                              );
+                            },
+                            onClearAll: _searchCubit.clearRecent,
+                          )
+                        : !state.hasAnyResult && !state.isSearching
+                        ? Center(child: Text(l10n.searchNoResults(state.query)))
+                        : ListView(
+                            padding: EdgeInsets.only(bottom: tokens.spacingLg),
+                            children: <Widget>[
+                              if ((state.scope == SearchScopeFilter.all ||
+                                      state.scope ==
+                                          SearchScopeFilter.albums) &&
+                                  state.albums.isNotEmpty) ...<Widget>[
+                                _SectionHeader(title: l10n.tabAlbums),
+                                for (final album in state.albums.take(6))
+                                  ListTile(
+                                    leading: WetarArtworkImage(
+                                      cacheKey: album.albumKey,
+                                      size: 46,
+                                      artworkUri:
+                                          album.representative.artworkUri,
+                                      filePath: album.representative.filePath,
+                                      thumbnailCache: thumbCache,
                                     ),
+                                    title: Text(album.name),
+                                    subtitle: Text(album.artist),
+                                    onTap: () {
+                                      _searchCubit.commitRecentSearch(
+                                        state.query,
+                                      );
+                                      context.read<PlayerCubit>().playTracks(
+                                        album.tracks,
+                                      );
+                                    },
                                   ),
-                                  onTap: () {
-                                    _searchCubit.commitRecentSearch(
-                                      state.query,
-                                    );
-                                    context.read<PlayerCubit>().playTracks(
-                                      artist.tracks,
-                                    );
-                                  },
-                                ),
+                              ],
+                              if ((state.scope == SearchScopeFilter.all ||
+                                      state.scope ==
+                                          SearchScopeFilter.artists) &&
+                                  state.artists.isNotEmpty) ...<Widget>[
+                                _SectionHeader(title: l10n.tabArtists),
+                                for (final artist in state.artists.take(6))
+                                  ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: tokens.surfaceElevated,
+                                      child: const Icon(Icons.person_rounded),
+                                    ),
+                                    title: Text(artist.name),
+                                    subtitle: Text(
+                                      l10n.foldersTrackCount(
+                                        artist.tracks.length,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      _searchCubit.commitRecentSearch(
+                                        state.query,
+                                      );
+                                      context.read<PlayerCubit>().playTracks(
+                                        artist.tracks,
+                                      );
+                                    },
+                                  ),
+                              ],
+                              if ((state.scope == SearchScopeFilter.all ||
+                                      state.scope == SearchScopeFilter.songs) &&
+                                  state.tracks.isNotEmpty) ...<Widget>[
+                                _SectionHeader(title: l10n.tabSongs),
+                                for (var i = 0; i < state.tracks.length; i++)
+                                  TrackListTile(
+                                    track: state.tracks[i],
+                                    isPlayingTrack: false,
+                                    showArtwork: true,
+                                    numeralStyle: settings.numeralStyle,
+                                    thumbnailCache: thumbCache,
+                                    onTap: () {
+                                      _searchCubit.commitRecentSearch(
+                                        state.query,
+                                      );
+                                      context.read<PlayerCubit>().playTracks(
+                                        state.tracks,
+                                        index: i,
+                                      );
+                                    },
+                                    onMorePressed: () => widget
+                                        .onOpenTrackDetails(state.tracks[i]),
+                                  ),
+                              ],
                             ],
-                            if ((state.scope == SearchScopeFilter.all ||
-                                    state.scope == SearchScopeFilter.songs) &&
-                                state.tracks.isNotEmpty) ...<Widget>[
-                              _SectionHeader(title: l10n.tabSongs),
-                              for (var i = 0; i < state.tracks.length; i++)
-                                TrackListTile(
-                                  track: state.tracks[i],
-                                  isPlayingTrack: false,
-                                  showArtwork: true,
-                                  numeralStyle: settings.numeralStyle,
-                                  thumbnailCache: thumbCache,
-                                  onTap: () {
-                                    _searchCubit.commitRecentSearch(
-                                      state.query,
-                                    );
-                                    context.read<PlayerCubit>().playTracks(
-                                      state.tracks,
-                                      index: i,
-                                    );
-                                  },
-                                  onMorePressed: () => widget
-                                      .onOpenTrackDetails(state.tracks[i]),
-                                ),
-                            ],
-                          ],
-                        ),
-                ),
-              ],
+                          ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -262,6 +272,7 @@ class _RecentSearchesList extends StatelessWidget {
       );
     }
     return ListView(
+      padding: EdgeInsets.only(bottom: tokens.spacingLg),
       children: <Widget>[
         Padding(
           padding: EdgeInsets.symmetric(

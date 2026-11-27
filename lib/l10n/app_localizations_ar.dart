@@ -1138,6 +1138,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statsSharePoster => 'مشاركة بطاقة الملخص';
 
   @override
+  String statsDurationSeconds(String seconds) {
+    return '$seconds ث';
+  }
+
+  @override
+  String statsDurationMinutes(String minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String statsDurationHoursMinutes(String hours, String minutes) {
+    return '$hours س $minutes د';
+  }
+
+  @override
+  String get statsResetTitle => 'تصفير إحصائيات الاستماع؟';
+
+  @override
+  String get statsResetBody =>
+      'سيؤدي هذا إلى مسح وقت الاستماع وعدد مرات التشغيل المسجلة للبدء من جديد.';
+
+  @override
+  String get statsResetSuccess => 'تم تصفير إحصائيات الاستماع';
+
+  @override
   String get cacheClearButton => 'مسح الملفات المؤقتة';
 
   @override

@@ -110,7 +110,12 @@ class PlaylistsScreen extends StatelessWidget {
     final content = BlocBuilder<PlaylistsCubit, PlaylistsState>(
       builder: (context, state) {
         return ListView(
-          padding: EdgeInsets.all(tokens.spacingMd),
+          padding: EdgeInsets.fromLTRB(
+            tokens.spacingMd,
+            tokens.spacingMd,
+            tokens.spacingMd,
+            tokens.spacingLg,
+          ),
           children: <Widget>[
             Wrap(
               spacing: tokens.spacingSm,
@@ -293,7 +298,7 @@ class PlaylistsScreen extends StatelessWidget {
     if (embedded) return content;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.navPlaylists)),
-      body: content,
+      body: SafeArea(top: false, child: content),
     );
   }
 }
@@ -470,73 +475,78 @@ class _PlaylistTracksViewState extends State<_PlaylistTracksView> {
           ),
         ],
       ),
-      body: _tracks.isEmpty
-          ? Center(child: Text(l10n.libraryFilteredEmpty))
-          : widget.playlistId == null
-          ? ListView.builder(
-              itemExtent: effectiveExtent,
-              itemCount: _tracks.length,
-              itemBuilder: (ctx, i) => TrackListTile(
-                track: _tracks[i],
-                isPlayingTrack: false,
-                showArtwork: true,
-                numeralStyle: numerals,
-                thumbnailCache: thumbCache,
-                onTap: () =>
-                    context.read<PlayerCubit>().playTracks(_tracks, index: i),
-                onMorePressed: widget.onOpenTrackDetails == null
-                    ? null
-                    : () => widget.onOpenTrackDetails!(_tracks[i]),
-              ),
-            )
-          : ReorderableListView.builder(
-              itemExtent: effectiveExtent,
-              itemCount: _tracks.length,
-              onReorderItem: (oldIndex, newIndex) async {
-                if (oldIndex < 0 || oldIndex >= _tracks.length) return;
-                setState(() {
-                  final moved = _tracks.removeAt(oldIndex);
-                  final safeNew = newIndex.clamp(0, _tracks.length);
-                  _tracks.insert(safeNew, moved);
-                });
-                await context.read<PlaylistsCubit>().reorderTracks(
-                  widget.playlistId!,
-                  _tracks,
-                );
-              },
-              itemBuilder: (ctx, i) {
-                final t = _tracks[i];
-                return Dismissible(
-                  key: ValueKey<String>(t.stableKey),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) async {
-                    final removed = _tracks[i];
-                    setState(() => _tracks.removeAt(i));
-                    await context.read<PlaylistsCubit>().removeTrack(
-                      widget.playlistId!,
-                      removed.stableKey,
-                    );
-                  },
-                  child: Material(
-                    color: Colors.transparent,
-                    child: TrackListTile(
-                      track: t,
-                      isPlayingTrack: false,
-                      showArtwork: true,
-                      numeralStyle: numerals,
-                      thumbnailCache: thumbCache,
-                      onTap: () => context.read<PlayerCubit>().playTracks(
-                        _tracks,
-                        index: i,
+      body: SafeArea(
+        top: false,
+        child: _tracks.isEmpty
+            ? Center(child: Text(l10n.libraryFilteredEmpty))
+            : widget.playlistId == null
+            ? ListView.builder(
+                padding: EdgeInsets.only(bottom: tokens.spacingLg),
+                itemExtent: effectiveExtent,
+                itemCount: _tracks.length,
+                itemBuilder: (ctx, i) => TrackListTile(
+                  track: _tracks[i],
+                  isPlayingTrack: false,
+                  showArtwork: true,
+                  numeralStyle: numerals,
+                  thumbnailCache: thumbCache,
+                  onTap: () =>
+                      context.read<PlayerCubit>().playTracks(_tracks, index: i),
+                  onMorePressed: widget.onOpenTrackDetails == null
+                      ? null
+                      : () => widget.onOpenTrackDetails!(_tracks[i]),
+                ),
+              )
+            : ReorderableListView.builder(
+                padding: EdgeInsets.only(bottom: tokens.spacingLg),
+                itemExtent: effectiveExtent,
+                itemCount: _tracks.length,
+                onReorderItem: (oldIndex, newIndex) async {
+                  if (oldIndex < 0 || oldIndex >= _tracks.length) return;
+                  setState(() {
+                    final moved = _tracks.removeAt(oldIndex);
+                    final safeNew = newIndex.clamp(0, _tracks.length);
+                    _tracks.insert(safeNew, moved);
+                  });
+                  await context.read<PlaylistsCubit>().reorderTracks(
+                    widget.playlistId!,
+                    _tracks,
+                  );
+                },
+                itemBuilder: (ctx, i) {
+                  final t = _tracks[i];
+                  return Dismissible(
+                    key: ValueKey<String>(t.stableKey),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (_) async {
+                      final removed = _tracks[i];
+                      setState(() => _tracks.removeAt(i));
+                      await context.read<PlaylistsCubit>().removeTrack(
+                        widget.playlistId!,
+                        removed.stableKey,
+                      );
+                    },
+                    child: Material(
+                      color: Colors.transparent,
+                      child: TrackListTile(
+                        track: t,
+                        isPlayingTrack: false,
+                        showArtwork: true,
+                        numeralStyle: numerals,
+                        thumbnailCache: thumbCache,
+                        onTap: () => context.read<PlayerCubit>().playTracks(
+                          _tracks,
+                          index: i,
+                        ),
+                        onMorePressed: widget.onOpenTrackDetails == null
+                            ? null
+                            : () => widget.onOpenTrackDetails!(t),
                       ),
-                      onMorePressed: widget.onOpenTrackDetails == null
-                          ? null
-                          : () => widget.onOpenTrackDetails!(t),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:wetar/features/personalization/domain/appearance_settings.dart';
@@ -364,6 +365,19 @@ class WetarTokenResolver {
     );
   }
 
+  static SystemUiOverlayStyle systemOverlayStyle(WetarTokens tokens) {
+    final iconBrightness = tokens.isDark ? Brightness.light : Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: iconBrightness,
+      statusBarBrightness: tokens.isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: iconBrightness,
+      systemNavigationBarContrastEnforced: false,
+    );
+  }
+
   static ThemeData buildThemeData(
     AppearanceSettings settings, {
     required Brightness platformBrightness,
@@ -473,6 +487,7 @@ class WetarTokenResolver {
         foregroundColor: tokens.inkPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
+        systemOverlayStyle: systemOverlayStyle(tokens),
       ),
       navigationBarTheme: NavigationBarThemeData(
         labelTextStyle: WidgetStateProperty.resolveWith((states) {

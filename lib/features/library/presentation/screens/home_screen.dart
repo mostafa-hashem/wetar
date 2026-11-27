@@ -60,107 +60,110 @@ class HomeScreen extends StatelessWidget {
         surfaceLocation: BackgroundScope.homeAndPlayer,
         activeTrack: playerState.currentTrack,
         isPlaying: playerState.isPlaying,
-        child: CustomScrollView(
-          slivers: <Widget>[
-            SliverAppBar(
-              floating: true,
-              backgroundColor: Colors.transparent,
-              title: Text(l10n.appName),
-              actions: <Widget>[
-                IconButton(
-                  tooltip: l10n.actionSearch,
-                  icon: const Icon(Icons.search_rounded),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => SearchScreen(
-                        onOpenTrackDetails: onOpenTrackDetails,
-                        onAddToPlaylistRequested: onAddToPlaylistRequested,
+        child: SafeArea(
+          top: false,
+          child: CustomScrollView(
+            slivers: <Widget>[
+              SliverAppBar(
+                floating: true,
+                backgroundColor: Colors.transparent,
+                title: Text(l10n.appName),
+                actions: <Widget>[
+                  IconButton(
+                    tooltip: l10n.actionSearch,
+                    icon: const Icon(Icons.search_rounded),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SearchScreen(
+                          onOpenTrackDetails: onOpenTrackDetails,
+                          onAddToPlaylistRequested: onAddToPlaylistRequested,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                IconButton(
-                  tooltip: l10n.playerCarMode,
-                  icon: const Icon(Icons.directions_car_outlined),
-                  onPressed: onOpenCarMode,
-                ),
-              ],
-            ),
-            if (foldersState.selectedFolders.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(tokens.spacingLg),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(
-                          Icons.folder_open_rounded,
-                          size: 62,
-                          color: tokens.accentPrimary,
-                        ),
-                        SizedBox(height: tokens.spacingMd),
-                        Text(
-                          l10n.foldersEmptyTitle,
-                          style: Theme.of(context).textTheme.titleLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: tokens.spacingSm),
-                        Text(
-                          l10n.foldersEmptySubtitle,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: tokens.inkMuted),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: tokens.spacingLg),
-                        FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: tokens.accentPrimary,
+                  IconButton(
+                    tooltip: l10n.playerCarMode,
+                    icon: const Icon(Icons.directions_car_outlined),
+                    onPressed: onOpenCarMode,
+                  ),
+                ],
+              ),
+              if (foldersState.selectedFolders.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(tokens.spacingLg),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(
+                            Icons.folder_open_rounded,
+                            size: 62,
+                            color: tokens.accentPrimary,
                           ),
-                          onPressed: () async {
-                            if (sl<PlatformCapabilities>()
-                                .supportsInAppFolderPicker) {
-                              await Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const FolderPickerScreen(),
-                                ),
-                              );
-                            } else {
-                              await context
-                                  .read<MusicFoldersCubit>()
-                                  .pickSystemFolder();
-                            }
-                          },
-                          icon: const Icon(Icons.add_rounded),
-                          label: Text(l10n.foldersChooseCta),
-                        ),
-                      ],
+                          SizedBox(height: tokens.spacingMd),
+                          Text(
+                            l10n.foldersEmptyTitle,
+                            style: Theme.of(context).textTheme.titleLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: tokens.spacingSm),
+                          Text(
+                            l10n.foldersEmptySubtitle,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: tokens.inkMuted),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: tokens.spacingLg),
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: tokens.accentPrimary,
+                            ),
+                            onPressed: () async {
+                              if (sl<PlatformCapabilities>()
+                                  .supportsInAppFolderPicker) {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const FolderPickerScreen(),
+                                  ),
+                                );
+                              } else {
+                                await context
+                                    .read<MusicFoldersCubit>()
+                                    .pickSystemFolder();
+                              }
+                            },
+                            icon: const Icon(Icons.add_rounded),
+                            label: Text(l10n.foldersChooseCta),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                )
+              else
+                SliverPadding(
+                  padding: EdgeInsets.all(tokens.spacingMd),
+                  sliver: SliverList.separated(
+                    itemCount: visibleBlocks.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: tokens.spacingLg),
+                    itemBuilder: (context, index) {
+                      return _buildBlock(
+                        context,
+                        block: visibleBlocks[index],
+                        libState: libState,
+                        foldersState: foldersState,
+                        playerState: playerState,
+                        numerals: numerals,
+                        thumbCache: thumbCache,
+                      );
+                    },
+                  ),
                 ),
-              )
-            else
-              SliverPadding(
-                padding: EdgeInsets.all(tokens.spacingMd),
-                sliver: SliverList.separated(
-                  itemCount: visibleBlocks.length,
-                  separatorBuilder: (context, index) =>
-                      SizedBox(height: tokens.spacingLg),
-                  itemBuilder: (context, index) {
-                    return _buildBlock(
-                      context,
-                      block: visibleBlocks[index],
-                      libState: libState,
-                      foldersState: foldersState,
-                      playerState: playerState,
-                      numerals: numerals,
-                      thumbCache: thumbCache,
-                    );
-                  },
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

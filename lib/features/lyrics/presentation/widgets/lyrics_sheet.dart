@@ -92,147 +92,155 @@ class _LyricsSheetState extends State<LyricsSheet> {
                   ),
               ],
             ),
-            body: Column(
-              children: <Widget>[
-                if (track != null)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: tokens.spacingMd,
-                      vertical: tokens.spacingXs,
+            body: SafeArea(
+              top: false,
+              child: Column(
+                children: <Widget>[
+                  if (track != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacingMd,
+                        vertical: tokens.spacingXs,
+                      ),
+                      color: tokens.surface,
+                      child: Row(
+                        children: <Widget>[
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: () => context
+                                .read<LyricsCubit>()
+                                .adjustOffset(track, -200),
+                          ),
+                          Expanded(
+                            child: Text(
+                              l10n.lyricsOffsetLabel(lyricsState.userOffsetMs),
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: () => context
+                                .read<LyricsCubit>()
+                                .adjustOffset(track, 200),
+                          ),
+                        ],
+                      ),
                     ),
-                    color: tokens.surface,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
                     child: Row(
                       children: <Widget>[
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => context
-                              .read<LyricsCubit>()
-                              .adjustOffset(track, -200),
+                        Text(
+                          l10n.lyricsFontSize,
+                          style: Theme.of(context).textTheme.labelSmall,
                         ),
                         Expanded(
-                          child: Text(
-                            l10n.lyricsOffsetLabel(lyricsState.userOffsetMs),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.labelMedium,
+                          child: Slider(
+                            min: 14,
+                            max: 30,
+                            value: lyricsState.fontSize.clamp(14.0, 30.0),
+                            onChanged: (v) =>
+                                context.read<LyricsCubit>().setFontSize(v),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
-                          onPressed: () => context
-                              .read<LyricsCubit>()
-                              .adjustOffset(track, 200),
                         ),
                       ],
                     ),
                   ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-                  child: Row(
-                    children: <Widget>[
-                      Text(
-                        l10n.lyricsFontSize,
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                      Expanded(
-                        child: Slider(
-                          min: 14,
-                          max: 30,
-                          value: lyricsState.fontSize.clamp(14.0, 30.0),
-                          onChanged: (v) =>
-                              context.read<LyricsCubit>().setFontSize(v),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: lyricsState.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : lyricsState.parsed.lines.isEmpty
-                      ? Center(
-                          child: SingleChildScrollView(
-                            padding: EdgeInsets.all(tokens.spacingLg),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Icon(
-                                  Icons.lyrics_outlined,
-                                  size: 52,
-                                  color: tokens.accentPrimary,
-                                ),
-                                SizedBox(height: tokens.spacingMd),
-                                Text(
-                                  l10n.lyricsEmptyTitle,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
-                                ),
-                                SizedBox(height: tokens.spacingSm),
-                                Text(
-                                  l10n.lyricsEmptyBody,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                if (track != null) ...<Widget>[
-                                  SizedBox(height: tokens.spacingMd),
-                                  FilledButton.tonalIcon(
-                                    onPressed: () => context
-                                        .read<LyricsCubit>()
-                                        .attachLrcFromPicker(track),
-                                    icon: const Icon(Icons.file_open_outlined),
-                                    label: Text(l10n.lyricsAttachLrc),
+                  Expanded(
+                    child: lyricsState.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : lyricsState.parsed.lines.isEmpty
+                        ? Center(
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.all(tokens.spacingLg),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.lyrics_outlined,
+                                    size: 52,
+                                    color: tokens.accentPrimary,
                                   ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: EdgeInsets.all(tokens.spacingLg),
-                          itemCount: lyricsState.parsed.lines.length,
-                          itemBuilder: (context, idx) {
-                            final line = lyricsState.parsed.lines[idx];
-                            final isActive = idx == activeIdx;
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(
-                                tokens.radiusCard,
-                              ),
-                              onTap: line.timestamp == null
-                                  ? null
-                                  : () =>
-                                        sl<PlayerCubit>().seek(line.timestamp!),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: tokens.spacingSm,
-                                  horizontal: tokens.spacingSm,
-                                ),
-                                child: Directionality(
-                                  textDirection: line.isRtl
-                                      ? TextDirection.rtl
-                                      : TextDirection.ltr,
-                                  child: Text(
-                                    line.text,
+                                  SizedBox(height: tokens.spacingMd),
+                                  Text(
+                                    l10n.lyricsEmptyTitle,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium,
+                                  ),
+                                  SizedBox(height: tokens.spacingSm),
+                                  Text(
+                                    l10n.lyricsEmptyBody,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: isActive
-                                          ? lyricsState.fontSize + 3
-                                          : lyricsState.fontSize,
-                                      fontWeight: isActive
-                                          ? FontWeight.w700
-                                          : FontWeight.w400,
-                                      color: isActive
-                                          ? tokens.accentPrimary
-                                          : tokens.inkMuted,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall,
+                                  ),
+                                  if (track != null) ...<Widget>[
+                                    SizedBox(height: tokens.spacingMd),
+                                    FilledButton.tonalIcon(
+                                      onPressed: () => context
+                                          .read<LyricsCubit>()
+                                          .attachLrcFromPicker(track),
+                                      icon: const Icon(
+                                        Icons.file_open_outlined,
+                                      ),
+                                      label: Text(l10n.lyricsAttachLrc),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: EdgeInsets.all(tokens.spacingLg),
+                            itemCount: lyricsState.parsed.lines.length,
+                            itemBuilder: (context, idx) {
+                              final line = lyricsState.parsed.lines[idx];
+                              final isActive = idx == activeIdx;
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(
+                                  tokens.radiusCard,
+                                ),
+                                onTap: line.timestamp == null
+                                    ? null
+                                    : () => sl<PlayerCubit>().seek(
+                                        line.timestamp!,
+                                      ),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: tokens.spacingSm,
+                                    horizontal: tokens.spacingSm,
+                                  ),
+                                  child: Directionality(
+                                    textDirection: line.isRtl
+                                        ? TextDirection.rtl
+                                        : TextDirection.ltr,
+                                    child: Text(
+                                      line.text,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: isActive
+                                            ? lyricsState.fontSize + 3
+                                            : lyricsState.fontSize,
+                                        fontWeight: isActive
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
+                                        color: isActive
+                                            ? tokens.accentPrimary
+                                            : tokens.inkMuted,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           );
         },

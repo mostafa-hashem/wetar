@@ -332,7 +332,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         if (track == null) {
           return Scaffold(
             appBar: AppBar(title: Text(l10n.playerNowPlaying)),
-            body: Center(child: Text(l10n.queueEmpty)),
+            body: SafeArea(
+              top: false,
+              child: Center(child: Text(l10n.queueEmpty)),
+            ),
           );
         }
 

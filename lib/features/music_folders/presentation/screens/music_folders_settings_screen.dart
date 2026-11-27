@@ -51,122 +51,130 @@ class MusicFoldersSettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<MusicFoldersCubit, MusicFoldersState>(
-        builder: (context, state) {
-          return Column(
-            children: <Widget>[
-              if (state.scanProgress.isScanning)
-                Material(
-                  color: tokens.surfaceElevated,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: tokens.spacingMd,
-                      vertical: tokens.spacingSm,
-                    ),
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                l10n.foldersScanProgress(
-                                  state.scanProgress.currentFolderName,
-                                  state.scanProgress.processedCount,
-                                  state.scanProgress.totalCount,
+      body: SafeArea(
+        top: false,
+        child: BlocBuilder<MusicFoldersCubit, MusicFoldersState>(
+          builder: (context, state) {
+            return Column(
+              children: <Widget>[
+                if (state.scanProgress.isScanning)
+                  Material(
+                    color: tokens.surfaceElevated,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacingMd,
+                        vertical: tokens.spacingSm,
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  l10n.foldersScanProgress(
+                                    state.scanProgress.currentFolderName,
+                                    state.scanProgress.processedCount,
+                                    state.scanProgress.totalCount,
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              SizedBox(height: tokens.spacingXs),
-                              LinearProgressIndicator(
-                                value: state.scanProgress.fraction,
-                              ),
-                            ],
+                                SizedBox(height: tokens.spacingXs),
+                                LinearProgressIndicator(
+                                  value: state.scanProgress.fraction,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            context.read<MusicFoldersCubit>().cancelScan();
-                            WetarFeedback.showInfo(
-                              context,
-                              l10n.foldersScanCancelled,
-                            );
-                          },
-                          child: Text(l10n.actionCancel),
-                        ),
-                      ],
+                          TextButton(
+                            onPressed: () {
+                              context.read<MusicFoldersCubit>().cancelScan();
+                              WetarFeedback.showInfo(
+                                context,
+                                l10n.foldersScanCancelled,
+                              );
+                            },
+                            child: Text(l10n.actionCancel),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              Expanded(
-                child: state.selectedFolders.isEmpty
-                    ? Center(
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.all(tokens.spacingLg),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Icon(
-                                Icons.folder_off_outlined,
-                                size: 56,
-                                color: tokens.accentPrimary,
-                              ),
-                              SizedBox(height: tokens.spacingMd),
-                              Text(
-                                l10n.foldersEmptyTitle,
-                                style: Theme.of(context).textTheme.titleLarge,
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: tokens.spacingSm),
-                              Text(
-                                l10n.foldersEmptySubtitle,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: tokens.inkMuted),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: tokens.spacingLg),
-                              FilledButton.icon(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: tokens.accentPrimary,
+                Expanded(
+                  child: state.selectedFolders.isEmpty
+                      ? Center(
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.all(tokens.spacingLg),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.folder_off_outlined,
+                                  size: 56,
+                                  color: tokens.accentPrimary,
                                 ),
-                                onPressed: () async {
-                                  if (caps.supportsInAppFolderPicker) {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) =>
-                                            const FolderPickerScreen(),
-                                      ),
-                                    );
-                                  } else {
-                                    await context
-                                        .read<MusicFoldersCubit>()
-                                        .pickSystemFolder();
-                                  }
-                                },
-                                icon: const Icon(Icons.folder_open_rounded),
-                                label: Text(l10n.foldersChooseCta),
-                              ),
-                            ],
+                                SizedBox(height: tokens.spacingMd),
+                                Text(
+                                  l10n.foldersEmptyTitle,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: tokens.spacingSm),
+                                Text(
+                                  l10n.foldersEmptySubtitle,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(color: tokens.inkMuted),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: tokens.spacingLg),
+                                FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: tokens.accentPrimary,
+                                  ),
+                                  onPressed: () async {
+                                    if (caps.supportsInAppFolderPicker) {
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) =>
+                                              const FolderPickerScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      await context
+                                          .read<MusicFoldersCubit>()
+                                          .pickSystemFolder();
+                                    }
+                                  },
+                                  icon: const Icon(Icons.folder_open_rounded),
+                                  label: Text(l10n.foldersChooseCta),
+                                ),
+                              ],
+                            ),
                           ),
+                        )
+                      : ListView.separated(
+                          padding: EdgeInsets.fromLTRB(
+                            tokens.spacingMd,
+                            tokens.spacingMd,
+                            tokens.spacingMd,
+                            tokens.spacingLg,
+                          ),
+                          itemCount: state.selectedFolders.length,
+                          separatorBuilder: (context, index) =>
+                              SizedBox(height: tokens.spacingSm),
+                          itemBuilder: (context, index) {
+                            final folder = state.selectedFolders[index];
+                            return _FolderCard(
+                              folder: folder,
+                              numerals: numerals,
+                            );
+                          },
                         ),
-                      )
-                    : ListView.separated(
-                        padding: EdgeInsets.all(tokens.spacingMd),
-                        itemCount: state.selectedFolders.length,
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: tokens.spacingSm),
-                        itemBuilder: (context, index) {
-                          final folder = state.selectedFolders[index];
-                          return _FolderCard(
-                            folder: folder,
-                            numerals: numerals,
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

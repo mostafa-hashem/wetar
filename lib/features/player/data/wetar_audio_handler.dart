@@ -16,6 +16,7 @@ import '../../library/data/library_repository.dart';
 import '../../library/domain/library_models.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../settings/domain/playback_settings.dart';
+import '../domain/listening_session_tracker.dart';
 import '../domain/queue_snapshot_codec.dart';
 import '../domain/replay_gain_math.dart';
 import '../domain/sleep_timer_config.dart';
@@ -87,7 +88,12 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   bool _resumeAfterInterruption = false;
   bool _isFading = false;
   int _lastPersistMs = 0;
-  String? _lastCountedTrackKey;
+  int _lastHistoryCheckpointMs = 0;
+  int _lastObservedPosMs = 0;
+  int _lastManualSeekEpochMs = 0;
+  final ListeningSessionTracker _listeningTracker = ListeningSessionTracker();
+  final Map<int, int> _sessionHistoryRowIds = <int, int>{};
+  Future<void> _listeningFlushTail = Future<void>.value();
   Timer? _sleepTimerTicker;
   StreamSubscription<PlaybackEvent>? _eventSub;
   StreamSubscription<int?>? _indexSub;
@@ -204,6 +210,11 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     });
 
     _playerStateSub = _player.playerStateStream.listen((state) {
+      unawaited(
+        _enqueueListeningFlush(
+          _listeningTracker.onAudibleStateChanged(_isActivelyAudible),
+        ),
+      );
       if (state.processingState == ProcessingState.completed) {
         unawaited(_handleQueueCompleted());
       }
@@ -408,7 +419,56 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     await _persistQueueSnapshot(force: true);
   }
 
+  bool get _isActivelyAudible =>
+      _player.playing && _player.processingState == ProcessingState.ready;
+
+  /// Flushes accumulated listening time for the current track session to storage.
+  Future<void> flushListeningSession({bool endSession = false}) {
+    final flush = endSession
+        ? _listeningTracker.endCurrentSession()
+        : _listeningTracker.checkpoint();
+    return _enqueueListeningFlush(flush);
+  }
+
+  Future<void> _enqueueListeningFlush(ListeningSessionFlush? flush) {
+    if (flush == null) return _listeningFlushTail;
+    _listeningFlushTail = _listeningFlushTail
+        .catchError((_) {})
+        .then((_) => _applyListeningFlush(flush));
+    return _listeningFlushTail;
+  }
+
+  Future<void> _applyListeningFlush(ListeningSessionFlush flush) async {
+    try {
+      if (flush.shouldPersistHistory) {
+        final existingId = _sessionHistoryRowIds[flush.sessionId];
+        final rowId = await _libraryRepo.upsertPlayHistorySession(
+          eventId: existingId,
+          track: flush.track,
+          playedAtMs: flush.startedAtEpochMs,
+          listenedMs: flush.listenedMs,
+        );
+        if (rowId != null && !flush.isSessionEnded) {
+          _sessionHistoryRowIds[flush.sessionId] = rowId;
+        }
+      }
+      if (flush.recordPlayCountNow) {
+        await _libraryRepo.incrementTrackPlayCount(
+          flush.track,
+          playedAtMs: flush.startedAtEpochMs,
+        );
+      }
+    } catch (e, st) {
+      AppLogger.warn('AudioHandler', 'Listening history flush failed: $e\n$st');
+    } finally {
+      if (flush.isSessionEnded) {
+        _sessionHistoryRowIds.remove(flush.sessionId);
+      }
+    }
+  }
+
   Future<void> clearQueue() async {
+    await flushListeningSession(endSession: true);
     await _player.stop();
     _queueTracksSubject.add(const <WetarTrack>[]);
     _currentIndexSubject.add(0);
@@ -480,11 +540,20 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
       isPlaying: _player.playing,
     );
 
+    if (indexChanged ||
+        _listeningTracker.activeTrack?.stableKey != track.stableKey) {
+      unawaited(
+        _enqueueListeningFlush(
+          _listeningTracker.onTrackChanged(
+            track,
+            isActivelyAudible: _isActivelyAudible,
+          ),
+        ),
+      );
+      _lastObservedPosMs = _player.position.inMilliseconds;
+    }
+
     if (indexChanged) {
-      if (_lastCountedTrackKey != track.stableKey) {
-        _lastCountedTrackKey = track.stableKey;
-        unawaited(_libraryRepo.recordTrackPlay(track));
-      }
       _checkAfterTracksSleepTimer();
       await _persistQueueSnapshot(force: true);
     }
@@ -597,7 +666,29 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
       return;
     }
 
+    final posMs = pos.inMilliseconds;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final recentlySought = nowMs - _lastManualSeekEpochMs < 1500;
+    if (!recentlySought &&
+        _repeatModeSubject.value == WetarRepeatMode.one &&
+        _lastObservedPosMs > 5000 &&
+        posMs < 1500 &&
+        _listeningTracker.currentSessionListenedMs() >= 3000) {
+      unawaited(
+        _enqueueListeningFlush(
+          _listeningTracker.rotateLoopOneSession(
+            isActivelyAudible: _isActivelyAudible,
+          ),
+        ),
+      );
+    }
+    _lastObservedPosMs = posMs;
+
+    if (_isActivelyAudible && nowMs - _lastHistoryCheckpointMs >= 5000) {
+      _lastHistoryCheckpointMs = nowMs;
+      unawaited(flushListeningSession());
+    }
+
     if (_player.playing && nowMs - _lastPersistMs >= 10000) {
       unawaited(_persistQueueSnapshot());
     }
@@ -607,6 +698,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
     if (_sleepTimerSubject.value.mode == SleepTimerMode.endOfTrack) {
       cancelSleepTimer();
     }
+    await flushListeningSession();
     await _persistQueueSnapshot(force: true);
   }
 
@@ -654,6 +746,7 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
       );
     }
     await _player.pause();
+    await flushListeningSession();
     await _player.setVolume(_targetTrackVolume());
     await _persistQueueSnapshot(force: true);
     await _systemService.updateHomeWidget(
@@ -682,7 +775,11 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> seek(Duration position) => _player.seek(position);
+  Future<void> seek(Duration position) {
+    _lastManualSeekEpochMs = DateTime.now().millisecondsSinceEpoch;
+    _lastObservedPosMs = position.inMilliseconds;
+    return _player.seek(position);
+  }
 
   @override
   Future<void> skipToNext() async {
@@ -841,18 +938,21 @@ class WetarAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> onTaskRemoved() async {
+    await flushListeningSession(endSession: true);
     await _persistQueueSnapshot(force: true);
     await super.onTaskRemoved();
   }
 
   @override
   Future<void> stop() async {
+    await flushListeningSession(endSession: true);
     await _persistQueueSnapshot(force: true);
     await _player.stop();
     await super.stop();
   }
 
   Future<void> disposeHandler() async {
+    await flushListeningSession(endSession: true);
     _sleepTimerTicker?.cancel();
     await _eventSub?.cancel();
     await _indexSub?.cancel();

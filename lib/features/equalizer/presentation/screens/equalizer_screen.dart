@@ -61,12 +61,15 @@ class EqualizerScreen extends StatelessWidget {
         if (!state.isAvailable) {
           return Scaffold(
             appBar: AppBar(title: Text(l10n.playerEqualizer)),
-            body: Center(
-              child: Padding(
-                padding: EdgeInsets.all(tokens.spacingLg),
-                child: Text(
-                  l10n.equalizerUnavailable,
-                  textAlign: TextAlign.center,
+            body: SafeArea(
+              top: false,
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(tokens.spacingLg),
+                  child: Text(
+                    l10n.equalizerUnavailable,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ),
@@ -89,155 +92,167 @@ class EqualizerScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: ListView(
-            padding: EdgeInsets.all(tokens.spacingMd),
-            children: <Widget>[
-              // Frequency response curve graph
-              Container(
-                height: 150,
-                padding: EdgeInsets.all(tokens.spacingMd),
-                decoration: BoxDecoration(
-                  color: tokens.surface,
-                  borderRadius: BorderRadius.circular(tokens.radiusCard),
-                  border: Border.all(color: tokens.borderSubtle),
-                ),
-                child: CustomPaint(
-                  painter: _EqCurvePainter(
-                    bands: state.bands,
-                    minDb: state.minDb,
-                    maxDb: state.maxDb,
-                    enabled: state.isEnabled,
-                    accent: tokens.accentPrimary,
-                    secondary: tokens.accentSecondary,
-                    gridColor: tokens.borderSubtle,
-                  ),
-                ),
+          body: SafeArea(
+            top: false,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                tokens.spacingMd,
+                tokens.spacingMd,
+                tokens.spacingMd,
+                tokens.spacingLg,
               ),
-              SizedBox(height: tokens.spacingMd),
-
-              // Preset chips
-              SizedBox(
-                height: 44,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: state.presets.length,
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: tokens.spacingSm),
-                  itemBuilder: (context, idx) {
-                    final preset = state.presets[idx];
-                    final selected = state.activePresetName == preset.name;
-                    return InputChip(
-                      selected: selected,
-                      label: Text(preset.name),
-                      onSelected: (_) => cubit.applyPreset(preset),
-                      onDeleted: preset.isCustom
-                          ? () => cubit.deleteCustomPreset(preset.name)
-                          : null,
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: tokens.spacingMd),
-
-              // Band sliders
-              Card(
-                child: Padding(
+              children: <Widget>[
+                // Frequency response curve graph
+                Container(
+                  height: 150,
                   padding: EdgeInsets.all(tokens.spacingMd),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: state.bands.map((band) {
-                      return Expanded(
-                        child: Column(
-                          children: <Widget>[
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                band.gainDb.toStringAsFixed(1),
-                                maxLines: 1,
-                                softWrap: false,
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                            ),
-                            SizedBox(
-                              height: 180,
-                              child: RotatedBox(
-                                quarterTurns: 3,
-                                child: Slider(
-                                  min: state.minDb,
-                                  max: state.maxDb,
-                                  value: band.gainDb.clamp(
-                                    state.minDb,
-                                    state.maxDb,
-                                  ),
-                                  activeColor: state.isEnabled
-                                      ? tokens.accentPrimary
-                                      : tokens.inkMuted,
-                                  onChanged: state.isEnabled
-                                      ? (v) => cubit.setBandGain(band.index, v)
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                _formatHz(band.centerFreqHz),
-                                maxLines: 1,
-                                softWrap: false,
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                  decoration: BoxDecoration(
+                    color: tokens.surface,
+                    borderRadius: BorderRadius.circular(tokens.radiusCard),
+                    border: Border.all(color: tokens.borderSubtle),
                   ),
-                ),
-              ),
-              SizedBox(height: tokens.spacingMd),
-
-              if (caps.supportsBassBoost)
-                WetarSliderTile(
-                  title: l10n.equalizerBassBoost,
-                  valueLabel: '${(state.bassBoostStrength / 10).round()}%',
-                  min: 0,
-                  max: 1000,
-                  value: state.bassBoostStrength.toDouble(),
-                  activeColor: tokens.accentPrimary,
-                  onChanged: (v) => cubit.setBassBoost(v.round()),
-                ),
-              if (caps.supportsVirtualizer)
-                WetarSliderTile(
-                  title: l10n.equalizerVirtualizer,
-                  valueLabel: '${(state.virtualizerStrength / 10).round()}%',
-                  min: 0,
-                  max: 1000,
-                  value: state.virtualizerStrength.toDouble(),
-                  activeColor: tokens.accentSecondary,
-                  onChanged: (v) => cubit.setVirtualizer(v.round()),
-                ),
-              if (caps.supportsLoudnessEnhancer) ...<Widget>[
-                WetarSliderTile(
-                  title: l10n.equalizerLoudness,
-                  valueLabel: '+${state.loudnessGainDb.toStringAsFixed(1)} dB',
-                  min: 0,
-                  max: 12,
-                  divisions: 24,
-                  value: state.loudnessGainDb,
-                  activeColor: tokens.accentPrimary,
-                  onChanged: cubit.setLoudnessGain,
-                ),
-                if (state.loudnessGainDb >= 6.0)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-                    child: Text(
-                      l10n.equalizerLoudnessWarning,
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: tokens.danger),
+                  child: CustomPaint(
+                    painter: _EqCurvePainter(
+                      bands: state.bands,
+                      minDb: state.minDb,
+                      maxDb: state.maxDb,
+                      enabled: state.isEnabled,
+                      accent: tokens.accentPrimary,
+                      secondary: tokens.accentSecondary,
+                      gridColor: tokens.borderSubtle,
                     ),
                   ),
+                ),
+                SizedBox(height: tokens.spacingMd),
+
+                // Preset chips
+                SizedBox(
+                  height: 44,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: state.presets.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(width: tokens.spacingSm),
+                    itemBuilder: (context, idx) {
+                      final preset = state.presets[idx];
+                      final selected = state.activePresetName == preset.name;
+                      return InputChip(
+                        selected: selected,
+                        label: Text(preset.name),
+                        onSelected: (_) => cubit.applyPreset(preset),
+                        onDeleted: preset.isCustom
+                            ? () => cubit.deleteCustomPreset(preset.name)
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(height: tokens.spacingMd),
+
+                // Band sliders
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(tokens.spacingMd),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: state.bands.map((band) {
+                        return Expanded(
+                          child: Column(
+                            children: <Widget>[
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  band.gainDb.toStringAsFixed(1),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                              ),
+                              SizedBox(
+                                height: 180,
+                                child: RotatedBox(
+                                  quarterTurns: 3,
+                                  child: Slider(
+                                    min: state.minDb,
+                                    max: state.maxDb,
+                                    value: band.gainDb.clamp(
+                                      state.minDb,
+                                      state.maxDb,
+                                    ),
+                                    activeColor: state.isEnabled
+                                        ? tokens.accentPrimary
+                                        : tokens.inkMuted,
+                                    onChanged: state.isEnabled
+                                        ? (v) =>
+                                              cubit.setBandGain(band.index, v)
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  _formatHz(band.centerFreqHz),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                SizedBox(height: tokens.spacingMd),
+
+                if (caps.supportsBassBoost)
+                  WetarSliderTile(
+                    title: l10n.equalizerBassBoost,
+                    valueLabel: '${(state.bassBoostStrength / 10).round()}%',
+                    min: 0,
+                    max: 1000,
+                    value: state.bassBoostStrength.toDouble(),
+                    activeColor: tokens.accentPrimary,
+                    onChanged: (v) => cubit.setBassBoost(v.round()),
+                  ),
+                if (caps.supportsVirtualizer)
+                  WetarSliderTile(
+                    title: l10n.equalizerVirtualizer,
+                    valueLabel: '${(state.virtualizerStrength / 10).round()}%',
+                    min: 0,
+                    max: 1000,
+                    value: state.virtualizerStrength.toDouble(),
+                    activeColor: tokens.accentSecondary,
+                    onChanged: (v) => cubit.setVirtualizer(v.round()),
+                  ),
+                if (caps.supportsLoudnessEnhancer) ...<Widget>[
+                  WetarSliderTile(
+                    title: l10n.equalizerLoudness,
+                    valueLabel:
+                        '+${state.loudnessGainDb.toStringAsFixed(1)} dB',
+                    min: 0,
+                    max: 12,
+                    divisions: 24,
+                    value: state.loudnessGainDb,
+                    activeColor: tokens.accentPrimary,
+                    onChanged: cubit.setLoudnessGain,
+                  ),
+                  if (state.loudnessGainDb >= 6.0)
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacingMd,
+                      ),
+                      child: Text(
+                        l10n.equalizerLoudnessWarning,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: tokens.danger),
+                      ),
+                    ),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },

@@ -486,6 +486,36 @@
   "statsTopTracks": "أكثر المقاطع استماعاً",
   "statsTopArtists": "أكثر الفنانين استماعاً",
   "statsSharePoster": "مشاركة بطاقة الملخص",
+  "statsDurationSeconds": "{seconds} ث",
+  "@statsDurationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "statsDurationMinutes": "{minutes} د",
+  "@statsDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "statsDurationHoursMinutes": "{hours} س {minutes} د",
+  "@statsDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "statsResetTitle": "تصفير إحصائيات الاستماع؟",
+  "statsResetBody": "سيؤدي هذا إلى مسح وقت الاستماع وعدد مرات التشغيل المسجلة للبدء من جديد.",
+  "statsResetSuccess": "تم تصفير إحصائيات الاستماع",
   "cacheClearButton": "مسح الملفات المؤقتة",
   "cacheSizeLabel": "حجم الكاش: {size}",
   "@cacheSizeLabel": {

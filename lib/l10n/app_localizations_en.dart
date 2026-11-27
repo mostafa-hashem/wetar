@@ -1129,6 +1129,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsSharePoster => 'Share Wrapped card';
 
   @override
+  String statsDurationSeconds(String seconds) {
+    return '$seconds sec';
+  }
+
+  @override
+  String statsDurationMinutes(String minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String statsDurationHoursMinutes(String hours, String minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String get statsResetTitle => 'Reset listening stats?';
+
+  @override
+  String get statsResetBody =>
+      'This clears your recorded listening time and play counts so you can start fresh.';
+
+  @override
+  String get statsResetSuccess => 'Listening stats reset';
+
+  @override
   String get cacheClearButton => 'Clear app caches';
 
   @override

@@ -122,152 +122,158 @@ class _FolderPickerScreenState extends State<FolderPickerScreen> {
               ),
             ],
           ),
-          body: Column(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(tokens.spacingMd),
-                child: Column(
-                  children: <Widget>[
-                    TextField(
-                      controller: _searchController,
-                      onChanged: (v) => setState(() => _filterQuery = v.trim()),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search),
-                        hintText: l10n.foldersSearchHint,
-                        filled: true,
-                        fillColor: tokens.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            tokens.radiusCard,
-                          ),
-                          borderSide: BorderSide(color: tokens.borderSubtle),
-                        ),
-                      ),
-                    ),
-                    if (caps.supportsSafFolderPicker) ...<Widget>[
-                      SizedBox(height: tokens.spacingSm),
-                      Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: TextButton.icon(
-                          onPressed: () async {
-                            final added = await context
-                                .read<MusicFoldersCubit>()
-                                .pickSystemFolder();
-                            if (added != null && context.mounted) {
-                              WetarFeedback.showSuccess(
-                                context,
-                                l10n.foldersAddedSuccess(added.displayName),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.create_new_folder_outlined),
-                          label: Text(l10n.foldersAddManualSaf),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Expanded(
-                child: state.isLoadingDiscovery
-                    ? const Center(child: CircularProgressIndicator())
-                    : !state.permissions.audioGranted
-                    ? Center(
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.all(tokens.spacingLg),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Text(
-                                l10n.permissionDeniedTitle,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              SizedBox(height: tokens.spacingSm),
-                              Text(
-                                l10n.permissionDeniedBody,
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: tokens.spacingMd),
-                              FilledButton(
-                                onPressed: () => context
-                                    .read<MusicFoldersCubit>()
-                                    .requestPermissions(),
-                                child: Text(l10n.onboardingGrantPermission),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : grouped.isEmpty
-                    ? Center(child: Text(l10n.libraryFilteredEmpty))
-                    : ListView(
-                        children: <Widget>[
-                          for (final entry in grouped.entries) ...<Widget>[
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: tokens.spacingMd,
-                                vertical: tokens.spacingSm,
-                              ),
-                              child: Text(
-                                entry.key,
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(color: tokens.accentPrimary),
-                              ),
+          body: SafeArea(
+            top: false,
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.all(tokens.spacingMd),
+                  child: Column(
+                    children: <Widget>[
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (v) =>
+                            setState(() => _filterQuery = v.trim()),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: l10n.foldersSearchHint,
+                          filled: true,
+                          fillColor: tokens.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              tokens.radiusCard,
                             ),
-                            for (final folder in entry.value)
-                              CheckboxListTile(
-                                value: _checkedPaths.contains(folder.rootPath),
-                                activeColor: tokens.accentPrimary,
-                                onChanged: (checked) {
-                                  setState(() {
-                                    if (checked ?? false) {
-                                      _checkedPaths.add(folder.rootPath);
-                                    } else {
-                                      _checkedPaths.remove(folder.rootPath);
-                                    }
-                                  });
-                                },
-                                title: Text(
-                                  folder.displayName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                            borderSide: BorderSide(color: tokens.borderSubtle),
+                          ),
+                        ),
+                      ),
+                      if (caps.supportsSafFolderPicker) ...<Widget>[
+                        SizedBox(height: tokens.spacingSm),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              final added = await context
+                                  .read<MusicFoldersCubit>()
+                                  .pickSystemFolder();
+                              if (added != null && context.mounted) {
+                                WetarFeedback.showSuccess(
+                                  context,
+                                  l10n.foldersAddedSuccess(added.displayName),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.create_new_folder_outlined),
+                            label: Text(l10n.foldersAddManualSaf),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: state.isLoadingDiscovery
+                      ? const Center(child: CircularProgressIndicator())
+                      : !state.permissions.audioGranted
+                      ? Center(
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.all(tokens.spacingLg),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Text(
+                                  l10n.permissionDeniedTitle,
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
-                                subtitle: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Directionality(
-                                      textDirection: TextDirection.ltr,
-                                      child: Text(
-                                        NumeralFormatter.shortenPath(
-                                          folder.rootPath,
+                                SizedBox(height: tokens.spacingSm),
+                                Text(
+                                  l10n.permissionDeniedBody,
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: tokens.spacingMd),
+                                FilledButton(
+                                  onPressed: () => context
+                                      .read<MusicFoldersCubit>()
+                                      .requestPermissions(),
+                                  child: Text(l10n.onboardingGrantPermission),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : grouped.isEmpty
+                      ? Center(child: Text(l10n.libraryFilteredEmpty))
+                      : ListView(
+                          children: <Widget>[
+                            for (final entry in grouped.entries) ...<Widget>[
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: tokens.spacingMd,
+                                  vertical: tokens.spacingSm,
+                                ),
+                                child: Text(
+                                  entry.key,
+                                  style: Theme.of(context).textTheme.labelLarge
+                                      ?.copyWith(color: tokens.accentPrimary),
+                                ),
+                              ),
+                              for (final folder in entry.value)
+                                CheckboxListTile(
+                                  value: _checkedPaths.contains(
+                                    folder.rootPath,
+                                  ),
+                                  activeColor: tokens.accentPrimary,
+                                  onChanged: (checked) {
+                                    setState(() {
+                                      if (checked ?? false) {
+                                        _checkedPaths.add(folder.rootPath);
+                                      } else {
+                                        _checkedPaths.remove(folder.rootPath);
+                                      }
+                                    });
+                                  },
+                                  title: Text(
+                                    folder.displayName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Directionality(
+                                        textDirection: TextDirection.ltr,
+                                        child: Text(
+                                          NumeralFormatter.shortenPath(
+                                            folder.rootPath,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        l10n.foldersTrackCount(
+                                          folder.trackCount,
+                                        ),
                                         style: Theme.of(context)
                                             .textTheme
-                                            .bodySmall,
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: tokens.accentSecondary,
+                                            ),
                                       ),
-                                    ),
-                                    Text(
-                                      l10n.foldersTrackCount(folder.trackCount),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: tokens.accentSecondary,
-                                          ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
+                            ],
                           ],
-                        ],
-                      ),
-              ),
-              SafeArea(
-                top: false,
-                child: Container(
+                        ),
+                ),
+                Container(
                   padding: EdgeInsets.all(tokens.spacingMd),
                   decoration: BoxDecoration(
                     color: tokens.surfaceElevated,
@@ -307,8 +313,8 @@ class _FolderPickerScreenState extends State<FolderPickerScreen> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

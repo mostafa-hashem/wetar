@@ -70,6 +70,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final tokens = context.wetarTokens;
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) {
         final fields = <(LibrarySortField, String)>[
           (LibrarySortField.title, l10n.librarySortTitle),
@@ -80,45 +81,48 @@ class _LibraryScreenState extends State<LibraryScreen> {
           (LibrarySortField.playCount, l10n.librarySortPlayCount),
         ];
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: tokens.inkMuted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(tokens.radiusPill),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    l10n.librarySortBy,
-                    style: Theme.of(ctx).textTheme.titleMedium,
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: tokens.inkMuted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(tokens.radiusPill),
                   ),
                 ),
-              ),
-              for (final item in fields)
-                ListTile(
-                  title: Text(item.$2),
-                  trailing: libState.sortField == item.$1
-                      ? Icon(
-                          libState.ascending
-                              ? Icons.arrow_upward_rounded
-                              : Icons.arrow_downward_rounded,
-                          color: tokens.accentPrimary,
-                        )
-                      : null,
-                  onTap: () {
-                    context.read<LibraryCubit>().setSort(item.$1);
-                    Navigator.of(ctx).pop();
-                  },
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      l10n.librarySortBy,
+                      style: Theme.of(ctx).textTheme.titleMedium,
+                    ),
+                  ),
                 ),
-            ],
+                for (final item in fields)
+                  ListTile(
+                    title: Text(item.$2),
+                    trailing: libState.sortField == item.$1
+                        ? Icon(
+                            libState.ascending
+                                ? Icons.arrow_upward_rounded
+                                : Icons.arrow_downward_rounded,
+                            color: tokens.accentPrimary,
+                          )
+                        : null,
+                    onTap: () {
+                      context.read<LibraryCubit>().setSort(item.$1);
+                      Navigator.of(ctx).pop();
+                    },
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -131,72 +135,78 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final player = context.read<PlayerCubit>();
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: tokens.inkMuted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(tokens.radiusPill),
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: tokens.inkMuted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(tokens.radiusPill),
+                  ),
                 ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.playlist_play_rounded),
-                title: Text(l10n.actionPlayNext),
-                onTap: () {
-                  player.playNext(track);
-                  Navigator.of(ctx).pop();
-                  WetarFeedback.showSuccess(context, l10n.actionPlayNext);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.queue_music_rounded),
-                title: Text(l10n.actionAddToQueue),
-                onTap: () {
-                  player.addToQueue(<WetarTrack>[track]);
-                  Navigator.of(ctx).pop();
-                  WetarFeedback.showSuccess(context, l10n.actionAddToQueue);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.playlist_add_rounded),
-                title: Text(l10n.actionAddToPlaylist),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  widget.onAddToPlaylistRequested(<WetarTrack>[track]);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  track.isFavorite
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: track.isFavorite ? tokens.accentPrimary : null,
+                ListTile(
+                  leading: const Icon(Icons.playlist_play_rounded),
+                  title: Text(l10n.actionPlayNext),
+                  onTap: () {
+                    player.playNext(track);
+                    Navigator.of(ctx).pop();
+                    WetarFeedback.showSuccess(context, l10n.actionPlayNext);
+                  },
                 ),
-                title: Text(
-                  track.isFavorite
-                      ? l10n.actionUnfavorite
-                      : l10n.actionFavorite,
+                ListTile(
+                  leading: const Icon(Icons.queue_music_rounded),
+                  title: Text(l10n.actionAddToQueue),
+                  onTap: () {
+                    player.addToQueue(<WetarTrack>[track]);
+                    Navigator.of(ctx).pop();
+                    WetarFeedback.showSuccess(context, l10n.actionAddToQueue);
+                  },
                 ),
-                onTap: () {
-                  context.read<LibraryCubit>().toggleFavorite(track.stableKey);
-                  Navigator.of(ctx).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.info_outline_rounded),
-                title: Text(l10n.playerTrackDetails),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  widget.onOpenTrackDetails(track);
-                },
-              ),
-            ],
+                ListTile(
+                  leading: const Icon(Icons.playlist_add_rounded),
+                  title: Text(l10n.actionAddToPlaylist),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    widget.onAddToPlaylistRequested(<WetarTrack>[track]);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    track.isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: track.isFavorite ? tokens.accentPrimary : null,
+                  ),
+                  title: Text(
+                    track.isFavorite
+                        ? l10n.actionUnfavorite
+                        : l10n.actionFavorite,
+                  ),
+                  onTap: () {
+                    context.read<LibraryCubit>().toggleFavorite(
+                      track.stableKey,
+                    );
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info_outline_rounded),
+                  title: Text(l10n.playerTrackDetails),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    widget.onOpenTrackDetails(track);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -274,14 +284,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
               ],
             ),
-            body: _buildTrackCollection(
-              context,
-              libState.sortedTracks,
-              libState,
-              appearance,
-              playbackSettings.numeralStyle,
-              currentTrackKey,
-              thumbCache,
+            body: SafeArea(
+              top: false,
+              child: _buildTrackCollection(
+                context,
+                libState.sortedTracks,
+                libState,
+                appearance,
+                playbackSettings.numeralStyle,
+                currentTrackKey,
+                thumbCache,
+              ),
             ),
           );
         }
@@ -323,48 +336,51 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ],
           ),
-          body: Column(
-            children: <Widget>[
-              SizedBox(
-                height: 44,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
-                  itemCount: LibraryCategory.values.length,
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: tokens.spacingSm),
-                  itemBuilder: (context, index) {
-                    final cat = LibraryCategory.values[index];
-                    final selected = libState.activeCategory == cat;
-                    return ChoiceChip(
-                      selected: selected,
-                      label: Text(_categoryLabel(l10n, cat)),
-                      selectedColor: tokens.accentPrimary.withValues(
-                        alpha: 0.2,
-                      ),
-                      onSelected: (_) =>
-                          context.read<LibraryCubit>().setCategory(cat),
-                    );
-                  },
+          body: SafeArea(
+            top: false,
+            child: Column(
+              children: <Widget>[
+                SizedBox(
+                  height: 44,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
+                    itemCount: LibraryCategory.values.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(width: tokens.spacingSm),
+                    itemBuilder: (context, index) {
+                      final cat = LibraryCategory.values[index];
+                      final selected = libState.activeCategory == cat;
+                      return ChoiceChip(
+                        selected: selected,
+                        label: Text(_categoryLabel(l10n, cat)),
+                        selectedColor: tokens.accentPrimary.withValues(
+                          alpha: 0.2,
+                        ),
+                        onSelected: (_) =>
+                            context.read<LibraryCubit>().setCategory(cat),
+                      );
+                    },
+                  ),
                 ),
-              ),
-              SizedBox(height: tokens.spacingXs),
-              Expanded(
-                child: foldersState.selectedFolders.isEmpty
-                    ? _EmptyNoFoldersView()
-                    : libState.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildCategoryBody(
-                        context,
-                        libState,
-                        appearance,
-                        playbackSettings.artistSeparators,
-                        playbackSettings.numeralStyle,
-                        currentTrackKey,
-                        thumbCache,
-                      ),
-              ),
-            ],
+                SizedBox(height: tokens.spacingXs),
+                Expanded(
+                  child: foldersState.selectedFolders.isEmpty
+                      ? _EmptyNoFoldersView()
+                      : libState.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildCategoryBody(
+                          context,
+                          libState,
+                          appearance,
+                          playbackSettings.artistSeparators,
+                          playbackSettings.numeralStyle,
+                          currentTrackKey,
+                          thumbCache,
+                        ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -559,22 +575,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ],
           ),
-          body: ListView.builder(
-            itemExtent: effectiveExtent,
-            itemCount: tracks.length,
-            itemBuilder: (ctx, i) {
-              final track = tracks[i];
-              return TrackListTile(
-                track: track,
-                isPlayingTrack: false,
-                showArtwork: appearance.showArtworkInLists,
-                numeralStyle: numerals,
-                thumbnailCache: thumbCache,
-                onTap: () =>
-                    context.read<PlayerCubit>().playTracks(tracks, index: i),
-                onMorePressed: () => _showTrackActionsSheet(ctx, track),
-              );
-            },
+          body: SafeArea(
+            top: false,
+            child: ListView.builder(
+              padding: EdgeInsets.only(bottom: tokens.spacingLg),
+              itemExtent: effectiveExtent,
+              itemCount: tracks.length,
+              itemBuilder: (ctx, i) {
+                final track = tracks[i];
+                return TrackListTile(
+                  track: track,
+                  isPlayingTrack: false,
+                  showArtwork: appearance.showArtworkInLists,
+                  numeralStyle: numerals,
+                  thumbnailCache: thumbCache,
+                  onTap: () =>
+                      context.read<PlayerCubit>().playTracks(tracks, index: i),
+                  onMorePressed: () => _showTrackActionsSheet(ctx, track),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -667,6 +687,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       labelForIndex: (idx) => ArabicNormalizer.indexLetter(tracks[idx].title),
       child: ListView.builder(
         controller: _scrollController,
+        padding: EdgeInsets.only(bottom: tokens.spacingMd),
         itemExtent: effectiveExtent,
         itemCount: tracks.length,
         itemBuilder: (context, index) {
@@ -847,6 +868,7 @@ class _GroupCollectionView<T> extends StatelessWidget {
         : tokens.listRowExtent;
 
     return ListView.builder(
+      padding: EdgeInsets.only(bottom: tokens.spacingMd),
       itemExtent: effectiveExtent,
       itemCount: items.length,
       itemBuilder: (context, index) {

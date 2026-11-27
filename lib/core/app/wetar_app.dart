@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wetar/core/capabilities/platform_capabilities.dart';
@@ -127,6 +128,9 @@ class _WetarMaterialApp extends StatelessWidget {
       systemDisableAnimations: disableAnimations,
     );
 
+    final tokens =
+        theme.extension<WetarTokens>() ?? WetarTokenResolver.fallbackDark;
+
     return BlocListener<SettingsCubit, PlaybackSettings>(
       listenWhen: (prev, curr) => prev != curr,
       listener: (context, nextSettings) {
@@ -137,18 +141,21 @@ class _WetarMaterialApp extends StatelessWidget {
       },
       child: TickerMode(
         enabled: isUiVisible && !isLite,
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          scaffoldMessengerKey: WetarFeedback.messengerKey,
-          locale: Locale(settings.localeCode),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appName,
-          theme: theme,
-          home: const WetarAppShell(),
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: WetarTokenResolver.systemOverlayStyle(tokens),
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: WetarFeedback.messengerKey,
+            locale: Locale(settings.localeCode),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appName,
+            theme: theme,
+            home: const WetarAppShell(),
+          ),
         ),
       ),
     );

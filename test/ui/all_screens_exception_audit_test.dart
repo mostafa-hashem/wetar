@@ -328,17 +328,20 @@ class _TestEnv {
         BlocProvider<EqualizerCubit>.value(value: equalizerCubit),
         BlocProvider<PlayerCubit>.value(value: playerCubit),
       ],
-      child: MediaQuery(
-        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
-        child: MaterialApp(
-          locale: locale,
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          theme: theme,
-          home: child,
+      child: Builder(
+        builder: (ctx) => MediaQuery(
+          data: MediaQueryData.fromView(View.of(ctx))
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: MaterialApp(
+            locale: locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            theme: theme,
+            home: child,
+          ),
         ),
       ),
     );
@@ -661,6 +664,73 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'Android edge-to-edge 48dp bottom nav bar does not overlap Equalizer or Wrapped stats',
+    (tester) async {
+      final env = await _TestEnv.create();
+      addTearDown(env.dispose);
+
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.physicalSize = const Size(392, 850);
+      tester.view.padding = const FakeViewPadding(top: 36, bottom: 48);
+      tester.view.viewPadding = const FakeViewPadding(top: 36, bottom: 48);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+        tester.view.resetPadding();
+        tester.view.resetViewPadding();
+      });
+
+      env.equalizerCubit.emitLoudness(12.0);
+      await tester.pumpWidget(
+        env.wrapScreen(const EqualizerScreen(), textScale: 1.0),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final eqScrollable = tester.state<ScrollableState>(
+        find.byType(Scrollable).first,
+      );
+      eqScrollable.position.jumpTo(eqScrollable.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+
+      final warningFinder = find.text(
+        'High volume boost may cause speaker distortion',
+      );
+      expect(warningFinder, findsOneWidget);
+      final warningRect = tester.getRect(warningFinder);
+      expect(warningRect.bottom, lessThanOrEqualTo(850.0 - 48.0));
+
+      // Verify ListeningStatsScreen displays real seconds & resets cleanly.
+      await (env.db.update(env.db.selectedFolders)
+            ..where((t) => t.id.equals(1)))
+          .write(const SelectedFoldersCompanion(isAvailable: Value(true)));
+      await env.libraryRepo.upsertPlayHistorySession(
+        track: env.tracks.first,
+        playedAtMs: 1700000000,
+        listenedMs: 18000,
+      );
+      await tester.pumpWidget(
+        env.wrapScreen(const ListeningStatsScreen(), textScale: 1.0),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      expect(find.text('18 sec'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
+
+      final shareBtnRect = tester.getRect(find.text('Share Wrapped card'));
+      expect(shareBtnRect.bottom, lessThanOrEqualTo(850.0 - 48.0));
+
+      await tester.tap(find.byIcon(Icons.restart_alt_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reset'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('0 min'), findsOneWidget);
+    },
+  );
 }
 
 class _StubPlayerCubit extends Cubit<PlayerStateSnapshot>
@@ -735,6 +805,8 @@ class _StubEqualizerCubit extends Cubit<EqualizerState>
           ],
         ),
       );
+
+  void emitLoudness(double db) => emit(state.copyWith(loudnessGainDb: db));
 
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
