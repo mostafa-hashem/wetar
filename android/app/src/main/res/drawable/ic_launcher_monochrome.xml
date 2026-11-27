@@ -5,31 +5,24 @@
     android:viewportWidth="1024"
     android:viewportHeight="1024">
     <group
-        android:translateX="488"
-        android:translateY="514"
-        android:scaleX="0.64"
-        android:scaleY="0.64"
-        android:rotation="42">
-        <!-- Acoustic resonance arcs -->
+        android:pivotX="512"
+        android:pivotY="512"
+        android:scaleX="0.62"
+        android:scaleY="0.62">
         <path
             android:fillColor="#00000000"
             android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="9"
+            android:strokeWidth="48"
             android:strokeLineCap="round"
-            android:pathData="M228.8,9.0 A242,242 0 0,1 228.8,167.0 M-228.8,167.0 A242,242 0 0,1 -228.8,9.0" />
-
-        <!-- Solid monochrome silhouette with cutouts for soundhole & bridge -->
+            android:pathData="M699.16,751.56 A304,304 0 1,1 699.16,272.44" />
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="28"
+            android:strokeLineCap="round"
+            android:pathData="M393.45,687.76 A212,212 0 0,1 393.45,336.24" />
         <path
             android:fillColor="#FFFFFFFF"
-            android:fillType="evenOdd"
-            android:pathData="M-38,-106 L-27,-268 L20,-310 L82,-342 C98,-350 108,-338 102,-324 C94,-304 62,-282 27,-268 L38,-106 C96,-54 206,-12 206,88 C206,194 118,268 0,268 C-118,268 -206,194 -206,88 C-206,-12 -96,-54 -38,-106 Z M-24,-266 L-32,-62 Q0,-48 32,-62 L24,-266 Z M0,-40 A76,76 0 1,0 0,112 A76,76 0 1,0 0,-40 Z M-69,162 A12,12 0 0,0 -81,174 A12,12 0 0,0 -69,186 L69,186 A12,12 0 0,0 81,174 A12,12 0 0,0 69,162 Z" />
-
-        <!-- Converging strings across cutouts -->
-        <path
-            android:fillColor="#00000000"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="7.5"
-            android:strokeLineCap="round"
-            android:pathData="M-15,-266 L-34,171 M0,-266 L0,171 M15,-266 L34,171" />
+            android:pathData="M400,624 L400,400 A52,52 0 0,1 478,354.97 L672,466.97 A52,52 0 0,1 672,557.03 L478,669.03 A52,52 0 0,1 400,624 Z" />
     </group>
 </vector>
